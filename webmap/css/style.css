@@ -80,6 +80,39 @@ html, body {
   margin: 0;
 }
 
+#measure-controls {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+#measure-controls button {
+  flex: 1;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--panel-border);
+  background: var(--panel-bg);
+  color: var(--panel-fg);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+#measure-controls button#measure-toggle.active {
+  background: #1565c0;
+  color: #ffffff;
+  border-color: #1565c0;
+}
+
+#measure-status {
+  margin-top: 6px;
+  font-size: 12px;
+  min-height: 16px;
+}
+
+#map.measuring {
+  cursor: crosshair;
+}
+
 #legend {
   margin-top: 14px;
   font-size: 12px;

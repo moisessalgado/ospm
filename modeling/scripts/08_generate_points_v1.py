@@ -69,7 +69,7 @@ BUFFER_DRIVEWAY_M = 2.0
 BUFFER_BUS_STOP_M = 12.0
 BUFFER_EXISTING_TREE_M = 4.0
 
-MIN_POINT_SEPARATION_M = 3.0
+MIN_POINT_SEPARATION_M = 6.0  # piso absoluto: o menor espaçamento entre portes (pequeno) — ver SPACING_BY_PORTE
 SAMPLE_STEP_M = 2.0
 BUILDING_SEARCH_RADIUS_M = 20.0
 
@@ -91,6 +91,45 @@ def sides_for(sidewalk_norm):
     if sidewalk_norm == "right":
         return ["right"]
     return ["left", "right"]
+
+
+def enforce_min_separation(points: gpd.GeoDataFrame, min_sep: float) -> gpd.GeoDataFrame:
+    """Greedy global dedup that *guarantees* no two kept points end up closer
+    than min_sep, regardless of which line/side/pass generated them.
+
+    Previous approach snapped points to a min_sep-sized grid and kept one per
+    cell — but two points on opposite sides of a cell boundary can be almost
+    0m apart and still land in different cells, so it didn't actually
+    enforce the minimum distance. This instead hashes accepted points into a
+    grid of cell size min_sep and, for each new point, checks only the 3x3
+    neighboring cells: any point closer than min_sep must fall in one of
+    those, so the check is both correct and O(1) amortized per point.
+    """
+    grid: dict[tuple[int, int], list[tuple[float, float]]] = {}
+    xs = points.geometry.x.to_numpy()
+    ys = points.geometry.y.to_numpy()
+    keep_mask = np.zeros(len(points), dtype=bool)
+    min_sep_sq = min_sep * min_sep
+
+    for i in range(len(points)):
+        x, y = xs[i], ys[i]
+        cx, cy = int(x // min_sep), int(y // min_sep)
+        conflict = False
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                for ox, oy in grid.get((cx + dx, cy + dy), ()):
+                    if (ox - x) ** 2 + (oy - y) ** 2 < min_sep_sq:
+                        conflict = True
+                        break
+                if conflict:
+                    break
+            if conflict:
+                break
+        if not conflict:
+            grid.setdefault((cx, cy), []).append((x, y))
+            keep_mask[i] = True
+
+    return points[keep_mask]
 
 
 def bearing(line: LineString) -> float:
@@ -371,11 +410,8 @@ def main() -> None:
     points = gpd.GeoDataFrame(records, geometry="geometry", crs=TARGET_CRS)
     print(f"\nPontos antes do dedup global: {len(points)}")
 
-    # --- generic dedup: snap to a grid of MIN_POINT_SEPARATION_M and keep first per cell ---
-    points["_gx"] = (points.geometry.x // MIN_POINT_SEPARATION_M).astype(int)
-    points["_gy"] = (points.geometry.y // MIN_POINT_SEPARATION_M).astype(int)
-    points = points.drop_duplicates(subset=["_gx", "_gy"]).drop(columns=["_gx", "_gy"])
-    print(f"Pontos após dedup global (grid {MIN_POINT_SEPARATION_M}m): {len(points)}")
+    points = enforce_min_separation(points, MIN_POINT_SEPARATION_M)
+    print(f"Pontos após dedup global (distância mínima garantida de {MIN_POINT_SEPARATION_M}m): {len(points)}")
 
     out_gpkg = OUT_DIR / "vagas_plantio_v1.gpkg"
     points.to_file(out_gpkg, layer="vagas_plantio", driver="GPKG")
