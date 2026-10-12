@@ -109,8 +109,21 @@ html, body {
   min-height: 16px;
 }
 
-#map.measuring {
-  cursor: crosshair;
+#cursor-label {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  background: rgba(33, 33, 33, 0.85);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+#cursor-label[hidden] {
+  display: none;
 }
 
 #legend {

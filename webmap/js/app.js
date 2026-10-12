@@ -9,20 +9,33 @@ function googleTileUrls(lyrs) {
 }
 
 const BASEMAPS = {
-  roadmap: googleTileUrls("m"),
-  satellite: googleTileUrls("s"),
-  hybrid: googleTileUrls("y"),
+  roadmap: { tiles: googleTileUrls("m"), attribution: "© Google", maxzoom: 22 },
+  satellite: { tiles: googleTileUrls("s"), attribution: "© Google", maxzoom: 22 },
+  hybrid: { tiles: googleTileUrls("y"), attribution: "© Google", maxzoom: 22 },
+  osm: {
+    tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxzoom: 19,
+  },
 };
 
-const OVERPASS_URL = "https://overpass-api.de/api/interpreter";
-const OSM_MIN_ZOOM = 14; // evita baixar a malha viária de toda a cidade de uma vez
+// Clustering: abaixo deste zoom os pontos são agregados em bolhas com contagem.
+// Acima dele os pontos individuais aparecem (e o snap da medição funciona).
+const CLUSTER_MAX_ZOOM = 14;
+const CLUSTER_RADIUS = 50;
+
+const SNAP_RADIUS_PX = 14;
+const FONT = ["Open Sans Semibold"];
 
 const style = {
   version: 8,
+  // Sem "glyphs" nenhuma camada de texto (contagem de cluster, rótulos de
+  // distância) é criada pelo MapLibre.
+  glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
   sources: Object.fromEntries(
-    Object.entries(BASEMAPS).map(([key, tiles]) => [
+    Object.entries(BASEMAPS).map(([key, b]) => [
       `basemap-${key}`,
-      { type: "raster", tiles, tileSize: 256, attribution: "© Google" },
+      { type: "raster", tiles: b.tiles, tileSize: 256, attribution: b.attribution, maxzoom: b.maxzoom },
     ])
   ),
   layers: Object.keys(BASEMAPS).map((key) => ({
@@ -39,34 +52,38 @@ const map = new maplibregl.Map({
   center: [-47.46, -23.5],
   zoom: 12,
 });
+map.addControl(new maplibregl.NavigationControl(), "top-right");
+map.addControl(new maplibregl.ScaleControl({ unit: "metric" }), "bottom-right");
 
 const statusEl = document.getElementById("status");
 const municipioSelect = document.getElementById("municipio-select");
 const basemapSelect = document.getElementById("basemap-select");
-const osmToggle = document.getElementById("osm-toggle");
 const measureToggleBtn = document.getElementById("measure-toggle");
 const measureClearBtn = document.getElementById("measure-clear");
+const snapToggle = document.getElementById("snap-toggle");
 const measureStatusEl = document.getElementById("measure-status");
-const mapContainer = document.getElementById("map");
+const cursorLabel = document.getElementById("cursor-label");
 
 let manifest = { municipios: [] };
-let osmFetchController = null;
+
+const emptyFC = () => ({ type: "FeatureCollection", features: [] });
 
 function setStatus(msg) {
   statusEl.textContent = msg || "";
 }
 
-// Clustering nativo do MapLibre: evita plotar centenas de milhares de
-// círculos de uma vez quando o zoom está baixo (cidade toda em tela).
-// A partir de CLUSTER_MAX_ZOOM os pontos individuais passam a ser
-// renderizados normalmente, coloridos por porte.
-const CLUSTER_MAX_ZOOM = 16;
-const CLUSTER_RADIUS = 60;
-
 map.on("load", async () => {
+  addVagasLayers();
+  addMeasureLayers();
+  await loadManifest();
+});
+
+// --- Camada de vagas (com clustering) ---------------------------------------
+
+function addVagasLayers() {
   map.addSource("vagas", {
     type: "geojson",
-    data: { type: "FeatureCollection", features: [] },
+    data: emptyFC(),
     cluster: true,
     clusterMaxZoom: CLUSTER_MAX_ZOOM,
     clusterRadius: CLUSTER_RADIUS,
@@ -79,7 +96,7 @@ map.on("load", async () => {
     filter: ["has", "point_count"],
     paint: {
       "circle-radius": ["step", ["get", "point_count"], 14, 100, 18, 1000, 24, 10000, 32],
-      "circle-color": ["step", ["get", "point_count"], "#90caf9", 100, "#42a5f5", 1000, "#1565c0", 10000, "#0d47a1"],
+      "circle-color": ["step", ["get", "point_count"], "#81c784", 100, "#43a047", 1000, "#2e7d32", 10000, "#1b5e20"],
       "circle-opacity": 0.85,
       "circle-stroke-width": 1.5,
       "circle-stroke-color": "#ffffff",
@@ -92,7 +109,9 @@ map.on("load", async () => {
     filter: ["has", "point_count"],
     layout: {
       "text-field": ["get", "point_count_abbreviated"],
+      "text-font": FONT,
       "text-size": 12,
+      "text-allow-overlap": true,
     },
     paint: { "text-color": "#ffffff" },
   });
@@ -103,7 +122,7 @@ map.on("load", async () => {
     source: "vagas",
     filter: ["!", ["has", "point_count"]],
     paint: {
-      "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 1.5, 16, 4, 19, 7],
+      "circle-radius": ["interpolate", ["linear"], ["zoom"], 15, 3, 18, 6, 21, 10],
       "circle-color": [
         "match",
         ["get", "porte"],
@@ -112,35 +131,43 @@ map.on("load", async () => {
         "grande", "#6a1b9a",
         "#999999",
       ],
-      "circle-opacity": 0.85,
-      "circle-stroke-width": 0.5,
+      "circle-opacity": 0.9,
+      "circle-stroke-width": 1,
       "circle-stroke-color": "#ffffff",
     },
   });
 
-  map.on("click", "vagas-clusters", (e) => {
-    if (measureActive) return; // não conflitar com a ferramenta de medição
-    const [feature] = map.queryRenderedFeatures(e.point, { layers: ["vagas-clusters"] });
-    const clusterId = feature.properties.cluster_id;
-    map.getSource("vagas").getClusterExpansionZoom(clusterId, (err, zoom) => {
-      if (err) return;
-      map.easeTo({ center: feature.geometry.coordinates, zoom });
-    });
+  map.on("click", "vagas-clusters", async (e) => {
+    if (measure.active) return;
+    const feature = e.features[0];
+    const zoom = await map.getSource("vagas").getClusterExpansionZoom(feature.properties.cluster_id);
+    map.easeTo({ center: feature.geometry.coordinates, zoom });
   });
-  map.on("mouseenter", "vagas-clusters", () => (map.getCanvas().style.cursor = "pointer"));
-  map.on("mouseleave", "vagas-clusters", () => (map.getCanvas().style.cursor = ""));
-
-  map.addSource("osm-live", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
-  map.addLayer({
-    id: "osm-live-lines",
-    type: "line",
-    source: "osm-live",
-    paint: { "line-color": "#ffeb3b", "line-width": 2, "line-opacity": 0.9 },
+  map.on("mouseenter", "vagas-clusters", () => {
+    if (!measure.active) map.getCanvas().style.cursor = "pointer";
   });
+  map.on("mouseleave", "vagas-clusters", () => {
+    if (!measure.active) map.getCanvas().style.cursor = "";
+  });
+}
 
-  setupMeasureTool();
-  await loadManifest();
-});
+// Formato compacto exportado por modeling/scripts/10_export_web.py:
+// points = [lon, lat, porte_code, slot_code, ...]; legend decodifica os códigos.
+function decodeCompactPoints(payload) {
+  const { legend, points } = payload;
+  const features = new Array(points.length / 4);
+  for (let i = 0, j = 0; i < points.length; i += 4, j++) {
+    features[j] = {
+      type: "Feature",
+      geometry: { type: "Point", coordinates: [points[i], points[i + 1]] },
+      properties: {
+        porte: legend.porte[points[i + 2]] ?? null,
+        slot_type: legend.slot_type[points[i + 3]] ?? null,
+      },
+    };
+  }
+  return { type: "FeatureCollection", features };
+}
 
 async function loadManifest() {
   const resp = await fetch("data/manifest.json");
@@ -153,35 +180,14 @@ async function loadManifest() {
   }
 }
 
-// Decodifica o formato compacto exportado por modeling/scripts/10_export_web.py
-// — points é um array plano [lon, lat, porte_code, slot_code, ...] e legend
-// mapeia cada código de volta ao texto usado na legenda/estilo dos pontos.
-function decodeCompactPoints(payload) {
-  const { legend, points } = payload;
-  const features = [];
-  for (let i = 0; i < points.length; i += 4) {
-    const [lon, lat, porteCode, slotCode] = points.slice(i, i + 4);
-    features.push({
-      type: "Feature",
-      geometry: { type: "Point", coordinates: [lon, lat] },
-      properties: {
-        porte: legend.porte[porteCode] ?? null,
-        slot_type: legend.slot_type[slotCode] ?? null,
-      },
-    });
-  }
-  return { type: "FeatureCollection", features };
-}
-
 async function loadMunicipio(slug) {
   const entry = manifest.municipios.find((m) => m.slug === slug);
   if (!entry) return;
   setStatus(`Carregando ${entry.nome}…`);
   const resp = await fetch(`data/${slug}.json`);
-  const payload = await resp.json();
-  const geojson = decodeCompactPoints(payload);
+  const geojson = decodeCompactPoints(await resp.json());
   map.getSource("vagas").setData(geojson);
-  map.flyTo({ center: entry.center, zoom: 13 });
+  map.flyTo({ center: entry.center, zoom: 12 });
   setStatus(`${entry.nome}: ${entry.count.toLocaleString("pt-BR")} vagas de plantio`);
 }
 
@@ -193,175 +199,252 @@ basemapSelect.addEventListener("change", (e) => {
   }
 });
 
-osmToggle.addEventListener("change", () => {
-  if (osmToggle.checked) {
-    fetchOsmForView();
-    map.on("moveend", fetchOsmForView);
-  } else {
-    map.off("moveend", fetchOsmForView);
-    map.getSource("osm-live").setData({ type: "FeatureCollection", features: [] });
-  }
-});
+// --- Ferramenta de medição ---------------------------------------------------
+// Clique adiciona um vértice; a linha "elástica" segue o cursor mostrando a
+// distância ao vivo. Duplo clique, Enter ou Esc finalizam a linha atual (ela
+// fica no mapa) e o próximo clique começa uma nova. Com snap ligado, o cursor
+// gruda no ponto de vaga mais próximo sob ele (qualquer ponto visível, não
+// só vizinhos), para medir com precisão a distância entre árvores.
 
-async function fetchOsmForView() {
-  if (!osmToggle.checked) return;
-  if (map.getZoom() < OSM_MIN_ZOOM) {
-    setStatus(`Aproxime o zoom (nível ${OSM_MIN_ZOOM}+) para ver as vias do OSM ao vivo`);
-    return;
-  }
-  const b = map.getBounds();
-  const bbox = `${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()}`;
-
-  if (osmFetchController) osmFetchController.abort();
-  osmFetchController = new AbortController();
-
-  setStatus("Buscando vias do OpenStreetMap…");
-  try {
-    const query = `[out:json][timeout:25];way["highway"](${bbox});out geom;`;
-    const resp = await fetch(OVERPASS_URL, {
-      method: "POST",
-      body: `data=${encodeURIComponent(query)}`,
-      signal: osmFetchController.signal,
-    });
-    const data = await resp.json();
-    const features = data.elements
-      .filter((el) => el.type === "way" && el.geometry)
-      .map((el) => ({
-        type: "Feature",
-        properties: { name: el.tags?.name || "" },
-        geometry: { type: "LineString", coordinates: el.geometry.map((p) => [p.lon, p.lat]) },
-      }));
-    map.getSource("osm-live").setData({ type: "FeatureCollection", features });
-    setStatus(`${features.length} vias OSM carregadas na área visível`);
-  } catch (err) {
-    if (err.name !== "AbortError") setStatus("Falha ao buscar vias do OSM. Tente novamente.");
-  }
-}
-
-// --- Ferramenta de medição de distância ---------------------------------
-// Modo "sempre partindo do último ponto": cada clique adiciona um vértice e
-// liga ao anterior, formando uma linha encadeada (sem precisar redesenhar
-// um segmento por vez). "Limpar" reinicia a medição; alternar o botão
-// "Medir" desliga a captura de cliques sem perder a linha já desenhada.
-
-let measureActive = false;
-let measurePoints = []; // [[lon, lat], ...]
+const measure = {
+  active: false,
+  lines: [], // linhas finalizadas: [[lon, lat], ...]
+  current: [], // linha em desenho
+  cursor: null, // posição atual do cursor (já com snap aplicado)
+  snapped: false,
+};
 
 function haversineMeters(a, b) {
-  const R = 6371000;
+  const R = 6371008.8;
   const toRad = (d) => (d * Math.PI) / 180;
   const dLat = toRad(b[1] - a[1]);
   const dLon = toRad(b[0] - a[0]);
-  const lat1 = toRad(a[1]);
-  const lat2 = toRad(b[1]);
-  const sinDLat = Math.sin(dLat / 2);
-  const sinDLon = Math.sin(dLon / 2);
-  const h = sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLon * sinDLon;
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(a[1])) * Math.cos(toRad(b[1])) * Math.sin(dLon / 2) ** 2;
   return 2 * R * Math.asin(Math.sqrt(h));
 }
 
 function formatMeters(m) {
-  return m >= 1000 ? `${(m / 1000).toFixed(2)} km` : `${m.toFixed(1)} m`;
+  return m >= 1000 ? `${(m / 1000).toFixed(2)} km` : `${m.toFixed(2)} m`;
 }
 
-function setupMeasureTool() {
-  map.addSource("measure-line", { type: "geojson", data: emptyFC() });
-  map.addLayer({
-    id: "measure-line",
-    type: "line",
-    source: "measure-line",
-    paint: { "line-color": "#ff5722", "line-width": 2.5, "line-dasharray": [2, 1] },
-  });
+function lineLength(coords) {
+  let total = 0;
+  for (let i = 1; i < coords.length; i++) total += haversineMeters(coords[i - 1], coords[i]);
+  return total;
+}
 
-  map.addSource("measure-points", { type: "geojson", data: emptyFC() });
+function addMeasureLayers() {
+  map.addSource("measure", { type: "geojson", data: emptyFC() });
   map.addLayer({
-    id: "measure-points",
+    id: "measure-lines",
+    type: "line",
+    source: "measure",
+    filter: ["==", ["get", "kind"], "line"],
+    layout: { "line-cap": "round" },
+    paint: { "line-color": "#ff5722", "line-width": 2.5 },
+  });
+  map.addLayer({
+    id: "measure-rubber",
+    type: "line",
+    source: "measure",
+    filter: ["==", ["get", "kind"], "rubber"],
+    paint: { "line-color": "#ff5722", "line-width": 2, "line-dasharray": [2, 1.5] },
+  });
+  map.addLayer({
+    id: "measure-vertices",
     type: "circle",
-    source: "measure-points",
+    source: "measure",
+    filter: ["==", ["get", "kind"], "vertex"],
     paint: {
-      "circle-radius": 5,
-      "circle-color": "#ff5722",
-      "circle-stroke-width": 1.5,
-      "circle-stroke-color": "#ffffff",
+      "circle-radius": 4,
+      "circle-color": "#ffffff",
+      "circle-stroke-width": 2,
+      "circle-stroke-color": "#ff5722",
     },
   });
-
-  map.addSource("measure-labels", { type: "geojson", data: emptyFC() });
+  map.addLayer({
+    id: "measure-snap",
+    type: "circle",
+    source: "measure",
+    filter: ["==", ["get", "kind"], "snap"],
+    paint: {
+      "circle-radius": 9,
+      "circle-color": "rgba(0,0,0,0)",
+      "circle-stroke-width": 2.5,
+      "circle-stroke-color": "#ffeb3b",
+    },
+  });
   map.addLayer({
     id: "measure-labels",
     type: "symbol",
-    source: "measure-labels",
+    source: "measure",
+    filter: ["==", ["get", "kind"], "label"],
     layout: {
       "text-field": ["get", "label"],
-      "text-size": 12,
-      "text-offset": [0, -1],
-      "text-anchor": "bottom",
+      "text-font": FONT,
+      "text-size": 13,
+      "text-offset": [0, -0.9],
+      "text-allow-overlap": true,
+      "text-ignore-placement": true,
     },
-    paint: {
-      "text-color": "#ff5722",
-      "text-halo-color": "#ffffff",
-      "text-halo-width": 1.5,
-    },
+    paint: { "text-color": "#bf360c", "text-halo-color": "#ffffff", "text-halo-width": 2 },
   });
 
   map.on("click", onMeasureClick);
+  map.on("dblclick", onMeasureDblClick);
+  map.on("mousemove", onMeasureMove);
+  map.getCanvasContainer().addEventListener("mouseleave", () => {
+    measure.cursor = null;
+    cursorLabel.hidden = true;
+    renderMeasure();
+  });
 }
 
-function emptyFC() {
-  return { type: "FeatureCollection", features: [] };
+function snapTarget(point) {
+  if (!snapToggle.checked) return null;
+  const box = [
+    [point.x - SNAP_RADIUS_PX, point.y - SNAP_RADIUS_PX],
+    [point.x + SNAP_RADIUS_PX, point.y + SNAP_RADIUS_PX],
+  ];
+  const candidates = map.queryRenderedFeatures(box, { layers: ["vagas-points"] });
+  let best = null;
+  let bestDist = Infinity;
+  for (const f of candidates) {
+    const px = map.project(f.geometry.coordinates);
+    const d = Math.hypot(px.x - point.x, px.y - point.y);
+    if (d < bestDist && d <= SNAP_RADIUS_PX) {
+      bestDist = d;
+      best = f.geometry.coordinates;
+    }
+  }
+  return best;
+}
+
+function resolvePosition(e) {
+  const snap = snapTarget(e.point);
+  measure.snapped = Boolean(snap);
+  return snap ? [snap[0], snap[1]] : [e.lngLat.lng, e.lngLat.lat];
 }
 
 function onMeasureClick(e) {
-  if (!measureActive) return;
-  measurePoints.push([e.lngLat.lng, e.lngLat.lat]);
+  if (!measure.active) return;
+  // O segundo click de um duplo clique chega aqui também; detail===2 é tratado no dblclick.
+  if (e.originalEvent.detail > 1) return;
+  measure.current.push(resolvePosition(e));
   renderMeasure();
+}
+
+function onMeasureDblClick(e) {
+  if (!measure.active) return;
+  e.preventDefault();
+  finishCurrentLine();
+}
+
+function onMeasureMove(e) {
+  if (!measure.active) return;
+  measure.cursor = resolvePosition(e);
+  map.getCanvas().style.cursor = measure.snapped ? "pointer" : "crosshair";
+
+  if (measure.current.length) {
+    const last = measure.current[measure.current.length - 1];
+    const seg = haversineMeters(last, measure.cursor);
+    const total = lineLength(measure.current) + seg;
+    cursorLabel.textContent =
+      measure.current.length > 1 ? `${formatMeters(seg)}  (total ${formatMeters(total)})` : formatMeters(seg);
+    cursorLabel.style.left = `${e.point.x + 14}px`;
+    cursorLabel.style.top = `${e.point.y + 14}px`;
+    cursorLabel.hidden = false;
+  } else {
+    cursorLabel.hidden = true;
+  }
+  renderMeasure();
+}
+
+function finishCurrentLine() {
+  if (measure.current.length >= 2) measure.lines.push(measure.current);
+  measure.current = [];
+  cursorLabel.hidden = true;
+  renderMeasure();
+}
+
+function segmentFeatures(coords) {
+  const out = [];
+  for (let i = 1; i < coords.length; i++) {
+    const a = coords[i - 1];
+    const b = coords[i];
+    out.push({
+      type: "Feature",
+      properties: { kind: "label", label: formatMeters(haversineMeters(a, b)) },
+      geometry: { type: "Point", coordinates: [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2] },
+    });
+  }
+  return out;
 }
 
 function renderMeasure() {
-  map.getSource("measure-points").setData({
-    type: "FeatureCollection",
-    features: measurePoints.map((c) => ({ type: "Feature", geometry: { type: "Point", coordinates: c }, properties: {} })),
-  });
-
-  map.getSource("measure-line").setData(
-    measurePoints.length >= 2
-      ? { type: "FeatureCollection", features: [{ type: "Feature", geometry: { type: "LineString", coordinates: measurePoints }, properties: {} }] }
-      : emptyFC()
-  );
-
-  const labelFeatures = [];
-  let total = 0;
-  for (let i = 1; i < measurePoints.length; i++) {
-    const a = measurePoints[i - 1];
-    const b = measurePoints[i];
-    const segDist = haversineMeters(a, b);
-    total += segDist;
-    labelFeatures.push({
-      type: "Feature",
-      geometry: { type: "Point", coordinates: [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2] },
-      properties: { label: formatMeters(segDist) },
-    });
+  const features = [];
+  for (const coords of [...measure.lines, measure.current]) {
+    if (coords.length >= 2) {
+      features.push({ type: "Feature", properties: { kind: "line" }, geometry: { type: "LineString", coordinates: coords } });
+      features.push(...segmentFeatures(coords));
+    }
+    for (const c of coords) {
+      features.push({ type: "Feature", properties: { kind: "vertex" }, geometry: { type: "Point", coordinates: c } });
+    }
   }
-  map.getSource("measure-labels").setData({ type: "FeatureCollection", features: labelFeatures });
+  if (measure.active && measure.current.length && measure.cursor) {
+    const last = measure.current[measure.current.length - 1];
+    features.push({ type: "Feature", properties: { kind: "rubber" }, geometry: { type: "LineString", coordinates: [last, measure.cursor] } });
+  }
+  if (measure.active && measure.snapped && measure.cursor) {
+    features.push({ type: "Feature", properties: { kind: "snap" }, geometry: { type: "Point", coordinates: measure.cursor } });
+  }
+  map.getSource("measure").setData({ type: "FeatureCollection", features });
 
-  if (measurePoints.length === 0) {
-    measureStatusEl.textContent = measureActive ? "Clique no mapa para começar a medir." : "";
-  } else if (measurePoints.length === 1) {
-    measureStatusEl.textContent = "Clique no próximo ponto para medir a distância.";
+  if (!measure.active) {
+    measureStatusEl.textContent = measure.lines.length ? `${measure.lines.length} medição(ões) no mapa` : "";
+  } else if (!measure.current.length) {
+    measureStatusEl.textContent = "Clique para iniciar uma linha.";
   } else {
-    measureStatusEl.textContent = `Distância total: ${formatMeters(total)} (${measurePoints.length - 1} segmento${measurePoints.length > 2 ? "s" : ""})`;
+    measureStatusEl.textContent = `Linha atual: ${formatMeters(lineLength(measure.current))} — duplo clique, Enter ou Esc para finalizar.`;
   }
 }
 
-measureToggleBtn.addEventListener("click", () => {
-  measureActive = !measureActive;
-  measureToggleBtn.classList.toggle("active", measureActive);
-  measureToggleBtn.textContent = measureActive ? "Medindo…" : "Medir";
-  mapContainer.classList.toggle("measuring", measureActive);
+function setMeasureActive(active) {
+  measure.active = active;
+  if (!active) finishCurrentLine();
+  measureToggleBtn.classList.toggle("active", active);
+  measureToggleBtn.textContent = active ? "Parar" : "Medir";
+  // Duplo clique finaliza a linha em vez de dar zoom enquanto mede.
+  if (active) map.doubleClickZoom.disable();
+  else map.doubleClickZoom.enable();
+  map.getCanvas().style.cursor = active ? "crosshair" : "";
+  measure.cursor = null;
+  cursorLabel.hidden = true;
+  renderMeasure();
+}
+
+measureToggleBtn.addEventListener("click", () => setMeasureActive(!measure.active));
+
+measureClearBtn.addEventListener("click", () => {
+  measure.lines = [];
+  measure.current = [];
   renderMeasure();
 });
 
-measureClearBtn.addEventListener("click", () => {
-  measurePoints = [];
-  renderMeasure();
+snapToggle.addEventListener("change", () => {
+  if (snapToggle.checked && map.getZoom() <= CLUSTER_MAX_ZOOM) {
+    measureStatusEl.textContent = `Snap funciona com os pontos individuais — aproxime o zoom (nível ${CLUSTER_MAX_ZOOM + 1}+).`;
+  }
+});
+
+document.addEventListener("keydown", (e) => {
+  if (!measure.active) return;
+  if (e.key === "Escape" || e.key === "Enter") finishCurrentLine();
+  if (e.key === "Backspace" && measure.current.length) {
+    measure.current.pop();
+    renderMeasure();
+  }
 });

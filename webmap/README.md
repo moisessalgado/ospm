@@ -6,9 +6,13 @@ gerados pelo módulo `modeling/`, sobre um basemap do Google Maps.
 - Basemap: tiles do Google Maps via endpoint XYZ não-oficial (`mt0-3.google.com/vt/...`),
   sem necessidade de API key. Risco: não é um endpoint suportado oficialmente
   pelo Google, podendo mudar ou ser bloqueado sem aviso.
-- Vias do OpenStreetMap: buscadas ao vivo via Overpass API, sob demanda, só
-  quando o toggle "Sobrepor vias" está ativo e o zoom é suficiente — não são
-  servidas como arquivo estático.
+- OpenStreetMap: disponível como opção de mapa base (tiles raster padrão do OSM).
+- Clustering: até o zoom 14 os pontos são agregados em bolhas com contagem
+  (clique para aproximar); a partir do 15 aparecem os pontos individuais.
+- Medição de distância: botão "Medir" — cada clique adiciona um vértice, a
+  linha segue o cursor mostrando a distância ao vivo; duplo clique, Enter ou
+  Esc finalizam a linha (Backspace desfaz o último vértice). Com "Snap" ligado,
+  o cursor gruda em qualquer ponto de vaga sob ele (zoom 15+).
 - Pontos de vagas de plantio: carregados de `data/<slug>.json`, gerado pelo
   `modeling/scripts/10_export_web.py`. Não é GeoJSON — é um array plano
   `[lon, lat, porte_code, slot_code, ...]` mais uma tabela `legend` para

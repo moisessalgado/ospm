@@ -9,6 +9,7 @@
 </head>
 <body>
   <div id="map"></div>
+  <div id="cursor-label" hidden></div>
 
   <div id="panel">
     <h1>Vagas de plantio</h1>
@@ -21,18 +22,18 @@
       <option value="roadmap">Google — Ruas</option>
       <option value="satellite" selected>Google — Satélite</option>
       <option value="hybrid">Google — Híbrido</option>
+      <option value="osm">OpenStreetMap</option>
     </select>
-
-    <label class="checkbox">
-      <input type="checkbox" id="osm-toggle" />
-      Sobrepor vias (OpenStreetMap, ao vivo)
-    </label>
 
     <label>Medir distância</label>
     <div id="measure-controls">
       <button id="measure-toggle" type="button">Medir</button>
       <button id="measure-clear" type="button">Limpar</button>
     </div>
+    <label class="checkbox">
+      <input type="checkbox" id="snap-toggle" checked />
+      Snap nos pontos de vaga
+    </label>
     <div id="measure-status"></div>
 
     <div id="legend">
