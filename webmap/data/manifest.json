@@ -1,0 +1,14 @@
+{
+  "municipios": [
+    {
+      "slug": "sorocaba",
+      "nome": "Sorocaba",
+      "uf": "São Paulo",
+      "center": [
+        -47.43649430000001,
+        -23.469435599999997
+      ],
+      "count": 614751
+    }
+  ]
+}

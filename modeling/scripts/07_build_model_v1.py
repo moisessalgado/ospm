@@ -1,4 +1,4 @@
-"""Tree-planting-slot model v1 for Sorocaba.
+"""Tree-planting-slot model v1 for a município.
 
 Improvements over v0:
   - Divided-road (dual carriageway) pairing: OSM often maps each direction of
@@ -26,6 +26,7 @@ Improvements over v0:
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
 import geopandas as gpd
@@ -34,9 +35,8 @@ import pandas as pd
 from shapely.geometry import LineString, Point, shape
 from shapely.strtree import STRtree
 
-DATA_DIR = Path(__file__).resolve().parent.parent / "data"
-OUT_DIR = Path(__file__).resolve().parent.parent / "output"
-TARGET_CRS = "EPSG:31983"
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from common.municipios import get_municipio, municipio_arg_parser  # noqa: E402
 
 # --- porte (tree size) thresholds, driven by proxy sidewalk width (m) ---
 # Clearance = distance from candidate point to nearest building facade.
@@ -109,8 +109,8 @@ def angle_diff(a: float, b: float) -> float:
     return min(d, 360 - d)
 
 
-def load_ways() -> gpd.GeoDataFrame:
-    ways = gpd.read_file(DATA_DIR / "sorocaba_highways_clipped.gpkg", layer="highways")
+def load_ways(data_dir: Path) -> gpd.GeoDataFrame:
+    ways = gpd.read_file(data_dir / "highways_clipped.gpkg", layer="highways")
     ways = ways.explode(index_parts=False).reset_index(drop=True)
     ways = ways[ways.geometry.geom_type == "LineString"]
     ways = ways[ways.geometry.length > 1.0].copy()
@@ -118,9 +118,9 @@ def load_ways() -> gpd.GeoDataFrame:
     return ways
 
 
-def load_obstacle_layer(tag_filter) -> gpd.GeoDataFrame:
+def load_obstacle_layer(data_dir: Path, target_crs: str, tag_filter) -> gpd.GeoDataFrame:
     """Load geometries from the auxiliary Overpass dump matching tag_filter(tags)->bool."""
-    raw = json.loads((DATA_DIR / "sorocaba_auxiliary_raw.json").read_text())
+    raw = json.loads((data_dir / "auxiliary_raw.json").read_text())
     geoms = []
     for el in raw["elements"]:
         tags = el.get("tags", {})
@@ -133,8 +133,8 @@ def load_obstacle_layer(tag_filter) -> gpd.GeoDataFrame:
             if len(coords) >= 2:
                 geoms.append(LineString(coords))
     if not geoms:
-        return gpd.GeoDataFrame(geometry=[], crs="EPSG:4326").to_crs(TARGET_CRS)
-    return gpd.GeoDataFrame(geometry=geoms, crs="EPSG:4326").to_crs(TARGET_CRS)
+        return gpd.GeoDataFrame(geometry=[], crs="EPSG:4326").to_crs(target_crs)
+    return gpd.GeoDataFrame(geometry=geoms, crs="EPSG:4326").to_crs(target_crs)
 
 
 def build_obstacle_union(ways_by_class: dict[str, gpd.GeoDataFrame], buffers: dict[str, float]):
@@ -209,7 +209,12 @@ def side_of_point(line: LineString, other_centroid: Point) -> str:
 
 
 def main() -> None:
-    ways = load_ways()
+    args = municipio_arg_parser(__doc__).parse_args()
+    municipio = get_municipio(args.municipio)
+    data_dir = Path(__file__).resolve().parent.parent / "data" / municipio.slug
+    target_crs = municipio.epsg
+
+    ways = load_ways(data_dir)
     eligible = ways[~ways["highway"].isin(EXCLUDED_CLASSES)].copy()
     print(f"Vias elegíveis (exclui classes de alta velocidade/não-logradouro): {len(eligible)}")
 
@@ -218,10 +223,10 @@ def main() -> None:
     print(f"Pares de pista dupla detectados: {n_pairs}")
 
     # Obstacle layers from real OSM coverage
-    crossings = load_obstacle_layer(lambda t: t.get("footway") == "crossing" or t.get("highway") == "crossing")
-    driveways = load_obstacle_layer(lambda t: t.get("amenity") == "parking_entrance" or t.get("service") == "driveway")
-    bus_stops = load_obstacle_layer(lambda t: t.get("highway") == "bus_stop" or t.get("public_transport") == "platform")
-    existing_trees = load_obstacle_layer(lambda t: t.get("natural") == "tree")
+    crossings = load_obstacle_layer(data_dir, target_crs, lambda t: t.get("footway") == "crossing" or t.get("highway") == "crossing")
+    driveways = load_obstacle_layer(data_dir, target_crs, lambda t: t.get("amenity") == "parking_entrance" or t.get("service") == "driveway")
+    bus_stops = load_obstacle_layer(data_dir, target_crs, lambda t: t.get("highway") == "bus_stop" or t.get("public_transport") == "platform")
+    existing_trees = load_obstacle_layer(data_dir, target_crs, lambda t: t.get("natural") == "tree")
     print(f"Obstáculos carregados: crossings={len(crossings)} driveways={len(driveways)} "
           f"bus_stops={len(bus_stops)} existing_trees={len(existing_trees)}")
 
@@ -231,10 +236,10 @@ def main() -> None:
          "bus_stop": BUFFER_BUS_STOP_M, "tree": BUFFER_EXISTING_TREE_M},
     )
 
-    out_path = DATA_DIR / "sorocaba_pairs_debug.json"
+    out_path = data_dir / "pairs_debug.json"
     out_path.write_text(json.dumps({"n_pairs": n_pairs}))
 
-    eligible.to_file(DATA_DIR / "sorocaba_eligible_v1.gpkg", layer="eligible", driver="GPKG")
+    eligible.to_file(data_dir / "eligible_v1.gpkg", layer="eligible", driver="GPKG")
     print("Checkpoint salvo — próxima etapa: amostragem por largura + porte (precisa de buildings).")
 
 

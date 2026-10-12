@@ -1,5 +1,5 @@
-"""v1 point generation: divided-road pairing + median points + building-width
-porte classification + obstacle buffers + generic dedup.
+"""v1 point generation for a município: divided-road pairing + median points +
+building-width porte classification + obstacle buffers + generic dedup.
 
 Run after 06 (buildings) and uses the pairing logic from 07 inline (kept
 self-contained here so this script can be iterated on its own).
@@ -8,6 +8,7 @@ self-contained here so this script can be iterated on its own).
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
 import geopandas as gpd
@@ -15,6 +16,9 @@ import numpy as np
 import pandas as pd
 from shapely.geometry import LineString, Point
 from shapely.ops import unary_union
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from common.municipios import get_municipio, municipio_arg_parser  # noqa: E402
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 OUT_DIR = Path(__file__).resolve().parent.parent / "output"
@@ -100,7 +104,7 @@ def angle_diff(a: float, b: float) -> float:
 
 
 def load_ways() -> gpd.GeoDataFrame:
-    ways = gpd.read_file(DATA_DIR / "sorocaba_highways_clipped.gpkg", layer="highways")
+    ways = gpd.read_file(DATA_DIR / "highways_clipped.gpkg", layer="highways")
     ways = ways.explode(index_parts=False).reset_index(drop=True)
     ways = ways[ways.geometry.geom_type == "LineString"]
     ways = ways[ways.geometry.length > 1.0].copy()
@@ -109,7 +113,7 @@ def load_ways() -> gpd.GeoDataFrame:
 
 
 def load_obstacle_layer(tag_filter) -> gpd.GeoDataFrame:
-    raw = json.loads((DATA_DIR / "sorocaba_auxiliary_raw.json").read_text())
+    raw = json.loads((DATA_DIR / "auxiliary_raw.json").read_text())
     geoms = []
     for el in raw["elements"]:
         tags = el.get("tags", {})
@@ -127,7 +131,7 @@ def load_obstacle_layer(tag_filter) -> gpd.GeoDataFrame:
 
 
 def load_buildings() -> gpd.GeoDataFrame:
-    raw = json.loads((DATA_DIR / "sorocaba_buildings_raw.json").read_text())
+    raw = json.loads((DATA_DIR / "buildings_raw.json").read_text())
     geoms = []
     for el in raw["elements"]:
         if el["type"] != "way" or "geometry" not in el:
@@ -232,6 +236,14 @@ def greedy_walk(samples: list[tuple[float, Point]], clearances: list[float], obs
 
 
 def main() -> None:
+    global DATA_DIR, OUT_DIR, TARGET_CRS
+    args = municipio_arg_parser(__doc__).parse_args()
+    municipio = get_municipio(args.municipio)
+    DATA_DIR = Path(__file__).resolve().parent.parent / "data" / municipio.slug
+    OUT_DIR = Path(__file__).resolve().parent.parent / "output" / municipio.slug
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    TARGET_CRS = municipio.epsg
+
     ways = load_ways()
     eligible = ways[~ways["highway"].isin(EXCLUDED_CLASSES)].copy()
     print(f"Vias elegíveis: {len(eligible)}")
@@ -365,9 +377,9 @@ def main() -> None:
     points = points.drop_duplicates(subset=["_gx", "_gy"]).drop(columns=["_gx", "_gy"])
     print(f"Pontos após dedup global (grid {MIN_POINT_SEPARATION_M}m): {len(points)}")
 
-    out_gpkg = OUT_DIR / "sorocaba_vagas_plantio_v1.gpkg"
+    out_gpkg = OUT_DIR / "vagas_plantio_v1.gpkg"
     points.to_file(out_gpkg, layer="vagas_plantio", driver="GPKG")
-    points.to_crs("EPSG:4326").to_file(OUT_DIR / "sorocaba_vagas_plantio_v1.geojson", driver="GeoJSON")
+    points.to_crs("EPSG:4326").to_file(OUT_DIR / "vagas_plantio_v1.geojson", driver="GeoJSON")
     print(f"Salvo -> {out_gpkg}")
 
     print("\n--- Por tipo de vaga ---")

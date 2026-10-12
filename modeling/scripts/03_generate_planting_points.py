@@ -1,4 +1,4 @@
-"""Generate candidate tree-planting-slot points along Sorocaba's sidewalks.
+"""Generate candidate tree-planting-slot points along a município's sidewalks (v0).
 
 Model (v0, pilot):
   - OSM has essentially no real sidewalk geometry here (confirmed: only 63
@@ -17,6 +17,7 @@ Model (v0, pilot):
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 import geopandas as gpd
@@ -24,11 +25,9 @@ import numpy as np
 import pandas as pd
 from shapely.geometry import LineString, Point
 
-DATA_DIR = Path(__file__).resolve().parent.parent / "data"
-OUT_DIR = Path(__file__).resolve().parent.parent / "output"
-OUT_DIR.mkdir(parents=True, exist_ok=True)
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from common.municipios import get_municipio, municipio_arg_parser  # noqa: E402
 
-TARGET_CRS = "EPSG:31983"
 SPACING_M = 8.0  # default spacing between planting slots along a sidewalk
 INTERSECTION_BUFFER_M = 6.0  # exclude slots within this radius of a street junction
 
@@ -109,7 +108,14 @@ def sample_points(line, spacing: float) -> list[Point]:
 
 
 def main() -> None:
-    ways = gpd.read_file(DATA_DIR / "sorocaba_highways_clipped.gpkg", layer="highways")
+    args = municipio_arg_parser(__doc__).parse_args()
+    municipio = get_municipio(args.municipio)
+    data_dir = Path(__file__).resolve().parent.parent / "data" / municipio.slug
+    out_dir = Path(__file__).resolve().parent.parent / "output" / municipio.slug
+    out_dir.mkdir(parents=True, exist_ok=True)
+    target_crs = municipio.epsg
+
+    ways = gpd.read_file(data_dir / "highways_clipped.gpkg", layer="highways")
     ways = ways[~ways["highway"].isin(EXCLUDED_CLASSES)].copy()
     ways = ways.explode(index_parts=False).reset_index(drop=True)
     ways = ways[ways.geometry.geom_type == "LineString"]
@@ -149,7 +155,7 @@ def main() -> None:
                     }
                 )
 
-    points = gpd.GeoDataFrame(records, geometry="geometry", crs=TARGET_CRS)
+    points = gpd.GeoDataFrame(records, geometry="geometry", crs=target_crs)
     print(f"Pontos candidatos antes do filtro de interseção: {len(points)}")
 
     if junction_union is not None:
@@ -157,11 +163,11 @@ def main() -> None:
         points = points[keep_mask].copy()
     print(f"Pontos candidatos após excluir proximidade de esquinas: {len(points)}")
 
-    out_gpkg = OUT_DIR / "sorocaba_vagas_plantio_v0.gpkg"
+    out_gpkg = out_dir / "vagas_plantio_v0.gpkg"
     points.to_file(out_gpkg, layer="vagas_plantio", driver="GPKG")
 
     points_wgs84 = points.to_crs("EPSG:4326")
-    out_geojson = OUT_DIR / "sorocaba_vagas_plantio_v0.geojson"
+    out_geojson = out_dir / "vagas_plantio_v0.geojson"
     points_wgs84.to_file(out_geojson, driver="GeoJSON")
 
     print(f"\nSalvo -> {out_gpkg}")

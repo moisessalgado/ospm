@@ -1,5 +1,6 @@
 CLAUDE.md
 docs/
 .venv/
-sorocaba-arvores/data/
-sorocaba-arvores/output/
+modeling/data/
+modeling/output/
+__pycache__/

@@ -1,19 +1,22 @@
-"""Download Sorocaba's municipal boundary (Nominatim) and road network (Overpass).
+"""Download the municipal boundary (Nominatim) and road network (Overpass)
+for a given município.
 
-Pilot for the tree-planting-slot modeling prototype. Single city, so Overpass
-API is fine here (country-wide would instead use a Geofabrik .osm.pbf extract).
+Pilot for the tree-planting-slot modeling prototype. Single city at a time,
+so Overpass API is fine here (country-wide would instead use a Geofabrik
+.osm.pbf extract).
 """
 
 from __future__ import annotations
 
 import json
+import sys
 import time
 from pathlib import Path
 
 import httpx
 
-DATA_DIR = Path(__file__).resolve().parent.parent / "data"
-DATA_DIR.mkdir(parents=True, exist_ok=True)
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from common.municipios import get_municipio, municipio_arg_parser  # noqa: E402
 
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
@@ -21,15 +24,15 @@ OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 HEADERS = {"User-Agent": "coordenada-geo-arvores-prototype/0.1 (contato: moises.pgser@gmail.com)"}
 
 
-def fetch_boundary() -> dict:
-    out_path = DATA_DIR / "sorocaba_boundary.geojson"
+def fetch_boundary(data_dir: Path, nome: str, uf: str) -> dict:
+    out_path = data_dir / "boundary.geojson"
     if out_path.exists():
         print(f"[boundary] cache hit -> {out_path}")
         return json.loads(out_path.read_text())
 
     params = {
-        "city": "Sorocaba",
-        "state": "São Paulo",
+        "city": nome,
+        "state": uf,
         "country": "Brazil",
         "format": "json",
         "polygon_geojson": 1,
@@ -39,7 +42,7 @@ def fetch_boundary() -> dict:
     resp.raise_for_status()
     results = resp.json()
     if not results:
-        raise RuntimeError("Nominatim returned no results for Sorocaba")
+        raise RuntimeError(f"Nominatim returned no results for {nome}, {uf}")
 
     feature = {
         "type": "Feature",
@@ -56,8 +59,8 @@ def fetch_boundary() -> dict:
     return fc
 
 
-def fetch_highways(bbox: tuple[float, float, float, float]) -> dict:
-    out_path = DATA_DIR / "sorocaba_highways_raw.json"
+def fetch_highways(data_dir: Path, bbox: tuple[float, float, float, float]) -> dict:
+    out_path = data_dir / "highways_raw.json"
     if out_path.exists():
         print(f"[highways] cache hit -> {out_path}")
         return json.loads(out_path.read_text())
@@ -85,7 +88,13 @@ def fetch_highways(bbox: tuple[float, float, float, float]) -> dict:
 
 
 def main() -> None:
-    boundary_fc = fetch_boundary()
+    args = municipio_arg_parser(__doc__).parse_args()
+    municipio = get_municipio(args.municipio)
+
+    data_dir = Path(__file__).resolve().parent.parent / "data" / municipio.slug
+    data_dir.mkdir(parents=True, exist_ok=True)
+
+    boundary_fc = fetch_boundary(data_dir, municipio.nome, municipio.uf)
     geom = boundary_fc["features"][0]["geometry"]
 
     coords = []
@@ -100,7 +109,10 @@ def main() -> None:
     bbox = (min(lats), min(lons), max(lats), max(lons))
     print(f"[bbox] south,west,north,east = {bbox}")
 
-    fetch_highways(bbox)
+    bbox_path = data_dir / "bbox.json"
+    bbox_path.write_text(json.dumps({"south": bbox[0], "west": bbox[1], "north": bbox[2], "east": bbox[3]}))
+
+    fetch_highways(data_dir, bbox)
 
 
 if __name__ == "__main__":

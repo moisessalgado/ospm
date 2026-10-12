@@ -1,4 +1,4 @@
-"""Fetch auxiliary OSM layers for Sorocaba to check real data availability
+"""Fetch auxiliary OSM layers for the município to check real data availability
 before building filters for driveways, bus stops, poles, hydrants, trees,
 crossings, overhead wiring and sidewalk width.
 """
@@ -6,26 +6,31 @@ crossings, overhead wiring and sidewalk width.
 from __future__ import annotations
 
 import json
+import sys
 import time
 from pathlib import Path
 
 import httpx
 
-DATA_DIR = Path(__file__).resolve().parent.parent / "data"
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from common.municipios import get_municipio, municipio_arg_parser  # noqa: E402
+
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 HEADERS = {"User-Agent": "coordenada-geo-arvores-prototype/0.1 (contato: moises.pgser@gmail.com)"}
 
-# bbox computed earlier for Sorocaba (south, west, north, east)
-BBOX = (-23.5893162, -47.5706612, -23.349555, -47.3023274)
-
 
 def main() -> None:
-    out_path = DATA_DIR / "sorocaba_auxiliary_raw.json"
+    args = municipio_arg_parser(__doc__).parse_args()
+    municipio = get_municipio(args.municipio)
+    data_dir = Path(__file__).resolve().parent.parent / "data" / municipio.slug
+
+    out_path = data_dir / "auxiliary_raw.json"
     if out_path.exists():
         print(f"[auxiliary] cache hit -> {out_path}")
         return
 
-    south, west, north, east = BBOX
+    bbox = json.loads((data_dir / "bbox.json").read_text())
+    south, west, north, east = bbox["south"], bbox["west"], bbox["north"], bbox["east"]
     bb = f"{south},{west},{north},{east}"
     query = f"""
     [out:json][timeout:300];

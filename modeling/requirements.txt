@@ -1,0 +1,6 @@
+httpx
+geopandas
+shapely
+pandas
+numpy
+matplotlib
