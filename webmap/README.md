@@ -81,6 +81,11 @@ de cada uma.
   alternada para `.in-view`); respeita `prefers-reduced-motion`.
 - Os diagramas são SVG inline (sem imagens externas), com animações próprias
   (`.pop`, `.fade`, `.draw-path`) definidas em `css/metodologia.css`.
+- As imagens de exemplo ficam em `img/` (JPEG 800 px): capturas do próprio
+  webmap no mesmo trecho de Suzano, uma por método, e recortes das análises de
+  QA sobre satélite. Os diagramas de "Regras comuns" e "Métodos em detalhe"
+  têm coordenadas calculadas (curva, caminhada) a partir dos mesmos números de
+  `modeling/ALGORITMOS.md`. Ao mudar o algoritmo, refaça as capturas.
 - O bloco "Resultado" não tem números fixos no HTML: `js/metodologia.js` busca
   `data/manifest.json` em tempo de execução e monta os cartões e o gráfico de
   barras a partir dele, então atualiza sozinho a cada novo município exportado.

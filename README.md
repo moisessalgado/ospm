@@ -101,10 +101,13 @@ cd webmap && python3 -m http.server 8000   # http://localhost:8000
 1. **Registro.** Acrescente uma entrada em `MUNICIPALITIES`, em
    [modeling/planting_slots/municipalities.py](modeling/planting_slots/municipalities.py):
    ```python
-   "campinas": Municipality(slug="campinas", name="Campinas", state="São Paulo",
-                            ibge_code="3509502", epsg="EPSG:31983"),
+   "campinas-SP": Municipality(slug="campinas-SP", name="Campinas", state="São Paulo",
+                               ibge_code="3509502", epsg="EPSG:31983"),
    ```
-   - `slug`: nome sem acento, usado em pastas e na URL do webmap;
+   - `slug`: nome sem acento seguido da UF (`campinas-SP`), para não haver
+     conflito entre municípios de mesmo nome em estados diferentes (há, por
+     exemplo, um Bom Jesus no PI, no RN, no RS e em SC); é usado no
+     `--municipio`, nas pastas de dados e no seletor do webmap;
    - `ibge_code`: código IBGE de 7 dígitos (os 2 primeiros definem a UF);
    - `epsg`: SIRGAS 2000 / UTM do fuso da longitude do município —
      `31978` a `31985` para os fusos 18S a 25S (ex.: `31983` = 23S, a
