@@ -150,21 +150,68 @@ function addSlotLayers() {
   map.on("mouseleave", "slot-clusters", () => {
     if (!measure.active) map.getCanvas().style.cursor = "";
   });
+
+  map.on("click", "slot-points", (e) => {
+    if (measure.active) return;
+    showSlotPopup(e.features[0]);
+  });
+  map.on("mouseenter", "slot-points", () => {
+    if (!measure.active) map.getCanvas().style.cursor = "pointer";
+  });
+  map.on("mouseleave", "slot-points", () => {
+    if (!measure.active) map.getCanvas().style.cursor = "";
+  });
+}
+
+const PORTE_LABEL = { pequeno: "Pequeno", medio: "Médio", grande: "Grande" };
+const TIPO_VAGA_LABEL = { calcada: "Calçada", canteiro_central: "Canteiro central" };
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function showSlotPopup(feature) {
+  const p = feature.properties;
+  const rows = [
+    p.logradouro ? `<div class="slot-popup-street">${escapeHtml(p.logradouro)}</div>` : "",
+    `<div><strong>Porte:</strong> ${PORTE_LABEL[p.porte] ?? "—"}</div>`,
+    `<div><strong>Tipo:</strong> ${TIPO_VAGA_LABEL[p.tipo_vaga] ?? "—"}</div>`,
+    p.cd_setor
+      ? `<div><strong>Setor/quadra/face:</strong> ${escapeHtml(p.cd_setor)} / ${escapeHtml(p.cd_quadra)} / ${escapeHtml(p.cd_face)}</div>`
+      : "",
+    p.posicao_face_m != null ? `<div><strong>Posição na face:</strong> ${p.posicao_face_m} m</div>` : "",
+  ].join("");
+  new maplibregl.Popup({ closeButton: true, maxWidth: "260px" })
+    .setLngLat(feature.geometry.coordinates)
+    .setHTML(`<div class="slot-popup"><div class="slot-popup-id">Vaga #${p.id}</div>${rows}</div>`)
+    .addTo(map);
 }
 
 // Compact format written by modeling/scripts/04_export_webmap.py:
-// points = [lon, lat, porte, tipo_vaga, ...] where the two attributes are
-// indices into legend. Rebuilt here as GeoJSON for MapLibre.
+// points = [lon, lat, porte, tipo_vaga, logradouro, face, posicao_face_m, ...],
+// 7 numbers per slot, where porte/tipo_vaga/logradouro/face are indices into
+// legend ("face" indexes legend.face, a [cd_setor, cd_quadra, cd_face] triple;
+// -1 for median slots, which have none). Rebuilt here as GeoJSON for MapLibre.
+const POINT_STRIDE = 7;
+
 function decodeCompactPoints(payload) {
   const { legend, points } = payload;
-  const features = new Array(points.length / 4);
-  for (let i = 0, j = 0; i < points.length; i += 4, j++) {
+  const features = new Array(points.length / POINT_STRIDE);
+  for (let i = 0, j = 0; i < points.length; i += POINT_STRIDE, j++) {
+    const face = points[i + 5] >= 0 ? legend.face[points[i + 5]] : null;
+    const pos = points[i + 6];
     features[j] = {
       type: "Feature",
       geometry: { type: "Point", coordinates: [points[i], points[i + 1]] },
       properties: {
+        id: j + 1,
         porte: legend.porte[points[i + 2]] ?? null,
         tipo_vaga: legend.tipo_vaga[points[i + 3]] ?? null,
+        logradouro: legend.logradouro[points[i + 4]] || null,
+        cd_setor: face ? face[0] : null,
+        cd_quadra: face ? face[1] : null,
+        cd_face: face ? face[2] : null,
+        posicao_face_m: pos >= 0 ? pos : null,
       },
     };
   }

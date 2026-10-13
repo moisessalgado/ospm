@@ -190,6 +190,32 @@ html, body {
   display: none;
 }
 
+/* Popup shown when a slot point is clicked (js/app.js: showSlotPopup) */
+.maplibregl-popup-content {
+  background: var(--surface-solid);
+  color: var(--fg);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  padding: 12px 14px;
+  font-family: var(--font-ui);
+}
+
+.slot-popup {
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+.slot-popup-id {
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.slot-popup-street {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
 #legend {
   margin-top: 14px;
   font-size: 12.5px;

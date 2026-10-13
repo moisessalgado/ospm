@@ -144,38 +144,51 @@ def allocate_face(face, blocked, spacing_at) -> list[float]:
     return [float(dists[i]) for i in greedy_walk(dists, ok, spacing_at)]
 
 
+CLAMP_MAX_ITER = 6
+
+
 def clamp_to_road(point: Point, road, min_clear: float, probe_entry) -> Point | None:
     """Push a face-derived point, perpendicular to the road, so it clears the
     carriageway (min_clear) without crossing the nearest building facade.
-    None if there is no room between the two."""
+    None if there is no room between the two, or if a safe spot can't be
+    found within CLAMP_MAX_ITER tries (a bend or junction nearby can put the
+    pushed point closer to a *different* stretch of the same road than the
+    one it was projected from) — skipping the slot there is safer than
+    risking a point still inside the carriageway."""
     pos_arr, left_d, right_d = probe_entry
-    proj = road.project(point)
-    r = road.interpolate(proj)
-    vx, vy = point.x - r.x, point.y - r.y
-    dist = float(np.hypot(vx, vy))
+    p = point
+    for _ in range(CLAMP_MAX_ITER):
+        proj = road.project(p)
+        r = road.interpolate(proj)
+        vx, vy = p.x - r.x, p.y - r.y
+        dist = float(np.hypot(vx, vy))
 
-    ahead = road.interpolate(min(proj + 0.5, road.length))
-    behind = road.interpolate(max(proj - 0.5, 0.0))
-    tx, ty = ahead.x - behind.x, ahead.y - behind.y
-    tn = np.hypot(tx, ty) or 1.0
-    tx, ty = tx / tn, ty / tn
-    nx, ny = -ty, tx  # left unit normal
+        ahead = road.interpolate(min(proj + 0.5, road.length))
+        behind = road.interpolate(max(proj - 0.5, 0.0))
+        tx, ty = ahead.x - behind.x, ahead.y - behind.y
+        tn = np.hypot(tx, ty) or 1.0
+        tx, ty = tx / tn, ty / tn
+        nx, ny = -ty, tx  # left unit normal
 
-    if dist < 1e-6:
-        ux, uy = nx, ny
-        side_left = True
-    else:
-        ux, uy = vx / dist, vy / dist
-        side_left = (ux * nx + uy * ny) >= 0
+        if dist < 1e-6:
+            ux, uy = nx, ny
+            side_left = True
+        else:
+            ux, uy = vx / dist, vy / dist
+            side_left = (ux * nx + uy * ny) >= 0
 
-    facade_d = np.nan
-    if len(pos_arr):
-        facade_d = local_facade(np.array([proj]), pos_arr, left_d if side_left else right_d)[0]
-    ceiling = (facade_d - CURB_SETBACK_M) if not np.isnan(facade_d) else np.inf
-    if min_clear > ceiling:
-        return None
-    target = min(max(dist, min_clear), ceiling)
-    return Point(r.x + ux * target, r.y + uy * target)
+        facade_d = np.nan
+        if len(pos_arr):
+            facade_d = local_facade(np.array([proj]), pos_arr, left_d if side_left else right_d)[0]
+        ceiling = (facade_d - CURB_SETBACK_M) if not np.isnan(facade_d) else np.inf
+        if min_clear > ceiling:
+            return None
+        target = min(max(dist, min_clear), ceiling)
+        candidate = Point(r.x + ux * target, r.y + uy * target)
+        if road.distance(candidate) >= min_clear - 1e-6:
+            return candidate
+        p = candidate  # too close to a different stretch of the road: re-project and retry
+    return None
 
 
 def main() -> None:

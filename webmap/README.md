@@ -21,17 +21,22 @@ de cada uma.
 - OpenStreetMap: disponível como opção de mapa base (tiles raster padrão do OSM).
 - Clustering: até o zoom 14 os pontos são agregados em bolhas com contagem
   (clique para aproximar); a partir do 15 aparecem os pontos individuais.
+- Clique num ponto individual para ver seus detalhes (id, logradouro, porte,
+  tipo, setor/quadra/face do IBGE e posição ao longo da face), num popup do
+  MapLibre (`showSlotPopup` em `js/app.js`).
 - Medição de distância: botão "Medir" — cada clique adiciona um vértice, a
   linha segue o cursor mostrando a distância ao vivo; duplo clique, Enter ou
   Esc finalizam a linha (Backspace desfaz o último vértice). Com "Snap" ligado,
   o cursor gruda em qualquer ponto de vaga sob ele (zoom 15+).
 - Vagas de plantio: carregadas de `data/<municipio>/<variante>.json`, gerado
   por `modeling/scripts/04_export_webmap.py`. Não é GeoJSON — é um array plano
-  `[lon, lat, porte, tipo_vaga, ...]` em que os atributos são índices da
-  tabela `legend`, o que reduz bastante o tamanho do arquivo sem perder
-  nenhuma vaga. `js/app.js` reconstrói o GeoJSON no navegador antes de passar
-  para o MapLibre. `data/manifest.json` lista municípios e variantes de
-  espaçamento disponíveis nos seletores.
+  `[lon, lat, porte, tipo_vaga, logradouro, face, posicao_face_m, ...]` (7
+  números por vaga) em que os atributos categóricos são índices da tabela
+  `legend` (`face` indexa `legend.face`, uma tripla `[cd_setor, cd_quadra,
+  cd_face]`), o que reduz bastante o tamanho do arquivo sem perder nenhuma
+  vaga nem atributo. `js/app.js` reconstrói o GeoJSON no navegador antes de
+  passar para o MapLibre. `data/manifest.json` lista municípios e variantes
+  de espaçamento disponíveis nos seletores.
 - A posição lateral das vagas é indicativa (linha da face de quadra do IBGE);
   ver `modeling/README.md`.
 - Em telas estreitas (≤560px) o painel de controles inicia recolhido; o botão

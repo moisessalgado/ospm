@@ -1,10 +1,12 @@
 """Export allocated slots to the webmap in a compact format and update its manifest.
 
 Each variant becomes webmap/data/<municipality>/<variant>.json:
-  {"legend": {"porte": [...], "tipo_vaga": [...]}, "points": [lon, lat, porte, tipo_vaga, ...]}
-i.e. a flat numeric array (4 numbers per slot) whose categorical attributes
-are indices into "legend" — no per-feature GeoJSON boilerplate. The webmap
-rebuilds the GeoJSON client-side.
+  {"legend": {...}, "points": [lon, lat, porte, tipo_vaga, logradouro, face, posicao_face_m, ...]}
+i.e. a flat numeric array (7 numbers per slot) whose categorical attributes
+are indices into "legend" — no per-feature GeoJSON boilerplate. "face" indexes
+legend.face, a [cd_setor, cd_quadra, cd_face] triple (-1, and posicao_face_m
+-1, for median slots, which have none). The webmap rebuilds the GeoJSON
+client-side.
 """
 
 from __future__ import annotations
@@ -17,6 +19,7 @@ from planting_slots.municipalities import get_municipality, municipality_arg_par
 from planting_slots.paths import WEBMAP_DATA_DIR, MunicipalityFiles
 
 COORD_DECIMALS = 5  # ~1.1 m — enough for display
+POINT_STRIDE = 7
 LEGEND = {
     "porte": ["pequeno", "medio", "grande"],
     "tipo_vaga": ["calcada", "canteiro_central"],
@@ -27,15 +30,40 @@ VARIANTS = {  # id -> label shown in the webmap, in selector order
 }
 
 
+def vocabulary():
+    """A values list plus a get(value) -> index that appends new values."""
+    values: list = []
+    index: dict = {}
+
+    def get(value):
+        if value not in index:
+            index[value] = len(values)
+            values.append(value)
+        return index[value]
+
+    return values, get
+
+
 def compact(geojson: dict) -> dict:
-    index = {attr: {v: i for i, v in enumerate(values)} for attr, values in LEGEND.items()}
+    porte_index = {v: i for i, v in enumerate(LEGEND["porte"])}
+    tipo_index = {v: i for i, v in enumerate(LEGEND["tipo_vaga"])}
+    logradouro_values, get_logradouro = vocabulary()
+    face_values, get_face = vocabulary()
+
     flat: list[float | int] = []
     for feat in geojson["features"]:
         lon, lat = feat["geometry"]["coordinates"]
         props = feat["properties"]
-        flat += [round(lon, COORD_DECIMALS), round(lat, COORD_DECIMALS),
-                 index["porte"].get(props.get("porte"), -1), index["tipo_vaga"].get(props.get("tipo_vaga"), -1)]
-    return {"legend": LEGEND, "points": flat}
+        setor = props.get("cd_setor")
+        face_i = get_face((setor, props.get("cd_quadra"), props.get("cd_face"))) if setor is not None else -1
+        pos = props.get("posicao_face_m")
+        flat += [
+            round(lon, COORD_DECIMALS), round(lat, COORD_DECIMALS),
+            porte_index.get(props.get("porte"), -1), tipo_index.get(props.get("tipo_vaga"), -1),
+            get_logradouro(props.get("logradouro") or ""), face_i, pos if pos is not None else -1,
+        ]
+    legend = {**LEGEND, "logradouro": logradouro_values, "face": face_values}
+    return {"legend": legend, "points": flat}
 
 
 def main() -> None:
@@ -52,7 +80,7 @@ def main() -> None:
         payload = compact(json.loads(src.read_text()))
         out = out_dir / f"{variant_id}.json"
         out.write_text(json.dumps(payload, separators=(",", ":")))
-        count = len(payload["points"]) // 4
+        count = len(payload["points"]) // POINT_STRIDE
         variants.append({"id": variant_id, "label": label, "count": count})
         print(f"[webmap] {variant_id}: {count} vagas -> {out} ({out.stat().st_size / 1e6:.1f} MB)")
     if not variants:

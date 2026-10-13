@@ -12,12 +12,12 @@
         {
           "id": "espacamento_10m",
           "label": "Espaçamento genérico de 10 m",
-          "count": 261491
+          "count": 261476
         },
         {
           "id": "espacamento_porte",
           "label": "Espaçamento por porte (6/8/11 m)",
-          "count": 309457
+          "count": 309440
         }
       ]
     },
@@ -33,12 +33,12 @@
         {
           "id": "espacamento_10m",
           "label": "Espaçamento genérico de 10 m",
-          "count": 101486
+          "count": 101481
         },
         {
           "id": "espacamento_porte",
           "label": "Espaçamento por porte (6/8/11 m)",
-          "count": 123181
+          "count": 123175
         }
       ]
     }
