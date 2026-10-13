@@ -31,12 +31,13 @@ LEGEND = {
     "porte": ["pequeno", "medio", "grande"],
     "tipo_vaga": ["calcada", "canteiro_central", "eixo_via"],
     "motivo": ["sem_espaco_seguro", "esquina", "travessia", "acesso_garagem", "ponto_onibus", "arvore_existente",
-              "via_transversal"],
+              "via_transversal", "espacamento_minimo"],
 }
 METHODS = {  # id -> label, in selector order
     "face_ibge": "Face de quadra (IBGE) — método atual",
     "osm_eixo": "Eixo da via (OSM), sem deslocamento",
     "osm_calcada": "Calçada estimada por OSM, sem prédios",
+    "osm_calcada_lado": "Calçada estimada por OSM, um lado só (menos endereços IBGE)",
     "osm_overture": "Calçada validada com prédios (OSM + Overture)",
 }
 SPACINGS = {

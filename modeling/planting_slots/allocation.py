@@ -18,28 +18,7 @@ def greedy_walk(dists, ok, spacing_at) -> list[int]:
     return placed
 
 
-def greedy_walk_reasons(dists, blocked, spacing_at) -> tuple[list[int], list[tuple[int, str]]]:
-    """Like greedy_walk, but instead of silently skipping a blocked sample it
-    attempts a slot there too — same spacing cadence as a real placement —
-    and records why: `blocked` is [(start, end, motivo), ...] (first match
-    wins), so the caller gets back not just where slots were placed but
-    where one was attempted and excluded, and by which rule."""
-    n = len(dists)
-    motivo = np.full(n, None, dtype=object)
-    for a, b, m in blocked:
-        mask = (dists >= a) & (dists <= b) & (motivo == None)  # noqa: E711 (vectorized None check)
-        motivo[mask] = m
-
-    placed, rejected, next_allowed = [], [], -np.inf
-    for i, d in enumerate(dists):
-        if d < next_allowed:
-            continue
-        if motivo[i] is None:
-            placed.append(i)
-        else:
-            rejected.append((i, motivo[i]))
-        next_allowed = d + spacing_at(i)
-    return placed, rejected
+SEPARATION_TOL_M = 1e-6  # float slack: 9.9999999996 m between two slots counts as 10 m
 
 
 def enforce_min_separation(points: gpd.GeoDataFrame, min_sep) -> gpd.GeoDataFrame:
@@ -62,7 +41,7 @@ def enforce_min_separation(points: gpd.GeoDataFrame, min_sep) -> gpd.GeoDataFram
         for dx in (-1, 0, 1):
             for dy in (-1, 0, 1):
                 for ox, oy, orad in grid.get((cx + dx, cy + dy), ()):
-                    req = max(r, orad)
+                    req = max(r, orad) - SEPARATION_TOL_M
                     if (ox - x) ** 2 + (oy - y) ** 2 < req * req:
                         ok = False
                         break

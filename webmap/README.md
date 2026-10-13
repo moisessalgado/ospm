@@ -26,8 +26,8 @@ de cada uma.
   tipo, setor/quadra/face do IBGE e posição ao longo da via/face), num popup
   do MapLibre (`showSlotPopup` em `js/app.js`).
 - Dois seletores — **Método de alocação** e **Espaçamento** — escolhem a
-  variante: 4 métodos (`face_ibge`, o de produção, e três comparações só com
-  o OSM — `osm_eixo`, `osm_calcada`, `osm_overture`; ver `modeling/README.md`)
+  variante: 5 métodos (`face_ibge`, o de produção, e quatro comparações só com
+  o OSM — `osm_eixo`, `osm_calcada`, `osm_calcada_lado`, `osm_overture`; ver `modeling/README.md`)
   x 2 espaçamentos. O webmap abre em Suzano/`osm_calcada` por padrão
   (`DEFAULT_MUNICIPALITY`/`DEFAULT_METHOD` em `js/app.js`, sem animação de
   voo — o mapa já nasce centrado ali) — mais próximo da calçada esperada sem
@@ -43,8 +43,9 @@ de cada uma.
     transversal (vaga empurrada para dentro de outra rua perto de um
     cruzamento — ver `drop_crossing_road_points` em
     `modeling/scripts/03_allocate_slots.py`), um obstáculo do OSM
-    (travessia, acesso de garagem, ponto de ônibus, árvore existente) ou
-    falta de espaço seguro até a fachada mais próxima; clique para o motivo
+    (travessia, acesso de garagem, ponto de ônibus, árvore existente),
+    falta de espaço seguro até a fachada mais próxima ou espaçamento mínimo
+    em relação a uma vaga de outra rua (perto de esquinas); clique para o motivo
     por extenso. Só aparecem a partir do zoom 15 (ver `rejected-points` em
     `js/app.js`) — em zoom de cidade seriam um borrão cobrindo o mapa.
   Ambos vêm de `data/<municipio>/<variante>.json` (`points`/`rejeitados`),

@@ -194,8 +194,12 @@
     </div>
 
     <p class="lead reveal" style="margin-top:28px">
-      Um candidato que esbarra numa dessas regras, ou que — perto de um cruzamento — acabaria dentro
-      do leito carroçável de uma via transversal, não vira uma lacuna silenciosa: ele aparece no mapa
+      O espaçamento é medido em linha reta entre as vagas (inclusive em curvas e já na posição da
+      calçada), e trechos consecutivos da mesma rua no OSM são tratados como uma via contínua — o
+      afastamento de esquina só vale onde há cruzamento de fato. Um candidato que esbarra numa
+      dessas regras, que — perto de um cruzamento — acabaria dentro do leito carroçável de uma via
+      transversal, ou que ficaria a menos do espaçamento mínimo de uma vaga de outra rua, não vira
+      uma lacuna silenciosa: ele aparece no mapa
       como <strong>vaga inviável</strong>, com a cor do porte que teria e um contorno indicando o
       motivo. É a mesma camada que explica, visualmente, por que o espaçamento nunca é perfeitamente
       regular.
@@ -209,7 +213,7 @@
     <p class="lead reveal">
       O webmap deixa alternar entre os quatro métodos abaixo para o mesmo município, um de cada vez —
       útil para comparar visualmente o que cada fonte de dados consegue garantir e o que ela só
-      consegue estimar. O método 1 nunca é o resultado final: existe só como referência visual de
+      consegue estimar. O método 2 tem ainda uma variante (2b) que aloca vagas só num lado de cada rua. O método 1 nunca é o resultado final: existe só como referência visual de
       quanto os outros três conseguem melhorar a posição da vaga.
     </p>
 
@@ -235,6 +239,18 @@
         </ul>
       </div>
       <div class="variant-card reveal">
+        <span class="tag">2b · osm_calcada_lado</span>
+        <h3>Calçada estimada por OSM, um lado só</h3>
+        <ul>
+          <li><strong>Vantagem:</strong> mesma posição do método 2, mas só num lado de cada rua — o
+            lado cujas faces de quadra do IBGE somam menos endereços (menos portões e acessos de
+            garagem); se só um lado tem face IBGE, como numa rua ao longo de uma praça, esse lado.</li>
+          <li><strong>Desvantagem:</strong> cerca de metade das vagas do método 2; em vias fora dos
+            setores urbanos do IBGE não há dado para escolher o lado, e fica o lado esquerdo do
+            traçado do OSM.</li>
+        </ul>
+      </div>
+      <div class="variant-card reveal">
         <span class="tag">3 · osm_overture</span>
         <h3>Calçada validada com prédios (OSM + Overture)</h3>
         <ul>
@@ -256,9 +272,9 @@
       </div>
     </div>
     <p class="lead reveal" style="margin-top:24px">
-      Todos os quatro usam o IBGE para identificar setor, quadra, face e logradouro oficial de cada
+      Todos usam o IBGE para identificar setor, quadra, face e logradouro oficial de cada
       vaga sempre que há uma face a menos de 25 m — no método 4 isso já vem do vínculo direto; nos
-      outros três é um pareamento à parte, só para preencher metadados, que nunca move o ponto.
+      outros é um pareamento à parte, só para preencher metadados, que nunca move o ponto.
     </p>
   </section>
 
@@ -364,7 +380,7 @@
       <div class="pipeline-step reveal">
         <div class="num">03</div>
         <h3>Alocar as vagas</h3>
-        <p>Gera os quatro métodos x duas variantes de espaçamento, com as mesmas regras comuns.</p>
+        <p>Gera os quatro métodos (e a variante 2b) x duas variantes de espaçamento, com as mesmas regras comuns.</p>
         <code>03_allocate_slots.py</code>
       </div>
       <div class="pipeline-step reveal">
@@ -389,7 +405,7 @@
   <!-- CTA -->
   <footer class="story-footer">
     <h2>Explore as vagas no mapa</h2>
-    <p>Veja os pontos calculados para cada município, alterne entre os quatro métodos, meça distâncias e compare os mapas base.</p>
+    <p>Veja os pontos calculados para cada município, alterne entre os métodos de alocação, meça distâncias e compare os mapas base.</p>
     <a class="btn btn-primary" href="index.html">Abrir o mapa →</a>
     <p class="fine">Fontes: IBGE (Censo 2022), OpenStreetMap, Overture Maps · Coletâneas Brasileiras de Arborização Urbana, MMA.</p>
   </footer>

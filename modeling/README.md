@@ -1,12 +1,12 @@
 # modeling
 
 Modelagem de vagas de plantio de árvores em vias públicas, por município, com
-quatro métodos de alocação comparáveis entre si (ver `## Métodos` abaixo) —
+cinco métodos de alocação comparáveis entre si (ver `## Métodos` abaixo) —
 o webmap deixa alternar entre eles para o mesmo município.
 
 ## Métodos
 
-O método de produção é `face_ibge`; os outros três (`osm_eixo`, `osm_calcada`,
+O método de produção é `face_ibge`; os outros (`osm_eixo`, `osm_calcada`, `osm_calcada_lado`,
 `osm_overture`) existem para comparar visualmente o que cada fonte de dados
 consegue garantir — ver `ROAD_METHODS` e `generate_face_ibge` em
 `scripts/03_allocate_slots.py`.
@@ -33,9 +33,9 @@ mais próxima medida na Overture; uma face sem espaço seguro entre os dois
 limites não gera vaga ali (`scripts/03_allocate_slots.py`,
 `clamp_to_road`).
 
-### osm_eixo, osm_calcada, osm_overture — comparação
+### osm_eixo, osm_calcada, osm_calcada_lado, osm_overture — comparação
 
-Os três métodos de comparação não usam a face do IBGE: caminham diretamente
+Os métodos de comparação não usam a face do IBGE: caminham diretamente
 sobre o eixo da via do OSM.
 
 - `osm_eixo` não desloca o ponto — fica sobre o próprio eixo, de propósito,
@@ -43,11 +43,16 @@ sobre o eixo da via do OSM.
 - `osm_calcada` desloca o ponto, dos dois lados da via, até a largura de
   calçada estimada pela classe/tag da via (`carriageway_half_width` +
   `CURB_SETBACK_M`) — sem checar prédios.
+- `osm_calcada_lado` é o `osm_calcada` em um lado só de cada via: o lado
+  cujas faces de quadra do IBGE (paralelas, a até `FACE_STREET_MATCH_M`)
+  somam menos endereços (`TOT_GERAL`); se só um lado tem face, esse lado;
+  sem face IBGE nenhuma, o lado esquerdo do traçado OSM
+  (`choose_side_by_addresses`).
 - `osm_overture` faz o mesmo deslocamento, mas usa o OSM já co-registrado às
   edificações e nunca passa da fachada mais próxima (mesma lógica de
   `clamp_to_road`, sem depender da face do IBGE).
 
-Nos três, a vaga recebe metadados do IBGE (setor/quadra/face, logradouro
+Em todos eles, a vaga recebe metadados do IBGE (setor/quadra/face, logradouro
 oficial) por proximidade — a face mais perto dentro de `IBGE_MATCH_M`,
 só para preencher atributos, nunca para mover o ponto (`enrich_with_ibge`).
 
@@ -57,7 +62,9 @@ Parâmetros das Coletâneas Brasileiras de Arborização Urbana, MMA 2026:
 
 - apenas faces em **setores censitários urbanos** (IBGE, CD_SIT 1–3) voltadas
   para uma via do OSM de classe elegível (`residential` a `primary`);
-- **6 m livres em cada esquina** (pontas da face);
+- **6 m livres em cada esquina** (pontas da face; nos métodos que caminham
+  sobre a via do OSM, só nas pontas que são cruzamento de fato — trechos OSM
+  consecutivos da mesma rua são unidos antes, ver `build_road_chains`);
 - trechos próximos a **obstáculos do OSM** projetados na face ficam sem vaga:
   travessias (3 m), acessos de garagem (2 m), pontos de ônibus (12 m),
   árvores já mapeadas (4 m);
@@ -69,7 +76,14 @@ Parâmetros das Coletâneas Brasileiras de Arborização Urbana, MMA 2026:
   de canteiro central;
 - duas variantes de espaçamento por método (critérios do MMA ainda
   pendentes): `10m` e `porte` (6/8/11 m pelo porte, que vem da classe da
-  via) — oito arquivos de saída por município (4 métodos × 2 espaçamentos).
+  via) — dez arquivos de saída por município (5 métodos × 2 espaçamentos).
+
+O espaçamento ao longo da via/face é medido em linha reta (corda), não ao
+longo da curva, e com os pontos já deslocados para a calçada quando é o caso
+(`advance` em `scripts/03_allocate_slots.py`): assim duas vagas consecutivas
+nunca ficam abaixo do espaçamento mínimo e não são removidas depois. Uma
+zona bloqueada (esquina, obstáculo) só custa as vagas que de fato cobre — a
+caminhada retoma logo após o fim dela.
 
 Todo candidato descartado é exportado também, em vez de virar uma lacuna
 silenciosa no webmap: `vagas_plantio_<variante>_sem_alocacao.geojson` (um por
@@ -78,10 +92,12 @@ porte que cada um teria, com o motivo em `properties.motivo` — `esquina`
 (afastamento de esquina), o nome do obstáculo do OSM (`travessia`,
 `acesso_garagem`, `ponto_onibus`, `arvore_existente`), `sem_espaco_seguro`
 (não coube entre o leito carroçável e a fachada mais próxima — ver
-`clamp_to_road`/`allocate_from_roads`) ou `via_transversal` (limpou a própria
+`clamp_to_road`/`allocate_from_roads`), `via_transversal` (limpou a própria
 via mas caiu dentro do leito carroçável de uma via transversal perto de um
 cruzamento — ver `drop_crossing_road_points`, aplicado a todos os métodos
-exceto `osm_eixo`, que fica no eixo de propósito). Ver `blocked_intervals`/
+exceto `osm_eixo`, que fica no eixo de propósito) ou `espacamento_minimo`
+(a menos do espaçamento da variante de uma vaga de outra rua, quase sempre
+perto de uma esquina). Ver `blocked_intervals`/
 `allocate_face` para como os outros motivos são atribuídos.
 
 ## Pipeline
@@ -91,7 +107,7 @@ pip install -e ".[dev]"     # a partir de modeling/
 
 python scripts/01_download_osm.py --municipio suzano        # limite, vias e obstáculos (OSM)
 python scripts/02_download_buildings.py --municipio suzano  # edificações (Overture Maps)
-python scripts/03_allocate_slots.py --municipio suzano      # alocação das vagas (4 métodos x 2 espaçamentos)
+python scripts/03_allocate_slots.py --municipio suzano      # alocação das vagas (5 métodos x 2 espaçamentos)
 python scripts/04_export_webmap.py --municipio suzano       # dados do webmap
 ```
 

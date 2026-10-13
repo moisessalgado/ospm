@@ -12,6 +12,8 @@ Methods (increasing use of data, decreasing distance from the carriageway):
     curb (carriageway_half_width + CURB_SETBACK_M) on both sides — no
     buildings involved. Cheap, but the offset is a guess: on an irregular
     block it can land the slot short of the real sidewalk or past it.
+  - osm_calcada_lado: osm_calcada on one side of each road only — the side
+    whose IBGE faces add up to fewer addresses (see choose_side_by_addresses).
   - osm_overture: same offset as osm_calcada, but computed on the OSM road
     already co-registered to the Overture buildings (see coregistration_field)
     and capped by the nearest facade (CURB_SETBACK_M short of it) — closest
@@ -30,9 +32,11 @@ median slots.
 Every candidate dropped along the way is exported too (one
 `<variante>_sem_alocacao.geojson` per variant, same porte it would have had),
 tagged with why — "esquina" (corner setback), an obstacle name (see
-OBSTACLES), "sem_espaco_seguro" (no safe room before the nearest facade), or
+OBSTACLES), "sem_espaco_seguro" (no safe room before the nearest facade),
 "via_transversal" (cleared its own road but still landed inside a different,
-intersecting one — see drop_crossing_road_points) — so the webmap can show
+intersecting one — see drop_crossing_road_points), or "espacamento_minimo"
+(closer than the variant's spacing to a slot of another street, almost
+always near a corner) — so the webmap can show
 *where* and *why* a slot is missing instead of leaving an unexplained gap.
 See blocked_intervals/allocate_face and allocate_from_roads/generate_face_ibge.
 """
@@ -48,12 +52,12 @@ import pandas as pd
 import shapely
 from shapely.geometry import Point
 
-from planting_slots.allocation import enforce_min_separation, greedy_walk, greedy_walk_reasons
+from planting_slots.allocation import enforce_min_separation, greedy_walk
 from planting_slots.buildings import facade_probes, load_overture_buildings, local_facade
 from planting_slots.ibge import load_street_faces, load_urban_area
 from planting_slots.municipalities import get_municipality, municipality_arg_parser
 from planting_slots.osm import (
-    DEFAULT_WIDTH_BY_CLASS, angle_diff, bearing, carriageway_half_width, find_divided_pairs,
+    CORNER_CLASSES, DEFAULT_WIDTH_BY_CLASS, angle_diff, bearing, carriageway_half_width, find_divided_pairs,
     junction_disks, load_osm_elements,
 )
 from planting_slots.paths import OSM_ROADS_LAYER, MunicipalityFiles
@@ -109,6 +113,8 @@ SPACINGS = {
 ROAD_METHODS = {
     "osm_eixo": {"label": "Eixo da via (OSM) — sem deslocamento", "offset": False, "clamp_building": False},
     "osm_calcada": {"label": "Calçada estimada por OSM (sem prédios)", "offset": True, "clamp_building": False},
+    "osm_calcada_lado": {"label": "Calçada estimada por OSM, um lado só (menos endereços IBGE)", "offset": True,
+                         "clamp_building": False, "one_side": True},
     "osm_overture": {"label": "Calçada validada com prédios (OSM + Overture)", "offset": True, "clamp_building": True},
 }
 IBGE_MATCH_M = 25.0  # metadata-only nearest-face search radius for non-face_ibge methods
@@ -118,6 +124,72 @@ def load_ways(files: MunicipalityFiles) -> gpd.GeoDataFrame:
     ways = gpd.read_file(files.osm_roads, layer=OSM_ROADS_LAYER)
     ways = ways.explode(index_parts=False).reset_index(drop=True)
     return ways[(ways.geometry.geom_type == "LineString") & (ways.geometry.length > 1.0)].copy()
+
+
+CHAIN_NODE_TOL_M = 0.05
+
+
+def build_road_chains(roads: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    """Generation-class roads as continuous chains, for the road-walking
+    methods. OSM splits a street into many ways wherever any tag changes
+    (bridge, surface, speed limit...), and each split used to restart the
+    spacing walk and get a 6 m corner setback on both sides — a gap of 12 m
+    or more where there is no corner at all. Here consecutive ways that meet
+    end-to-end with nothing else touching (a plain split) and share name,
+    class and carriageway width are merged into one line; and each chain end
+    is flagged as a corner only if it is an actual intersection — a node
+    shared by 3+ streets, or a T onto another street's middle — not a split
+    or a dead end."""
+    corner_roads = roads[roads["highway"].isin(CORNER_CLASSES)]
+    clabels = corner_roads.index.to_numpy()
+    tree = shapely.STRtree(corner_roads.geometry.to_numpy())
+    gen = roads[roads["highway"].isin(GENERATION_CLASSES)]
+    names = {lbl: (n if isinstance(n, str) else None) for lbl, n in gen["name"].items()}
+    group = {lbl: (h, round(float(w), 3), names[lbl]) for lbl, h, w in zip(gen.index, gen["highway"], gen["half"])}
+
+    parent = {lbl: lbl for lbl in gen.index}
+
+    def find(a):
+        while parent[a] != a:
+            parent[a] = parent[parent[a]]
+            a = parent[a]
+        return a
+
+    def key(c):
+        return round(c[0], 2), round(c[1], 2)
+
+    corner_at = {}
+    for lbl, g in gen.geometry.items():
+        for c in (g.coords[0], g.coords[-1]):
+            pt = Point(c)
+            others = [o for o in clabels[tree.query(pt, predicate="dwithin", distance=CHAIN_NODE_TOL_M)] if o != lbl]
+            if not others:
+                corner_at[key(c)] = False  # dead end
+            elif len(others) == 1:
+                og = roads.geometry.loc[others[0]]
+                split = min(Point(og.coords[0]).distance(pt), Point(og.coords[-1]).distance(pt)) <= CHAIN_NODE_TOL_M
+                corner_at[key(c)] = not split  # T onto another street's middle is a corner; a split is not
+                if split and others[0] in parent and group[others[0]] == group[lbl]:
+                    parent[find(lbl)] = find(others[0])
+            else:
+                corner_at[key(c)] = True
+
+    members = {}
+    for lbl in gen.index:
+        members.setdefault(find(lbl), []).append(lbl)
+    rows = []
+    for labels in members.values():
+        geoms = [gen.geometry.loc[m] for m in labels]
+        merged = shapely.line_merge(shapely.MultiLineString(geoms)) if len(geoms) > 1 else geoms[0]
+        first = gen.loc[labels[0]]
+        for part in ([merged] if merged.geom_type == "LineString" else list(merged.geoms)):
+            rows.append({
+                "highway": first["highway"], "half": first["half"], "name": names[labels[0]],
+                "start_corner": corner_at.get(key(part.coords[0]), True),
+                "end_corner": corner_at.get(key(part.coords[-1]), True),
+                "geometry": part,
+            })
+    return gpd.GeoDataFrame(rows, geometry="geometry", crs=roads.crs)
 
 
 def match_faces_to_streets(faces: gpd.GeoDataFrame, roads: gpd.GeoDataFrame) -> pd.DataFrame:
@@ -149,13 +221,19 @@ def local_bearing(line, pos: float, probe: float = 2.0) -> float:
     return float(np.degrees(np.arctan2(b.y - a.y, b.x - a.x))) % 360
 
 
-def blocked_intervals(line, obstacles: dict[str, np.ndarray]) -> list[tuple[float, float, str]]:
+def blocked_intervals(line, obstacles: dict[str, np.ndarray], start_corner: bool = True,
+                      end_corner: bool = True) -> list[tuple[float, float, str]]:
     """Intervals (m from the line start) where a slot can't go, each tagged
-    with why — the corner setback at both ends, plus a radius around every
-    nearby obstacle. Fed to allocate_face, which uses the tag to report not
-    just that a candidate was dropped there but which rule dropped it."""
+    with why — the corner setback at each end that is an actual intersection
+    (see build_road_chains), plus a radius around every nearby obstacle. Fed
+    to allocate_face, which uses the tag to report not just that a candidate
+    was dropped there but which rule dropped it."""
     length = line.length
-    out = [(0.0, CORNER_SETBACK_M, "esquina"), (max(length - CORNER_SETBACK_M, CORNER_SETBACK_M), length, "esquina")]
+    out = []
+    if start_corner:
+        out.append((0.0, CORNER_SETBACK_M, "esquina"))
+    if end_corner:
+        out.append((max(length - CORNER_SETBACK_M, 0.0), length, "esquina"))
     for name, (geoms, radius) in obstacles.items():
         if not len(geoms):
             continue
@@ -166,17 +244,58 @@ def blocked_intervals(line, obstacles: dict[str, np.ndarray]) -> list[tuple[floa
     return out
 
 
-def allocate_face(line, blocked, spacing_at) -> tuple[list[float], list[tuple[float, str]]]:
+SPACING_TOL_M = 1e-6  # float slack: a chord of 9.9999999996 m counts as 10 m
+ADVANCE_STEP_M = 0.1
+
+
+def advance(line, pos: float, spacing: float, offset: float = 0.0, sides=(True, False)) -> float:
+    """The first arc-length after pos whose straight-line distance to the
+    point at pos is at least `spacing` — on a straight road exactly pos +
+    spacing; on a bend a little more, since the chord is shorter than the
+    arc. With an offset, the check is on the points shifted to both sides
+    (the inner side of a bend is shorter than the centerline). Walking by
+    chord (not arc) is what keeps consecutive slots from being thrown out
+    later by enforce_min_separation, which measures straight-line distance."""
+    sides = list(sides) if offset else [None]
+
+    def at(p, side):
+        return point_at_offset(line, p, side, offset) if offset else line.interpolate(p)
+
+    origins = [at(pos, s) for s in sides]
+    p = pos + spacing
+    while p <= line.length and any(at(p, s).distance(o) < spacing - SPACING_TOL_M for s, o in zip(sides, origins)):
+        p += ADVANCE_STEP_M
+    return p
+
+
+def allocate_face(line, blocked, spacing_at, offset: float = 0.0,
+                  sides=(True, False)) -> tuple[list[float], list[tuple[float, str]]]:
     """Positions (m from the line start) of the slots on one face/road, and
-    the positions+reasons where a slot was attempted (same spacing cadence)
-    but excluded by a blocked interval (corner, obstacle — see
-    blocked_intervals) instead of silently leaving a gap."""
-    dists = np.arange(0.0, line.length + 1e-9, SAMPLE_STEP_M)
-    if not len(dists):
-        return [], []
-    placed_idx, rejected_idx = greedy_walk_reasons(dists, blocked, spacing_at)
-    placed = [float(dists[i]) for i in placed_idx]
-    rejected = [(float(dists[i]), motivo) for i, motivo in rejected_idx]
+    the positions+reasons where a slot was attempted but excluded by a
+    blocked interval (corner, obstacle — see blocked_intervals) instead of
+    silently leaving a gap. Each slot is placed `spacing` (straight-line, see
+    advance) after the previous one; a blocked candidate is recorded and the
+    walk resumes at whichever comes first — the next spacing step, or the
+    end of the blocked stretch — so an obstacle only costs the slots it
+    actually covers, not a whole extra spacing after it."""
+    length = line.length
+    placed, rejected = [], []
+    pos = 0.0
+    while pos <= length + 1e-9:
+        spacing = spacing_at(pos)
+        hits = [(a, b, m) for a, b, m in blocked if a <= pos <= b]
+        if not hits:
+            placed.append(pos)
+            pos = advance(line, pos, spacing, offset, sides)
+            continue
+        rejected.append((pos, hits[0][2]))
+        end = max(b for _, b, _ in hits)
+        grew = True
+        while grew:  # overlapping intervals chain into one blocked stretch
+            more = [b for a, b, _ in blocked if a <= end < b]
+            grew = bool(more)
+            end = max([end, *more])
+        pos = min(advance(line, pos, spacing, offset, sides), end + ADVANCE_STEP_M)
     return placed, rejected
 
 
@@ -241,33 +360,37 @@ def point_at_offset(road, pos: float, side_left: bool, offset: float) -> Point:
 
 
 def allocate_from_roads(roads: gpd.GeoDataFrame, probes: dict, obstacles: dict, offset: bool,
-                        clamp_building: bool, spacing_fn) -> tuple[list[dict], list[dict]]:
+                        clamp_building: bool, spacing_fn, sides: dict | None = None) -> tuple[list[dict], list[dict]]:
     """Slots walked directly along eligible roads (no IBGE face involved),
-    for the three OSM-only comparison methods — see module docstring. Also
+    for the OSM-only comparison methods — see module docstring. Also
     returns every candidate dropped along the way — by the corner setback,
     by a nearby obstacle (see blocked_intervals), or for lack of safe room
     between the carriageway and the nearest facade (motivo=sem_espaco_seguro)
     — at its best-guess position, so the webmap can show *where* and *why*
-    a slot is missing instead of just leaving a silent gap."""
+    a slot is missing instead of just leaving a silent gap. `sides`, when
+    given, maps a road to the one side (True = left) that gets slots — see
+    choose_side_by_addresses; otherwise both sides do."""
     empty_probe = (np.array([]), np.array([]), np.array([]))
     records, rejected = [], []
     for idx, row in roads.iterrows():
         porte = PORTE_BY_CLASS[row["highway"]]
         road_geom = row.geometry
         street_name = normalize_street_name(row.get("name"))
-        positions, blocked_rej = allocate_face(road_geom, blocked_intervals(road_geom, obstacles),
-                                               lambda _: spacing_fn(porte))
-        probe_entry = probes.get(idx, empty_probe) if clamp_building else empty_probe
         floor = row["half"] + CURB_SETBACK_M
+        side_options = ([sides[idx]] if sides is not None and idx in sides else [True, False]) if offset else [None]
+        blocked = blocked_intervals(road_geom, obstacles, row["start_corner"], row["end_corner"])
+        positions, blocked_rej = allocate_face(road_geom, blocked, lambda _: spacing_fn(porte),
+                                               floor if offset else 0.0, side_options)
+        probe_entry = probes.get(idx, empty_probe) if clamp_building else empty_probe
 
         for pos, motivo in blocked_rej:
-            for side_left in ([True, False] if offset else [None]):
+            for side_left in side_options:
                 point = point_at_offset(road_geom, pos, side_left, floor) if offset else road_geom.interpolate(pos)
                 rejected.append({"motivo": motivo, "porte": porte, "logradouro": street_name, "geometry": point})
 
         for pos in positions:
             own_bearing = local_bearing(road_geom, pos)
-            for side_left in ([True, False] if offset else [None]):
+            for side_left in side_options:
                 if not offset:
                     point = road_geom.interpolate(pos)
                 else:
@@ -290,11 +413,59 @@ def allocate_from_roads(roads: gpd.GeoDataFrame, probes: dict, obstacles: dict, 
                     "logradouro": street_name, "bearing": own_bearing,
                     "cd_setor": None, "cd_quadra": None, "cd_face": None, "posicao_face_m": round(pos, 1),
                     "posicao_lateral": "sobre o eixo da via" if not offset else
-                                      ("deslocada por largura estimada (sem prédios)" if not clamp_building else
-                                       "deslocada e validada contra a fachada mais próxima (Overture)"),
+                                      ("deslocada e validada contra a fachada mais próxima (Overture)" if clamp_building else
+                                       "deslocada por largura estimada, só no lado com menos endereços (IBGE)"
+                                       if sides is not None else "deslocada por largura estimada (sem prédios)"),
                     "geometry": point,
                 })
     return records, rejected
+
+
+def choose_side_by_addresses(chains: gpd.GeoDataFrame, faces: gpd.GeoDataFrame) -> tuple[dict, Counter]:
+    """For the one-side variant: which side of each road (True = left of
+    its drawn direction) gets slots. The IBGE street faces along the road
+    (within FACE_STREET_MATCH_M and roughly parallel, each face counted for
+    its nearest road only) are split by side, and the side whose faces add
+    up to fewer addresses (TOT_GERAL) wins — fewer gates and garage
+    entrances to work around. If only one side has an IBGE face (a street
+    along a square, a river, an empty lot), that side; if neither does, the
+    left side (no IBGE data to go on)."""
+    mid = faces.geometry.interpolate(0.5, normalized=True).to_numpy()
+    face_bearing = np.array([bearing(g) for g in faces.geometry])
+    total = faces["TOT_GERAL"].fillna(0).to_numpy()
+    geoms = chains.geometry.to_numpy()
+    fi, ci = shapely.STRtree(geoms).query(mid, predicate="dwithin", distance=FACE_STREET_MATCH_M)
+    best = {}  # face -> (distance, chain, left?)
+    for f, c in zip(fi, ci):
+        road = geoms[c]
+        pos = road.project(mid[f])
+        local = local_bearing(road, pos)
+        if min(angle_diff(face_bearing[f], local), angle_diff(face_bearing[f], (local + 180) % 360)) > FACE_STREET_MAX_ANGLE_DEG:
+            continue
+        d = road.distance(mid[f])
+        if f in best and best[f][0] <= d:
+            continue
+        r = road.interpolate(pos)
+        t = np.radians(local)
+        best[f] = (d, c, np.cos(t) * (mid[f].y - r.y) - np.sin(t) * (mid[f].x - r.x) > 0)
+    tot = np.zeros((len(chains), 2))
+    seen = np.zeros((len(chains), 2), dtype=bool)
+    for f, (_, c, left) in best.items():
+        tot[c, int(left)] += total[f]
+        seen[c, int(left)] = True
+    sides, how = {}, Counter()
+    for c, idx in enumerate(chains.index):
+        right_seen, left_seen = seen[c]
+        if left_seen and right_seen:
+            sides[idx] = bool(tot[c, 1] <= tot[c, 0])
+            how["menos endereços"] += 1
+        elif left_seen or right_seen:
+            sides[idx] = bool(left_seen)
+            how["único lado com face IBGE"] += 1
+        else:
+            sides[idx] = True
+            how["sem face IBGE (lado esquerdo)"] += 1
+    return sides, how
 
 
 def enrich_with_ibge(points: gpd.GeoDataFrame, faces: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
@@ -406,8 +577,13 @@ def main() -> None:
                      for r, p in zip(roads.to_dict("records"), roads["paired"])]
     roads_raw = roads.copy()
     roads_raw["geometry"] = ways_raw_geometry.loc[roads.index]
-    gen_roads = roads[roads["highway"].isin(GENERATION_CLASSES)]
-    gen_roads_raw = roads_raw[roads_raw["highway"].isin(GENERATION_CLASSES)]
+    road_chains = build_road_chains(roads)
+    road_chains_raw = build_road_chains(roads_raw)
+    chain_probes = {i: facade_probes(g, btree, bgeoms) for i, g in road_chains.geometry.items()}
+    chain_sides_raw, side_how = choose_side_by_addresses(road_chains_raw, faces)
+    print("Lado único (osm_calcada_lado):", dict(side_how))
+    print(f"Vias geradoras: {int(roads['highway'].isin(GENERATION_CLASSES).sum())} trechos OSM -> "
+          f"{len(road_chains)} vias contínuas")
     road_tree = build_road_buffer_tree(roads)
     road_tree_raw = build_road_buffer_tree(roads_raw)
     road_geoms = roads.geometry.to_numpy()
@@ -515,14 +691,15 @@ def main() -> None:
         spacing_fn = spacing_cfg["spacing"]
 
         def generate_road_method(spacing_fn, roads, obs, mcfg):
-            records, rejected = allocate_from_roads(roads, probes, obs, mcfg["offset"], mcfg["clamp_building"], spacing_fn)
+            records, rejected = allocate_from_roads(roads, chain_probes, obs, mcfg["offset"], mcfg["clamp_building"],
+                                                    spacing_fn, chain_sides_raw if mcfg.get("one_side") else None)
             skipped = sum(1 for r in rejected if r["motivo"] == "sem_espaco_seguro")
             stats = {"removidos_sem_espaco_seguro_ate_fachada": skipped} if mcfg["clamp_building"] else {}
             return records, rejected, stats
 
         methods = {"face_ibge": generate_face_ibge}
         for method_id, mcfg in ROAD_METHODS.items():
-            roads_for_method = gen_roads if mcfg["clamp_building"] else gen_roads_raw
+            roads_for_method = road_chains if mcfg["clamp_building"] else road_chains_raw
             obstacles_for_method = obstacles if mcfg["clamp_building"] else obstacles_raw
             methods[method_id] = lambda spacing_fn, roads=roads_for_method, obs=obstacles_for_method, mcfg=mcfg: (
                 generate_road_method(spacing_fn, roads, obs, mcfg)
@@ -548,7 +725,10 @@ def main() -> None:
 
             before = len(points)
             min_sep = points["porte"].map(lambda porte: spacing_fn(porte)).to_numpy()
-            points = enforce_min_separation(points, min_sep).reset_index(drop=True)
+            kept = enforce_min_separation(points, min_sep)
+            rejected += [{"motivo": "espacamento_minimo", "porte": row.porte, "logradouro": row.logradouro,
+                          "geometry": row.geometry} for row in points.drop(kept.index).itertuples()]
+            points = kept.reset_index(drop=True)
 
             variant = f"{method_id}_{spacing_id}"
             points.to_file(files.slots(variant, "gpkg"), layer="vagas_plantio", driver="GPKG")
