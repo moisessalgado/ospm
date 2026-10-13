@@ -18,21 +18,28 @@ def greedy_walk(dists, ok, spacing_at) -> list[int]:
     return placed
 
 
-def enforce_min_separation(points: gpd.GeoDataFrame, min_sep: float) -> gpd.GeoDataFrame:
-    """Greedy dedup guaranteeing no two kept points closer than min_sep
-    (grid hash of cell size min_sep, checking the 3x3 neighbourhood)."""
-    grid: dict[tuple[int, int], list[tuple[float, float]]] = {}
+def enforce_min_separation(points: gpd.GeoDataFrame, min_sep) -> gpd.GeoDataFrame:
+    """Greedy dedup guaranteeing no two kept points closer than min_sep.
+
+    min_sep is each point's own required clearance (a scalar applied to all,
+    or a per-point array/Series, e.g. by porte) — two points must be at
+    least max(min_sep[i], min_sep[j]) apart, so a large-porte slot keeps its
+    full radius free even from a small-porte neighbour. Grid hash with cell
+    size max(min_sep), checking the 3x3 neighbourhood."""
+    radius = np.full(len(points), min_sep, dtype=float) if np.isscalar(min_sep) else np.asarray(min_sep, dtype=float)
+    cell = radius.max() if len(radius) else 1.0
+    grid: dict[tuple[int, int], list[tuple[float, float, float]]] = {}
     xs, ys = points.geometry.x.to_numpy(), points.geometry.y.to_numpy()
     keep = np.zeros(len(points), dtype=bool)
-    sq = min_sep * min_sep
     for i in range(len(points)):
-        x, y = xs[i], ys[i]
-        cx, cy = int(x // min_sep), int(y // min_sep)
+        x, y, r = xs[i], ys[i], radius[i]
+        cx, cy = int(x // cell), int(y // cell)
         ok = True
         for dx in (-1, 0, 1):
             for dy in (-1, 0, 1):
-                for ox, oy in grid.get((cx + dx, cy + dy), ()):
-                    if (ox - x) ** 2 + (oy - y) ** 2 < sq:
+                for ox, oy, orad in grid.get((cx + dx, cy + dy), ()):
+                    req = max(r, orad)
+                    if (ox - x) ** 2 + (oy - y) ** 2 < req * req:
                         ok = False
                         break
                 if not ok:
@@ -40,6 +47,6 @@ def enforce_min_separation(points: gpd.GeoDataFrame, min_sep: float) -> gpd.GeoD
             if not ok:
                 break
         if ok:
-            grid.setdefault((cx, cy), []).append((x, y))
+            grid.setdefault((cx, cy), []).append((x, y, r))
             keep[i] = True
     return points[keep]

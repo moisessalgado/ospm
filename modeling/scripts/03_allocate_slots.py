@@ -27,7 +27,10 @@ Median slots come from OSM divided roads co-registered to the buildings; a
 slot is accepted only outside every carriageway grown by the registration
 uncertainty measured against IBGE (worst case), corners and obstacles.
 
-Finally, no two slots are closer than MIN_POINT_SEPARATION_M.
+Finally, no two slots are closer than the variant's own spacing for the
+larger-porte slot of the pair (10 m flat for espacamento_10m; 6/8/11 m by
+porte for espacamento_porte) — the same rule used to place slots along a
+single face, now enforced across faces and between sidewalk and median slots.
 """
 
 from __future__ import annotations
@@ -58,7 +61,6 @@ CORNER_SETBACK_M = 6.0
 CURB_SETBACK_M = 0.5
 PIT_HALF_WIDTH_M = 0.5
 SERVICE_SETBACK_M = 1.5
-MIN_POINT_SEPARATION_M = 6.0
 SAMPLE_STEP_M = 1.0
 
 OBSTACLES = {  # name -> (OSM tag filter, exclusion radius in m)
@@ -281,7 +283,7 @@ def main() -> None:
         "municipio": municipality.slug,
         "metodo": "vagas vinculadas às faces de logradouro IBGE 2022; posição lateral indicativa",
         "parametros": {
-            "afastamento_esquina_m": CORNER_SETBACK_M, "espacamento_minimo_global_m": MIN_POINT_SEPARATION_M,
+            "afastamento_esquina_m": CORNER_SETBACK_M,
             "incerteza_registro_canteiros_m": round(uncertainty, 2),
         },
         "faces": summary,
@@ -317,7 +319,8 @@ def main() -> None:
 
         points = gpd.GeoDataFrame(records, geometry="geometry", crs=crs)
         before = len(points)
-        points = enforce_min_separation(points, MIN_POINT_SEPARATION_M).reset_index(drop=True)
+        min_sep = points["porte"].map(lambda porte: cfg["spacing"](porte)).to_numpy()
+        points = enforce_min_separation(points, min_sep).reset_index(drop=True)
         points.to_file(files.slots(variant, "gpkg"), layer="vagas_plantio", driver="GPKG")
         points.to_crs("EPSG:4326").to_file(files.slots(variant, "geojson"), driver="GeoJSON")
         report["variantes"][variant] = {

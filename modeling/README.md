@@ -35,7 +35,10 @@ Urbana, MMA 2026):
   árvores já mapeadas (4 m);
 - **canteiros centrais** de pistas duplas do OSM, co-registradas às
   edificações, com margem de pior caso igual à incerteza medida contra o IBGE;
-- **espaçamento mínimo de 6 m** entre quaisquer duas vagas;
+- **espaçamento mínimo entre quaisquer duas vagas igual ao espaçamento da
+  variante** (10 m fixo em `espacamento_10m`; 6/8/11 m pelo porte da maior
+  das duas vagas em `espacamento_porte`), inclusive entre vagas de calçada e
+  de canteiro central;
 - duas variantes de espaçamento (critérios do MMA ainda pendentes):
   `espacamento_10m` e `espacamento_porte` (6/8/11 m pelo porte, que vem da
   classe da via).
