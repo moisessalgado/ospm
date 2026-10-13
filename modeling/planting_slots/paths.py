@@ -40,6 +40,9 @@ class MunicipalityFiles:
     def slots(self, variant: str, extension: str) -> Path:
         return self.output_dir / f"vagas_plantio_{variant}.{extension}"
 
+    def obstacles(self, extension: str) -> Path:
+        return self.output_dir / f"obstaculos.{extension}"
+
     def ensure_dirs(self) -> None:
         self.data_dir.mkdir(parents=True, exist_ok=True)
         self.output_dir.mkdir(parents=True, exist_ok=True)

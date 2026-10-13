@@ -27,9 +27,17 @@ de cada uma.
 - Dois seletores — **Método de alocação** e **Espaçamento** — escolhem a
   variante: 4 métodos (`face_ibge`, o de produção, e três comparações só com
   o OSM — `osm_eixo`, `osm_calcada`, `osm_overture`; ver `modeling/README.md`)
-  x 2 espaçamentos. Pontos de `osm_eixo` (deliberadamente sobre a via) saem
-  com contorno vermelho, para ficar visualmente óbvio qual é o método de
-  comparação "errado de propósito".
+  x 2 espaçamentos. O webmap abre em `osm_calcada` por padrão (`DEFAULT_METHOD`
+  em `js/app.js`) — mais próximo da calçada esperada sem depender da face do
+  IBGE; os outros três ficam disponíveis no seletor para comparação.
+- Pontos cinza com contorno vermelho ("Vagas não alocadas" na legenda) são
+  candidatos que não couberam entre o leito carroçável e a fachada mais
+  próxima (`sem_espaco_seguro`); clique para o motivo. Um checkbox liga a
+  camada de obstáculos do OSM (travessias, acessos de garagem, pontos de
+  ônibus, árvores existentes) que explicam os demais espaços irregulares —
+  ambos vêm de `data/<municipio>/<variante>.json` (`rejeitados`) e
+  `data/<municipio>/obstaculos.json`, gerados por
+  `modeling/scripts/04_export_webmap.py`.
 - Medição de distância: botão "Medir" — cada clique adiciona um vértice, a
   linha segue o cursor mostrando a distância ao vivo; duplo clique, Enter ou
   Esc finalizam a linha (Backspace desfaz o último vértice). Com "Snap" ligado,

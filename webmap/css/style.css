@@ -232,6 +232,29 @@ html, body {
   margin-bottom: 6px;
 }
 
+#legend strong:not(:first-child) {
+  margin-top: 12px;
+}
+
+.legend-hint {
+  cursor: help;
+  color: var(--muted);
+  border-bottom: 1px dotted var(--muted);
+  font-size: 11px;
+}
+
+.legend-note {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.legend-note a {
+  color: var(--primary-dark);
+  font-weight: 600;
+  text-decoration: none;
+}
+
 .dot {
   display: inline-block;
   width: 10px;

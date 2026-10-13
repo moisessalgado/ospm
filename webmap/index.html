@@ -8,7 +8,7 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ctext y='20' font-size='22'%3E%F0%9F%8C%B3%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
   <link rel="stylesheet" href="css/base.css?v=2" />
-  <link rel="stylesheet" href="css/style.css?v=3" />
+  <link rel="stylesheet" href="css/style.css?v=4" />
 </head>
 <body>
   <nav class="site-nav map-nav">
@@ -61,6 +61,11 @@
       </div>
     </div>
 
+    <label class="checkbox">
+      <input type="checkbox" id="obstacles-toggle" />
+      Mostrar obstáculos (travessias, acessos, pontos de ônibus, árvores)
+    </label>
+
     <hr class="divider" />
 
     <label>Medir distância</label>
@@ -76,10 +81,20 @@
 
     <div id="legend">
       <strong>Porte da árvore</strong>
-      <div><span class="dot" style="background:#66bb6a"></span> Pequeno</div>
-      <div><span class="dot" style="background:#1565c0"></span> Médio</div>
-      <div><span class="dot" style="background:#6a1b9a"></span> Grande</div>
-      <div><span class="dot" style="background:#1565c0;outline:2px solid #d64545;outline-offset:1px"></span> Contorno vermelho: ponto sobre o eixo da via (método de comparação)</div>
+      <div><span class="dot" style="background:#66bb6a"></span> Pequeno <span class="legend-hint" title="Vias residenciais estreitas (living_street) — menor espaçamento mínimo (6 m).">ⓘ</span></div>
+      <div><span class="dot" style="background:#1565c0"></span> Médio <span class="legend-hint" title="Vias locais e coletoras (residencial, terciária) — espaçamento mínimo de 8 m.">ⓘ</span></div>
+      <div><span class="dot" style="background:#6a1b9a"></span> Grande <span class="legend-hint" title="Vias arteriais (secundária, primária) — espaçamento mínimo de 11 m.">ⓘ</span></div>
+      <p class="legend-note">O porte é estimado pela classificação da via no OSM. <a href="metodologia.html#variantes">Como funciona →</a></p>
+
+      <strong>Obstáculos</strong>
+      <div><span class="dot" style="background:#fb8c00"></span> Travessia de pedestres</div>
+      <div><span class="dot" style="background:#8d6e63"></span> Acesso de garagem</div>
+      <div><span class="dot" style="background:#29b6f6"></span> Ponto de ônibus</div>
+      <div><span class="dot" style="background:#2e7d32"></span> Árvore existente</div>
+
+      <strong>Vagas não alocadas</strong>
+      <div><span class="dot" style="background:#bdbdbd;outline:2px solid #d64545;outline-offset:1px"></span> Sem espaço seguro até a fachada</div>
+      <p class="legend-note">Obstáculos e vagas não alocadas só aparecem a partir do zoom 15.</p>
     </div>
 
     <div id="status"></div>
@@ -90,6 +105,6 @@
   </div>
 
   <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-  <script src="js/app.js?v=6"></script>
+  <script src="js/app.js?v=8"></script>
 </body>
 </html>

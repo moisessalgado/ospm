@@ -26,6 +26,13 @@ Finally, no two slots of the same variant (method + spacing) are closer than
 the spacing for the larger-porte slot of the pair (10 m flat for the generic
 spacing; 6/8/11 m by porte otherwise) — including between sidewalk and
 median slots.
+
+Two things that keep a slot from existing somewhere are exported too, so the
+webmap can show *why* a gap is there instead of leaving it unexplained:
+obstacles (one file per municipality, shared by every variant — see
+OBSTACLES) and candidates dropped for lack of safe room between the
+carriageway and the nearest facade (one `<variante>_sem_alocacao.geojson`
+per variant — see allocate_from_roads/generate_face_ibge).
 """
 
 from __future__ import annotations
@@ -213,14 +220,19 @@ def point_at_offset(road, pos: float, side_left: bool, offset: float) -> Point:
 
 
 def allocate_from_roads(roads: gpd.GeoDataFrame, probes: dict, obstacles: dict, offset: bool,
-                        clamp_building: bool, spacing_fn) -> tuple[list[dict], int]:
+                        clamp_building: bool, spacing_fn) -> tuple[list[dict], list[dict], int]:
     """Slots walked directly along eligible roads (no IBGE face involved),
-    for the three OSM-only comparison methods — see module docstring."""
+    for the three OSM-only comparison methods — see module docstring. Also
+    returns the candidates that had to be dropped for lack of safe room
+    between the carriageway and the nearest facade (motivo=sem_espaco_seguro),
+    kept at their best-guess position so the webmap can show *where* and
+    *why* a slot is missing, instead of just leaving a silent gap."""
     empty_probe = (np.array([]), np.array([]), np.array([]))
-    records, skipped = [], 0
+    records, rejected, skipped = [], [], 0
     for idx, row in roads.iterrows():
         porte = PORTE_BY_CLASS[row["highway"]]
         road_geom = row.geometry
+        street_name = normalize_street_name(row.get("name"))
         positions = allocate_face(road_geom, blocked_intervals(road_geom, obstacles), lambda _: spacing_fn(porte))
         if not positions:
             continue
@@ -238,21 +250,25 @@ def allocate_from_roads(roads: gpd.GeoDataFrame, probes: dict, obstacles: dict, 
                         ceiling = (facade_d - CURB_SETBACK_M) if not np.isnan(facade_d) else np.inf
                     if floor > ceiling:
                         skipped += 1
+                        rejected.append({"motivo": "sem_espaco_seguro", "porte": porte,
+                                        "logradouro": street_name, "geometry": road_geom.interpolate(pos)})
                         continue
                     point = point_at_offset(road_geom, pos, side_left, floor)
                     if clamp_building and road_geom.distance(point) < floor - 1e-6:
                         skipped += 1
+                        rejected.append({"motivo": "sem_espaco_seguro", "porte": porte,
+                                        "logradouro": street_name, "geometry": point})
                         continue
                 records.append({
                     "tipo_vaga": "calcada" if offset else "eixo_via", "porte": porte, "via_osm": row["highway"],
-                    "logradouro": normalize_street_name(row.get("name")),
+                    "logradouro": street_name,
                     "cd_setor": None, "cd_quadra": None, "cd_face": None, "posicao_face_m": round(pos, 1),
                     "posicao_lateral": "sobre o eixo da via" if not offset else
                                       ("deslocada por largura estimada (sem prédios)" if not clamp_building else
                                        "deslocada e validada contra a fachada mais próxima (Overture)"),
                     "geometry": point,
                 })
-    return records, skipped
+    return records, rejected, skipped
 
 
 def enrich_with_ibge(points: gpd.GeoDataFrame, faces: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
@@ -307,6 +323,17 @@ def main() -> None:
         geoms = load_osm_elements(files.osm_obstacles, flt, crs).geometry.values
         obstacles_raw[name] = (geoms, radius)
         obstacles[name] = (apply_shift(geoms, gx, gy, shift), radius)
+
+    # Exported once (shared by every method/spacing) so the webmap can show
+    # *why* the generic spacing looks irregular in places — the gaps are
+    # these exclusion zones, not noise in the allocation.
+    obstacle_records = [
+        {"motivo": name, "geometry": g.centroid if g.geom_type != "Point" else g}
+        for name, (geoms, _radius) in obstacles_raw.items() for g in geoms
+    ]
+    if obstacle_records:
+        gpd.GeoDataFrame(obstacle_records, geometry="geometry", crs=crs) \
+            .to_crs("EPSG:4326").to_file(files.obstacles("geojson"), driver="GeoJSON")
 
     roads = ways[ways["highway"].isin(DEFAULT_WIDTH_BY_CLASS)].copy()
     roads["half"] = [carriageway_half_width(r, p, np.nan, municipality.min_sidewalk_width_m)[0]
@@ -379,18 +406,22 @@ def main() -> None:
     }
 
     def generate_face_ibge(spacing_fn):
-        records, fora_de_alcance = [], 0
+        records, rejected, fora_de_alcance = [], [], 0
         for i, face in sel.iterrows():
             porte = PORTE_BY_CLASS[face["highway"]]
             road_geom, min_clear, probe_entry = clamp_ctx[i]
+            street_name = normalize_street_name(face["NM_TIP_LOG"], face["NM_TIT_LOG"], face["NM_LOG"])
             for pos in allocate_face(face.geometry, blocked[i], lambda _: spacing_fn(porte)):
-                point = clamp_to_road(face.geometry.interpolate(pos), road_geom, min_clear, probe_entry)
+                candidate = face.geometry.interpolate(pos)
+                point = clamp_to_road(candidate, road_geom, min_clear, probe_entry)
                 if point is None:
                     fora_de_alcance += 1
+                    rejected.append({"motivo": "sem_espaco_seguro", "porte": porte,
+                                    "logradouro": street_name, "geometry": candidate})
                     continue
                 records.append({
                     "tipo_vaga": "calcada", "porte": porte, "via_osm": face["highway"],
-                    "logradouro": normalize_street_name(face["NM_TIP_LOG"], face["NM_TIT_LOG"], face["NM_LOG"]),
+                    "logradouro": street_name,
                     "cd_setor": face["CD_SETOR"], "cd_quadra": face["CD_QUADRA"], "cd_face": face["CD_FACE"],
                     "posicao_face_m": round(pos, 1), "posicao_lateral": "indicativa (ajustada à via OSM)",
                     "geometry": point,
@@ -404,15 +435,15 @@ def main() -> None:
                     "cd_setor": None, "cd_quadra": None, "cd_face": None, "posicao_face_m": None,
                     "posicao_lateral": "pior caso (OSM co-registrado)", "geometry": g["pts"][i],
                 })
-        return records, {"removidos_sem_espaco_seguro_ate_fachada": fora_de_alcance}
+        return records, rejected, {"removidos_sem_espaco_seguro_ate_fachada": fora_de_alcance}
 
     for spacing_id, spacing_cfg in SPACINGS.items():
         spacing_fn = spacing_cfg["spacing"]
 
         def generate_road_method(spacing_fn, roads, obs, mcfg):
-            records, skipped = allocate_from_roads(roads, probes, obs, mcfg["offset"], mcfg["clamp_building"], spacing_fn)
+            records, rejected, skipped = allocate_from_roads(roads, probes, obs, mcfg["offset"], mcfg["clamp_building"], spacing_fn)
             stats = {"removidos_sem_espaco_seguro_ate_fachada": skipped} if mcfg["clamp_building"] else {}
-            return records, stats
+            return records, rejected, stats
 
         methods = {"face_ibge": generate_face_ibge}
         for method_id, mcfg in ROAD_METHODS.items():
@@ -423,7 +454,7 @@ def main() -> None:
             )
 
         for method_id, generate in methods.items():
-            records, extra_stats = generate(spacing_fn)
+            records, rejected, extra_stats = generate(spacing_fn)
             points = gpd.GeoDataFrame(records, geometry="geometry", crs=crs)
             if method_id != "face_ibge":
                 points = enrich_with_ibge(points, faces)
@@ -434,13 +465,19 @@ def main() -> None:
             variant = f"{method_id}_{spacing_id}"
             points.to_file(files.slots(variant, "gpkg"), layer="vagas_plantio", driver="GPKG")
             points.to_crs("EPSG:4326").to_file(files.slots(variant, "geojson"), driver="GeoJSON")
+            if rejected:
+                rejected_gdf = gpd.GeoDataFrame(rejected, geometry="geometry", crs=crs)
+                rejected_gdf.to_crs("EPSG:4326").to_file(
+                    files.slots(f"{variant}_sem_alocacao", "geojson"), driver="GeoJSON")
             report["variantes"][variant] = {
                 "metodo": method_id, "espacamento": spacing_id, "pontos": len(points),
-                "removidos_espacamento_minimo": before - len(points), **extra_stats,
+                "removidos_espacamento_minimo": before - len(points), "pontos_sem_alocacao": len(rejected),
+                **extra_stats,
                 "por_tipo": points["tipo_vaga"].value_counts().to_dict(),
                 "por_porte": points["porte"].value_counts().to_dict(),
             }
-            print(f"[{variant}] {len(points)} pontos (espaçamento mínimo removeu {before - len(points)})",
+            print(f"[{variant}] {len(points)} pontos (espaçamento mínimo removeu {before - len(points)}, "
+                  f"sem alocação {len(rejected)})",
                   points["tipo_vaga"].value_counts().to_dict(), points["porte"].value_counts().to_dict())
 
     files.allocation_report.write_text(json.dumps(report, indent=2, ensure_ascii=False))

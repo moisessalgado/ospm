@@ -60,6 +60,7 @@ const municipalitySelect = document.getElementById("municipality-select");
 const methodSelect = document.getElementById("method-select");
 const spacingSelect = document.getElementById("spacing-select");
 const basemapSelect = document.getElementById("basemap-select");
+const obstaclesToggle = document.getElementById("obstacles-toggle");
 const measureToggleBtn = document.getElementById("measure-toggle");
 const measureClearBtn = document.getElementById("measure-clear");
 const snapToggle = document.getElementById("snap-toggle");
@@ -134,9 +135,87 @@ function addSlotLayers() {
         "#999999",
       ],
       "circle-opacity": 0.9,
-      "circle-stroke-width": ["match", ["get", "tipo_vaga"], "eixo_via", 2, 1],
-      "circle-stroke-color": ["match", ["get", "tipo_vaga"], "eixo_via", "#d64545", "#ffffff"],
+      "circle-stroke-width": 1,
+      "circle-stroke-color": "#ffffff",
     },
+  });
+
+  // Candidates that couldn't get a slot (no safe room before the nearest
+  // facade) and OSM obstacles (crossings, driveways, bus stops, existing
+  // trees) that carve gaps out of the regular spacing — both explain *why*
+  // a slot is missing somewhere, instead of leaving a silent, seemingly
+  // irregular gap.
+  map.addSource("rejected", { type: "geojson", data: emptyFC() });
+  map.addLayer({
+    id: "rejected-points",
+    type: "circle",
+    source: "rejected",
+    minzoom: CLUSTER_MAX_ZOOM,
+    paint: {
+      "circle-radius": ["interpolate", ["linear"], ["zoom"], 15, 4, 18, 7, 21, 11],
+      "circle-color": "#bdbdbd",
+      "circle-opacity": 0.85,
+      "circle-stroke-width": 2,
+      "circle-stroke-color": "#d64545",
+    },
+  });
+
+  map.addSource("obstacles", { type: "geojson", data: emptyFC() });
+  map.addLayer({
+    id: "obstacle-points",
+    type: "circle",
+    source: "obstacles",
+    minzoom: CLUSTER_MAX_ZOOM,
+    layout: { visibility: "none" },
+    paint: {
+      "circle-radius": 5,
+      "circle-color": [
+        "match",
+        ["get", "motivo"],
+        "travessia", "#fb8c00",
+        "acesso_garagem", "#8d6e63",
+        "ponto_onibus", "#29b6f6",
+        "arvore_existente", "#2e7d32",
+        "#9e9e9e",
+      ],
+      "circle-opacity": 0.9,
+      "circle-stroke-width": 1,
+      "circle-stroke-color": "#ffffff",
+    },
+  });
+
+  map.on("click", "rejected-points", (e) => {
+    if (measure.active) return;
+    const porte = PORTE_LABEL[e.features[0].properties.porte] ?? "—";
+    new maplibregl.Popup({ closeButton: true, maxWidth: "260px" })
+      .setLngLat(e.features[0].geometry.coordinates)
+      .setHTML(
+        `<div class="slot-popup"><div class="slot-popup-id">Sem alocação segura</div>` +
+          `<div>Não há distância segura entre a via e a fachada mais próxima para uma vaga ` +
+          `de porte ${porte.toLowerCase()} aqui.</div></div>`
+      )
+      .addTo(map);
+  });
+  map.on("mouseenter", "rejected-points", () => {
+    if (!measure.active) map.getCanvas().style.cursor = "pointer";
+  });
+  map.on("mouseleave", "rejected-points", () => {
+    if (!measure.active) map.getCanvas().style.cursor = "";
+  });
+
+  map.on("click", "obstacle-points", (e) => {
+    if (measure.active) return;
+    const motivo = e.features[0].properties.motivo;
+    new maplibregl.Popup({ closeButton: true, maxWidth: "260px" })
+      .setLngLat(e.features[0].geometry.coordinates)
+      .setHTML(`<div class="slot-popup"><div class="slot-popup-id">${OBSTACLE_LABEL[motivo] ?? motivo}</div></div>`)
+      .addTo(map);
+  });
+  map.on("mouseenter", "obstacle-points", () => {
+    if (!measure.active) map.getCanvas().style.cursor = "pointer";
+  });
+  map.on("mouseleave", "obstacle-points", () => {
+    if (!measure.active) map.getCanvas().style.cursor = "";
   });
 
   map.on("click", "slot-clusters", async (e) => {
@@ -166,6 +245,12 @@ function addSlotLayers() {
 
 const PORTE_LABEL = { pequeno: "Pequeno", medio: "Médio", grande: "Grande" };
 const TIPO_VAGA_LABEL = { calcada: "Calçada", canteiro_central: "Canteiro central", eixo_via: "Eixo da via (comparação)" };
+const OBSTACLE_LABEL = {
+  travessia: "Travessia de pedestres",
+  acesso_garagem: "Acesso de garagem",
+  ponto_onibus: "Ponto de ônibus",
+  arvore_existente: "Árvore existente",
+};
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -219,12 +304,46 @@ function decodeCompactPoints(payload) {
   return { type: "FeatureCollection", features };
 }
 
+// "rejeitados": [lon, lat, porte, ...] (3 numbers per point — see
+// modeling/scripts/04_export_webmap.py). Only one reason exists so far
+// (no safe room before the nearest facade), hence no legend index for it.
+const REJECTED_STRIDE = 3;
+
+function decodeRejectedPoints(flat, legendPorte) {
+  const features = new Array(flat.length / REJECTED_STRIDE);
+  for (let i = 0, j = 0; i < flat.length; i += REJECTED_STRIDE, j++) {
+    features[j] = {
+      type: "Feature",
+      geometry: { type: "Point", coordinates: [flat[i], flat[i + 1]] },
+      properties: { porte: legendPorte[flat[i + 2]] ?? null },
+    };
+  }
+  return { type: "FeatureCollection", features };
+}
+
+// obstaculos.json: {"legend": [motivo, ...], "points": [lon, lat, motivo, ...]}
+// (3 numbers per point), shared by every variant of a municipality.
+const OBSTACLE_STRIDE = 3;
+
+function decodeObstacles(payload) {
+  const { legend, points } = payload;
+  const features = new Array(points.length / OBSTACLE_STRIDE);
+  for (let i = 0, j = 0; i < points.length; i += OBSTACLE_STRIDE, j++) {
+    features[j] = {
+      type: "Feature",
+      geometry: { type: "Point", coordinates: [points[i], points[i + 1]] },
+      properties: { motivo: legend[points[i + 2]] ?? null },
+    };
+  }
+  return { type: "FeatureCollection", features };
+}
+
 // Bypasses the browser cache: the data changes whenever the pipeline is
 // rerun, and a stale manifest/variant here means wrong slot counts and
 // positions silently shown to the user (not just a stale style).
 const CACHE_BUST = Date.now();
 const DEFAULT_MUNICIPALITY = "suzano";
-const DEFAULT_METHOD = "face_ibge"; // the production method; others are comparison baselines
+const DEFAULT_METHOD = "osm_calcada"; // closest to the expected sidewalk position without IBGE's face lines
 
 // A municipality's variants each carry a method and a spacing (see
 // modeling/scripts/04_export_webmap.py); the two selects below combine to
@@ -260,7 +379,7 @@ async function selectMunicipality(slug) {
   methodSelect.innerHTML = methods.map((v) => `<option value="${v.method}">${v.method_label}</option>`).join("");
   const initialMethod = methods.find((v) => v.method === DEFAULT_METHOD) ?? methods[0];
   methodSelect.value = initialMethod.method;
-  await selectMethod(municipality, initialMethod.method);
+  await Promise.all([selectMethod(municipality, initialMethod.method), loadObstacles(municipality)]);
   map.flyTo({ center: municipality.center, zoom: 12 });
 }
 
@@ -273,8 +392,22 @@ async function selectMethod(municipality, method) {
 async function loadVariant(municipality, variant) {
   setStatus(`Carregando ${municipality.name}…`);
   const resp = await fetch(`data/${municipality.slug}/${variant.id}.json?t=${CACHE_BUST}`);
-  map.getSource("slots").setData(decodeCompactPoints(await resp.json()));
-  setStatus(`${municipality.name} — ${variant.method_label}: ${variant.count.toLocaleString("pt-BR")} vagas de plantio`);
+  const payload = await resp.json();
+  map.getSource("slots").setData(decodeCompactPoints(payload));
+  map.getSource("rejected").setData(decodeRejectedPoints(payload.rejeitados ?? [], payload.legend.porte));
+  const rejectedNote = variant.rejected_count ? ` · ${variant.rejected_count.toLocaleString("pt-BR")} sem alocação segura` : "";
+  setStatus(
+    `${municipality.name} — ${variant.method_label}: ${variant.count.toLocaleString("pt-BR")} vagas de plantio${rejectedNote}`
+  );
+}
+
+async function loadObstacles(municipality) {
+  try {
+    const resp = await fetch(`data/${municipality.slug}/obstaculos.json?t=${CACHE_BUST}`);
+    map.getSource("obstacles").setData(resp.ok ? decodeObstacles(await resp.json()) : emptyFC());
+  } catch {
+    map.getSource("obstacles").setData(emptyFC());
+  }
 }
 
 municipalitySelect.addEventListener("change", (e) => selectMunicipality(e.target.value));
@@ -292,6 +425,10 @@ basemapSelect.addEventListener("change", (e) => {
   for (const key of Object.keys(BASEMAPS)) {
     map.setLayoutProperty(`basemap-${key}`, "visibility", key === e.target.value ? "visible" : "none");
   }
+});
+
+obstaclesToggle.addEventListener("change", (e) => {
+  map.setLayoutProperty("obstacle-points", "visibility", e.target.checked ? "visible" : "none");
 });
 
 // --- Measuring tool ---------------------------------------------------------

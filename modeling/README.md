@@ -71,6 +71,17 @@ Parâmetros das Coletâneas Brasileiras de Arborização Urbana, MMA 2026:
   pendentes): `10m` e `porte` (6/8/11 m pelo porte, que vem da classe da
   via) — oito arquivos de saída por município (4 métodos × 2 espaçamentos).
 
+Dois arquivos auxiliares, exportados para explicar os espaços sem vaga em vez
+de deixá-los como lacunas silenciosas no webmap:
+
+- `obstaculos.geojson` (um por município, igual para todas as variantes):
+  posição de cada obstáculo do OSM usado para restringir a alocação
+  (travessia, acesso de garagem, ponto de ônibus, árvore existente).
+- `vagas_plantio_<variante>_sem_alocacao.geojson` (um por variante, quando há
+  candidatos descartados): posição aproximada de cada candidato que não
+  coube entre o leito carroçável e a fachada mais próxima (`sem_espaco_seguro`
+  — ver `clamp_to_road`/`allocate_from_roads`).
+
 ## Pipeline
 
 ```bash
