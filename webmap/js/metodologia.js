@@ -46,7 +46,7 @@ async function loadResults() {
   const statGrid = document.getElementById("stat-grid");
   const chart = document.getElementById("chart");
   try {
-    const resp = await fetch("data/manifest.json");
+    const resp = await fetch(`data/manifest.json?t=${Date.now()}`);
     const manifest = await resp.json();
     const municipalities = manifest.municipalities || [];
 

@@ -171,8 +171,13 @@ function decodeCompactPoints(payload) {
   return { type: "FeatureCollection", features };
 }
 
+// Bypasses the browser cache: the data changes whenever the pipeline is
+// rerun, and a stale manifest/variant here means wrong slot counts and
+// positions silently shown to the user (not just a stale style).
+const CACHE_BUST = Date.now();
+
 async function loadManifest() {
-  const resp = await fetch("data/manifest.json");
+  const resp = await fetch(`data/manifest.json?t=${CACHE_BUST}`);
   manifest = await resp.json();
   municipalitySelect.innerHTML = manifest.municipalities
     .map((m) => `<option value="${m.slug}">${m.name} — ${m.state}</option>`)
@@ -195,7 +200,7 @@ async function selectMunicipality(slug) {
 async function loadVariant(municipality, variantId) {
   const variant = municipality.variants.find((v) => v.id === variantId);
   setStatus(`Carregando ${municipality.name}…`);
-  const resp = await fetch(`data/${municipality.slug}/${variant.id}.json`);
+  const resp = await fetch(`data/${municipality.slug}/${variant.id}.json?t=${CACHE_BUST}`);
   map.getSource("slots").setData(decodeCompactPoints(await resp.json()));
   setStatus(`${municipality.name}: ${variant.count.toLocaleString("pt-BR")} vagas de plantio`);
 }

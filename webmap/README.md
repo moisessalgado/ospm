@@ -65,4 +65,7 @@ GitHub Actions**.
 O CSS/JS é servido com `cache-control: max-age=14400` (4h); os `<link>` e
 `<script>` locais em `index.html`/`metodologia.html` têm um `?v=N` no final
 da URL para forçar o navegador a buscar a versão nova assim que o deploy sai
-— lembre de incrementar esse `N` ao editar `css/` ou `js/`.
+— lembre de incrementar esse `N` ao editar `css/` ou `js/`. Os `data/*.json`
+(manifesto e vagas) usam um cache-buster por timestamp (`?t=...` em
+`js/app.js`/`js/metodologia.js`), porque uma contagem ou posição de vaga
+desatualizada é pior que buscar o arquivo de novo a cada carregamento.
