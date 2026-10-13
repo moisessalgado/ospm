@@ -244,11 +244,27 @@ html, body {
   color: var(--muted);
 }
 
+/* A plain "i" in a circle, built from CSS rather than a Unicode glyph
+   (ⓘ renders inconsistently across fonts/platforms — sometimes as a small
+   emoji-style icon, sometimes as plain text — which looked unstandardized
+   next to each other). */
 .legend-hint {
-  cursor: help;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 1px solid var(--muted);
   color: var(--muted);
-  border-bottom: 1px dotted var(--muted);
-  font-size: 11px;
+  font-size: 9px;
+  font-style: italic;
+  font-weight: 700;
+  font-family: Georgia, "Times New Roman", serif;
+  line-height: 1;
+  cursor: help;
+  user-select: none;
 }
 
 .dot {

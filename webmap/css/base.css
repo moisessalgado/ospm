@@ -107,6 +107,16 @@ button {
   color: var(--primary);
 }
 
+/* "OpenStreet" + "Map" read like a nod to OSM's own wordmark (same sans,
+   same weight); "Plants" switches to the display serif in the brand green
+   so it reads as the joke it is, not a copy of the original logo. */
+.site-nav .brand .brand-plants {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 600;
+  color: var(--primary);
+}
+
 .site-nav .links {
   display: flex;
   align-items: center;

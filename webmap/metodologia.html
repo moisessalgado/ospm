@@ -6,7 +6,7 @@
   <title>Metodologia — Vagas de Plantio</title>
   <meta name="description" content="Como calculamos as vagas de plantio de árvores em vias públicas: fontes de dados, limites de precisão e regras de alocação." />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ctext y='20' font-size='22'%3E%F0%9F%8C%B3%3C/text%3E%3C/svg%3E">
-  <link rel="stylesheet" href="css/base.css?v=2" />
+  <link rel="stylesheet" href="css/base.css?v=3" />
   <link rel="stylesheet" href="css/metodologia.css?v=2" />
 </head>
 <body>
@@ -18,7 +18,7 @@
         <path d="M4 14c0-6 4.5-10 11-10 1 5-1 11-7 11-2.3 0-3.6-.4-4-1Z" />
         <path d="M4 14c3 0 6-1.5 7-5" />
       </svg>
-      Vagas de Plantio
+      <span>OpenStreet<span class="brand-plants">Plants</span>Map</span>
     </a>
     <div class="links">
       <a href="index.html">Mapa</a>
@@ -32,10 +32,11 @@
     <h1>Onde cabe uma árvore <em>sem</em> tirar uma vaga da rua</h1>
     <p class="lede">
       Como calculamos, município por município, pontos de plantio em vias públicas a partir de
-      dados abertos — e por que a posição exata de cada ponto tem limites que não escondemos.
+      dados abertos — com quatro métodos diferentes, cada um com suas vantagens e limites, que
+      explicamos em detalhe nesta página.
     </p>
     <div class="cta-row">
-      <a class="btn btn-primary" href="#pedra-fundamental">Ver a metodologia</a>
+      <a class="btn btn-primary" href="#fontes">Ver a metodologia</a>
       <a class="btn btn-ghost" href="index.html">Abrir o mapa</a>
     </div>
     <div class="scroll-cue">
@@ -43,40 +44,6 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v16m0 0-6-6m6 6 6-6"/></svg>
     </div>
   </header>
-
-  <!-- A pedra fundamental -->
-  <section class="story-section" id="pedra-fundamental">
-    <p class="eyebrow reveal">A pedra fundamental</p>
-    <h2 class="reveal">Vagas na calçada, no canteiro ou no passeio — nunca no meio da rua</h2>
-    <p class="lead reveal">
-      É o critério que guia todas as outras decisões de modelagem: uma vaga sobre o asfalto não é
-      uma opção, então qualquer fonte de dados ou abordagem que não garantisse isso com segurança
-      foi ajustada ou descartada em favor de uma que garantisse.
-    </p>
-
-    <div class="diagram reveal">
-      <svg viewBox="0 0 600 220" role="img" aria-label="Comparação entre um ponto incorretamente alocado no meio da rua e um ponto corretamente alocado na calçada">
-        <rect x="0" y="16" width="168" height="188" rx="6" fill="var(--primary-light)" stroke="var(--border)" />
-        <rect x="432" y="16" width="168" height="188" rx="6" fill="var(--primary-light)" stroke="var(--border)" />
-        <rect x="168" y="16" width="30" height="188" fill="var(--surface-solid)" stroke="var(--border)" />
-        <rect x="402" y="16" width="30" height="188" fill="var(--surface-solid)" stroke="var(--border)" />
-        <rect x="198" y="16" width="204" height="188" fill="#c9c9c9" />
-        <line x1="300" y1="16" x2="300" y2="204" stroke="#ffffff" stroke-width="3" stroke-dasharray="14 10" opacity="0.8" />
-
-        <g class="pop">
-          <circle cx="300" cy="110" r="11" fill="#d64545" />
-          <path d="M294 104l12 12M306 104l-12 12" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" />
-        </g>
-        <text class="pop fade" x="300" y="150" text-anchor="middle" font-size="13" font-weight="700" fill="#d64545">Incorreto — meio da rua</text>
-
-        <g class="pop delay-2">
-          <circle cx="183" cy="60" r="8" fill="var(--primary)" stroke="#ffffff" stroke-width="2" />
-        </g>
-        <text class="pop delay-2 fade" x="183" y="40" text-anchor="middle" font-size="13" font-weight="700" fill="var(--primary-dark)">Correto — calçada</text>
-      </svg>
-      <p class="caption">Esquema ilustrativo de uma via: calçadas nas bordas, leito carroçável ao centro.</p>
-    </div>
-  </section>
 
   <!-- Fontes de dados -->
   <section class="story-section alt" id="fontes">
@@ -146,26 +113,57 @@
     </div>
 
     <p class="lead reveal">
-      Testamos empurrar cada ponto para dentro da calçada com uma margem de segurança a partir do eixo
-      da via. O resultado piorou: em trechos com recuos irregulares, os pontos "seguros" caíam dentro de
-      lotes e sobre telhados. A assimetria da fachada vem do recuo do prédio, não da calçada — não é uma
-      margem utilizável.
+      Testamos empurrar cada ponto para dentro da calçada com uma margem de segurança fixa a partir do
+      eixo da via. O resultado piorou: em trechos com recuos irregulares, os pontos "seguros" caíam
+      dentro de lotes e sobre telhados. A distância até a fachada vem do recuo do prédio, não da
+      calçada — não é uma margem fixa e utilizável em qualquer lugar.
     </p>
   </section>
 
-  <!-- A solução -->
-  <section class="story-section alt" id="solucao">
-    <p class="eyebrow reveal">A solução adotada</p>
-    <h2 class="reveal">Cada vaga pertence a uma face de quadra</h2>
+  <!-- Regras comuns aos quatro métodos -->
+  <section class="story-section alt" id="pedra-fundamental">
+    <p class="eyebrow reveal">Regras comuns</p>
+    <h2 class="reveal">Mesma malha elegível, mesmo porte, mesmas exclusões — o que muda é a distância até o meio-fio</h2>
     <p class="lead reveal">
-      Em vez de deduzir uma posição lateral exata, vinculamos cada vaga à <strong>face de quadra oficial
-      do IBGE</strong>: ela sabe em qual setor, quadra, face e logradouro está, e sua posição ao longo
-      da face é exata. A posição lateral — de qual lado da linha, a que distância do meio-fio — fica
-      <strong>indicativa</strong>, desenhada sobre a própria linha da face.
+      Os quatro métodos de alocação (ver "Quatro métodos, lado a lado" logo abaixo) partem da mesma
+      base: só vias de classe elegível (residencial a primária) entram no cálculo, o porte da árvore
+      vem da classe da via, e as mesmas zonas de exclusão valem para todos. O que muda de um método
+      para outro é só a distância da vaga até o leito carroçável — da calçada estimada até,
+      deliberadamente, o próprio eixo da via em um deles, usado como referência de comparação.
     </p>
 
     <div class="diagram reveal">
-      <svg viewBox="0 0 700 190" role="img" aria-label="Vagas espaçadas ao longo de uma face de quadra, com recuo de seis metros nas esquinas e uma zona sem vaga em frente a um obstáculo">
+      <svg viewBox="0 0 600 220" role="img" aria-label="Comparação entre uma vaga no eixo da via, usada como referência de comparação, e uma vaga fora do leito carroçável, usada pelos outros três métodos">
+        <rect x="0" y="16" width="168" height="188" rx="6" fill="var(--primary-light)" stroke="var(--border)" />
+        <rect x="432" y="16" width="168" height="188" rx="6" fill="var(--primary-light)" stroke="var(--border)" />
+        <rect x="168" y="16" width="30" height="188" fill="var(--surface-solid)" stroke="var(--border)" />
+        <rect x="402" y="16" width="30" height="188" fill="var(--surface-solid)" stroke="var(--border)" />
+        <rect x="198" y="16" width="204" height="188" fill="#c9c9c9" />
+        <line x1="300" y1="16" x2="300" y2="204" stroke="#ffffff" stroke-width="3" stroke-dasharray="14 10" opacity="0.8" />
+
+        <g class="pop">
+          <circle cx="300" cy="110" r="9" fill="#9e9e9e" stroke="#ffffff" stroke-width="2" />
+        </g>
+        <text class="pop fade" x="300" y="150" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--muted)">Eixo da via — 1 de 4 métodos</text>
+
+        <g class="pop delay-2">
+          <circle cx="183" cy="60" r="8" fill="var(--primary)" stroke="#ffffff" stroke-width="2" />
+        </g>
+        <text class="pop delay-2 fade" x="183" y="40" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--primary-dark)">Fora do leito — 3 de 4 métodos</text>
+      </svg>
+      <p class="caption">Esquema ilustrativo de uma via: calçadas nas bordas, leito carroçável ao centro.</p>
+    </div>
+
+    <p class="lead reveal" style="margin-top:28px">Trechos próximos a obstáculos mapeados no OSM ficam sem vaga, com uma distância que varia por tipo — a mesma regra vale nos quatro métodos:</p>
+    <div class="card-grid">
+      <article class="source-card reveal"><h3>Travessia</h3><p>3 m de cada lado.</p></article>
+      <article class="source-card reveal"><h3>Acesso de garagem</h3><p>2 m de cada lado.</p></article>
+      <article class="source-card reveal"><h3>Ponto de ônibus</h3><p>12 m de cada lado.</p></article>
+      <article class="source-card reveal"><h3>Árvore existente</h3><p>4 m de raio, dentro de um alcance de busca de 8 m.</p></article>
+    </div>
+
+    <div class="diagram reveal" style="margin-top:28px">
+      <svg viewBox="0 0 700 190" role="img" aria-label="Vagas espaçadas ao longo de uma via, com recuo de seis metros nas esquinas e uma zona sem vaga em frente a um obstáculo">
         <rect x="20" y="14" width="660" height="56" rx="6" fill="var(--surface-solid)" stroke="var(--border)" />
         <text x="40" y="47" font-size="12.5" fill="var(--muted)">quadra (edificações)</text>
 
@@ -192,32 +190,27 @@
           <circle cx="570" cy="110" r="6" fill="var(--primary)" />
         </g>
       </svg>
-      <p class="caption">Vagas (verde) espaçadas ao longo da face, respeitando esquinas e obstáculos.</p>
+      <p class="caption">Vagas (verde) espaçadas ao longo da via ou face de quadra, respeitando esquinas e obstáculos — mesma lógica nos quatro métodos.</p>
     </div>
 
-    <p class="lead reveal">Trechos próximos a obstáculos mapeados no OSM ficam sem vaga, com uma distância que varia por tipo:</p>
-    <div class="card-grid">
-      <article class="source-card reveal"><h3>Travessia</h3><p>3 m de cada lado.</p></article>
-      <article class="source-card reveal"><h3>Acesso de garagem</h3><p>2 m de cada lado.</p></article>
-      <article class="source-card reveal"><h3>Ponto de ônibus</h3><p>12 m de cada lado.</p></article>
-      <article class="source-card reveal"><h3>Árvore existente</h3><p>4 m de raio, dentro de um alcance de busca de 8 m.</p></article>
-    </div>
     <p class="lead reveal" style="margin-top:28px">
-      Canteiros centrais de avenidas de pista dupla também recebem vagas — identificados a partir de
-      pares de vias paralelas no OSM, co-registrados contra as edificações, com a mesma margem de
-      segurança medida na comparação com o IBGE.
+      Um candidato que esbarra numa dessas regras, ou que — perto de um cruzamento — acabaria dentro
+      do leito carroçável de uma via transversal, não vira uma lacuna silenciosa: ele aparece no mapa
+      como <strong>vaga inviável</strong>, com a cor do porte que teria e um contorno indicando o
+      motivo. É a mesma camada que explica, visualmente, por que o espaçamento nunca é perfeitamente
+      regular.
     </p>
   </section>
 
   <!-- Quatro métodos -->
-  <section class="story-section alt" id="metodos">
+  <section class="story-section" id="metodos">
     <p class="eyebrow reveal">Quatro métodos, lado a lado</p>
     <h2 class="reveal">Nem toda fonte de dados dá a mesma margem de segurança</h2>
     <p class="lead reveal">
-      O webmap deixa alternar entre os quatro métodos abaixo para o mesmo município — útil para ver,
-      visualmente, o que cada fonte de dados consegue garantir e o que ela só consegue estimar. Pontos
-      do método 1 aparecem com contorno vermelho no mapa, como lembrete de que ali a vaga está
-      deliberadamente sobre a via.
+      O webmap deixa alternar entre os quatro métodos abaixo para o mesmo município, um de cada vez —
+      útil para comparar visualmente o que cada fonte de dados consegue garantir e o que ela só
+      consegue estimar. O método 1 nunca é o resultado final: existe só como referência visual de
+      quanto os outros três conseguem melhorar a posição da vaga.
     </p>
 
     <div class="variant-grid">
@@ -226,8 +219,8 @@
         <h3>Eixo da via (OSM), sem deslocamento</h3>
         <ul>
           <li><strong>Vantagem:</strong> o mais simples e rápido de calcular; só precisa do OSM.</li>
-          <li><strong>Desvantagem:</strong> a vaga fica sobre o próprio eixo da rua — viola a regra
-            de nunca ficar no meio da via. Existe só como referência de comparação, não para uso real.</li>
+          <li><strong>Desvantagem:</strong> a vaga fica sobre o próprio eixo da rua, de propósito —
+            existe só como baseline de comparação, nunca como resultado a ser usado no plantio real.</li>
         </ul>
       </div>
       <div class="variant-card reveal">
@@ -237,8 +230,8 @@
           <li><strong>Vantagem:</strong> ainda depende só do OSM; desloca a vaga para a largura de
             calçada estimada pela classe da via (residencial, arterial etc.).</li>
           <li><strong>Desvantagem:</strong> a largura é uma estimativa por classe, não uma medição.
-            Em vias mais estreitas que o estimado, a vaga pode continuar na rua; em lotes com recuo
-            irregular, pode passar da calçada e cair dentro do terreno.</li>
+            Em vias mais estreitas que o estimado, a vaga pode continuar perto da rua; em lotes com
+            recuo irregular, pode passar da calçada e cair dentro do terreno.</li>
         </ul>
       </div>
       <div class="variant-card reveal">
@@ -256,7 +249,7 @@
         <h3>Face de quadra (IBGE) — método atual</h3>
         <ul>
           <li><strong>Vantagem:</strong> metadados oficiais completos (setor, quadra, face, logradouro)
-            e o único método com canteiros centrais; é o mais testado dos quatro.</li>
+            e o único método com canteiros centrais; é o mais testado dos quatro — ver detalhe abaixo.</li>
           <li><strong>Desvantagem:</strong> mais lento de calcular; depende do download manual das
             faces de logradouro do IBGE por estado, que nem sempre está disponível.</li>
         </ul>
@@ -269,13 +262,57 @@
     </p>
   </section>
 
+  <!-- Método em detalhe: face de quadra (IBGE) -->
+  <section class="story-section alt" id="solucao">
+    <p class="eyebrow reveal">Método em detalhe — face de quadra (IBGE)</p>
+    <h2 class="reveal">Cada vaga pertence a uma face de quadra</h2>
+    <p class="lead reveal">
+      Dos quatro métodos, este é o mais testado e o único com metadados oficiais completos desde a
+      origem. Em vez de deduzir uma posição lateral exata, ele vincula cada vaga à <strong>face de
+      quadra oficial do IBGE</strong>: ela sabe em qual setor, quadra, face e logradouro está, e sua
+      posição ao longo da face é exata. A posição lateral — de qual lado da linha, a que distância do
+      meio-fio — fica <strong>indicativa</strong>, desenhada sobre a própria linha da face e depois
+      ajustada para nunca ficar mais perto da via do que o leito carroçável, nem mais longe do que a
+      fachada mais próxima medida na Overture.
+    </p>
+
+    <div class="diagram reveal">
+      <svg viewBox="0 0 600 200" role="img" aria-label="Corte transversal mostrando o leito carroçável, a zona segura entre o meio-fio e a fachada mais próxima, e a vaga ajustada para dentro dela">
+        <rect x="0" y="150" width="600" height="50" fill="#c9c9c9" />
+        <text x="300" y="180" text-anchor="middle" font-size="12" fill="#666">leito carroçável</text>
+
+        <rect class="fade" x="140" y="40" width="320" height="110" fill="var(--primary-light)" fill-opacity="0.6" />
+        <text class="fade" x="300" y="58" text-anchor="middle" font-size="12" font-weight="700" fill="var(--primary-dark)">zona segura</text>
+
+        <line x1="140" y1="40" x2="140" y2="150" stroke="var(--accent)" stroke-width="2" stroke-dasharray="6 4" />
+        <text x="140" y="30" text-anchor="middle" font-size="11" fill="var(--accent)">meio-fio + folga</text>
+
+        <line x1="460" y1="40" x2="460" y2="150" stroke="#6a1b9a" stroke-width="2" stroke-dasharray="6 4" />
+        <text x="460" y="30" text-anchor="middle" font-size="11" fill="#6a1b9a">fachada mais próxima</text>
+
+        <g class="pop delay-1">
+          <circle cx="260" cy="95" r="9" fill="var(--primary)" stroke="#ffffff" stroke-width="2" />
+        </g>
+        <text class="pop delay-1 fade" x="260" y="122" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--primary-dark)">vaga</text>
+      </svg>
+      <p class="caption">Se não há espaço seguro entre os dois limites, a vaga não é gerada ali — vira uma "vaga inviável" no mapa, não um ponto forçado numa posição ruim.</p>
+    </div>
+
+    <p class="lead reveal" style="margin-top:28px">
+      Canteiros centrais de avenidas de pista dupla também recebem vagas — identificados a partir de
+      pares de vias paralelas no OSM, co-registrados contra as edificações, com a mesma margem de
+      segurança medida na comparação com o IBGE. É a única categoria de vaga que os outros três
+      métodos não geram.
+    </p>
+  </section>
+
   <!-- Variantes de espaçamento -->
   <section class="story-section" id="variantes">
     <p class="eyebrow reveal">Duas variantes</p>
     <h2 class="reveal">Dois critérios de espaçamento, lado a lado</h2>
     <p class="lead reveal">
-      Geramos as duas versões em paralelo, para comparar o resultado de cada critério sem
-      precisar reprocessar o restante do pipeline.
+      Geramos as duas versões em paralelo, para cada um dos quatro métodos, para comparar o resultado
+      de cada critério sem precisar reprocessar o restante do pipeline.
     </p>
 
     <div class="variant-grid">
@@ -327,7 +364,7 @@
       <div class="pipeline-step reveal">
         <div class="num">03</div>
         <h3>Alocar as vagas</h3>
-        <p>Vincula faces de quadra do IBGE às vias, aplica regras e espaçamento.</p>
+        <p>Gera os quatro métodos x duas variantes de espaçamento, com as mesmas regras comuns.</p>
         <code>03_allocate_slots.py</code>
       </div>
       <div class="pipeline-step reveal">
@@ -343,7 +380,7 @@
   <section class="story-section" id="resultado">
     <p class="eyebrow reveal">Resultado</p>
     <h2 class="reveal">Números atuais, direto dos dados publicados</h2>
-    <p class="lead reveal">Estes números vêm do mesmo manifesto que alimenta o mapa — atualizam sozinhos a cada novo município ou reprocessamento.</p>
+    <p class="lead reveal">Estes números vêm do mesmo manifesto que alimenta o mapa — do método de produção (face de quadra, IBGE) — e atualizam sozinhos a cada novo município ou reprocessamento.</p>
 
     <div class="stat-grid" id="stat-grid"></div>
     <div class="chart" id="chart"></div>
@@ -352,7 +389,7 @@
   <!-- CTA -->
   <footer class="story-footer">
     <h2>Explore as vagas no mapa</h2>
-    <p>Veja os pontos calculados para cada município, meça distâncias e compare os mapas base.</p>
+    <p>Veja os pontos calculados para cada município, alterne entre os quatro métodos, meça distâncias e compare os mapas base.</p>
     <a class="btn btn-primary" href="index.html">Abrir o mapa →</a>
     <p class="fine">Fontes: IBGE (Censo 2022), OpenStreetMap, Overture Maps · Coletâneas Brasileiras de Arborização Urbana, MMA.</p>
   </footer>

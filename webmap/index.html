@@ -7,8 +7,8 @@
   <meta name="description" content="Mapa das vagas de plantio de árvores em vias públicas, calculadas a partir de dados do IBGE, OpenStreetMap e Overture Maps." />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ctext y='20' font-size='22'%3E%F0%9F%8C%B3%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
-  <link rel="stylesheet" href="css/base.css?v=2" />
-  <link rel="stylesheet" href="css/style.css?v=6" />
+  <link rel="stylesheet" href="css/base.css?v=3" />
+  <link rel="stylesheet" href="css/style.css?v=7" />
 </head>
 <body>
   <nav class="site-nav map-nav">
@@ -17,7 +17,7 @@
         <path d="M4 14c0-6 4.5-10 11-10 1 5-1 11-7 11-2.3 0-3.6-.4-4-1Z" />
         <path d="M4 14c3 0 6-1.5 7-5" />
       </svg>
-      Vagas de Plantio
+      <span>OpenStreet<span class="brand-plants">Plants</span>Map</span>
     </a>
     <div class="links">
       <a href="index.html" class="active">Mapa</a>
@@ -71,7 +71,7 @@
     <label class="checkbox">
       <input type="checkbox" id="snap-toggle" checked />
       Snap nos pontos de vaga
-      <span class="legend-hint" title="Funciona com os pontos individuais — aproxime o zoom (nível 15+).">ⓘ</span>
+      <span class="legend-hint" title="Funciona com os pontos individuais — aproxime o zoom (nível 15+).">i</span>
     </label>
     <div id="measure-status"></div>
 
@@ -79,7 +79,7 @@
       <label class="legend-title">
         <input type="checkbox" id="layer-slots-toggle" checked />
         <strong>Vagas de plantio</strong>
-        <span class="legend-hint" title="Cor por porte da árvore, estimado pela classificação da via no OSM. Mais em metodologia.html#variantes.">ⓘ</span>
+        <span class="legend-hint" title="Cor por porte da árvore, estimado pela classificação da via no OSM. Mais em metodologia.html#variantes.">i</span>
       </label>
       <div><span class="dot" style="background:#66bb6a"></span> Pequeno</div>
       <div><span class="dot" style="background:#1565c0"></span> Médio</div>
@@ -88,7 +88,7 @@
       <label class="legend-title">
         <input type="checkbox" id="layer-rejected-toggle" checked />
         <strong>Vagas inviáveis</strong>
-        <span class="legend-hint" title="Mesma cor de porte, com o contorno indicando o motivo. Só aparecem a partir do zoom 15.">ⓘ</span>
+        <span class="legend-hint" title="Mesma cor de porte, com o contorno indicando o motivo. Só aparecem a partir do zoom 15.">i</span>
       </label>
       <div><span class="dot" style="background:#1565c0;outline:2.5px solid #d64545;outline-offset:1px"></span> Sem espaço até a fachada</div>
       <div><span class="dot" style="background:#1565c0;outline:2.5px solid #fdd835;outline-offset:1px"></span> Esquina</div>
