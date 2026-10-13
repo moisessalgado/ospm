@@ -7,12 +7,22 @@ Modelagem de vagas de plantio de árvores em vias públicas, por município.
 Cada vaga é **vinculada a uma face de quadra** da Base de Faces de Logradouros
 do IBGE (Censo 2022): setor, quadra, face, logradouro e posição ao longo da
 face. A contagem e o espaçamento ao longo da face são exatos; a posição
-lateral, desenhada sobre a linha da face, é **indicativa**.
+lateral é indicativa.
 
 Motivo: nenhuma fonte disponível em escala nacional localiza o meio-fio com
 precisão melhor que ±2–3 m (comparação OSM × IBGE × edificações Overture),
 o que é maior que a largura típica de uma calçada. Posicionar o ponto
 "dentro da calçada" a partir do eixo da via não é confiável com esses dados.
+
+A linha da face em si também não é confiável sozinha: em muitas quadras ela é
+digitalizada rente ao eixo da via, em vez de na divisa do lote — o que
+colocaria a vaga dentro do leito carroçável. Por isso a posição lateral de
+cada vaga é ajustada, perpendicularmente à via do OSM já co-registrada às
+edificações, para nunca ficar mais perto da via do que o leito carroçável
+(largura por classe/tag + `CURB_SETBACK_M`) nem mais longe do que a fachada
+mais próxima medida na Overture; uma face sem espaço seguro entre os dois
+limites não gera vaga ali (`scripts/03_allocate_slots.py`,
+`clamp_to_road`).
 
 Regras de alocação (parâmetros das Coletâneas Brasileiras de Arborização
 Urbana, MMA 2026):

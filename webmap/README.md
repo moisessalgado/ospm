@@ -61,3 +61,8 @@ O workflow `.github/workflows/deploy-webmap.yml` publica esta pasta a cada
 push na branch `master` que toque `webmap/**`. Para ativar (uma vez, nas
 configurações do repositório no GitHub): **Settings → Pages → Source →
 GitHub Actions**.
+
+O CSS/JS é servido com `cache-control: max-age=14400` (4h); os `<link>` e
+`<script>` locais em `index.html`/`metodologia.html` têm um `?v=N` no final
+da URL para forçar o navegador a buscar a versão nova assim que o deploy sai
+— lembre de incrementar esse `N` ao editar `css/` ou `js/`.

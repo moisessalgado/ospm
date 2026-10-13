@@ -4,14 +4,24 @@ No source available nationwide locates the curb better than ±2-3 m (OSM x IBGE
 x buildings), which exceeds a typical sidewalk width. Each slot is therefore
 linked to an IBGE street face (sector, block, face, street name, position along
 the face): counts and spacing along the face are exact, while the lateral
-position, drawn on the face line, is indicative.
+position is indicative.
+
+The face line itself is not always trustworthy for that lateral position: on
+many blocks it is digitized hugging the street axis rather than the lot line,
+which would place the point inside the carriageway (checked directly against
+the OSM road geometry — see CURB_SETBACK_M). Each point is therefore clamped,
+perpendicular to the matched OSM road, to never fall closer to the road than
+its carriageway plus CURB_SETBACK_M, and never farther than the nearest
+Overture building facade minus CURB_SETBACK_M; a face with no room between
+the two (street wider than the gap to the facade) contributes no slot there.
 
 Sidewalk slots, for each face in an urban census tract that faces an eligible
 OSM road (parallel and within FACE_STREET_MATCH_M):
   - keep CORNER_SETBACK_M clear at both ends of the face (corners);
   - skip stretches near OSM obstacles projected onto the face (crossings,
     driveways, bus stops, existing trees);
-  - place slots with each variant's spacing.
+  - place slots with each variant's spacing;
+  - clamp each slot's lateral position as described above.
 
 Median slots come from OSM divided roads co-registered to the buildings; a
 slot is accepted only outside every carriageway grown by the registration
@@ -28,9 +38,10 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import shapely
+from shapely.geometry import Point
 
 from planting_slots.allocation import enforce_min_separation, greedy_walk
-from planting_slots.buildings import facade_probes, load_overture_buildings
+from planting_slots.buildings import facade_probes, load_overture_buildings, local_facade
 from planting_slots.ibge import load_street_faces, load_urban_area
 from planting_slots.municipalities import get_municipality, municipality_arg_parser
 from planting_slots.osm import (
@@ -133,6 +144,40 @@ def allocate_face(face, blocked, spacing_at) -> list[float]:
     return [float(dists[i]) for i in greedy_walk(dists, ok, spacing_at)]
 
 
+def clamp_to_road(point: Point, road, min_clear: float, probe_entry) -> Point | None:
+    """Push a face-derived point, perpendicular to the road, so it clears the
+    carriageway (min_clear) without crossing the nearest building facade.
+    None if there is no room between the two."""
+    pos_arr, left_d, right_d = probe_entry
+    proj = road.project(point)
+    r = road.interpolate(proj)
+    vx, vy = point.x - r.x, point.y - r.y
+    dist = float(np.hypot(vx, vy))
+
+    ahead = road.interpolate(min(proj + 0.5, road.length))
+    behind = road.interpolate(max(proj - 0.5, 0.0))
+    tx, ty = ahead.x - behind.x, ahead.y - behind.y
+    tn = np.hypot(tx, ty) or 1.0
+    tx, ty = tx / tn, ty / tn
+    nx, ny = -ty, tx  # left unit normal
+
+    if dist < 1e-6:
+        ux, uy = nx, ny
+        side_left = True
+    else:
+        ux, uy = vx / dist, vy / dist
+        side_left = (ux * nx + uy * ny) >= 0
+
+    facade_d = np.nan
+    if len(pos_arr):
+        facade_d = local_facade(np.array([proj]), pos_arr, left_d if side_left else right_d)[0]
+    ceiling = (facade_d - CURB_SETBACK_M) if not np.isnan(facade_d) else np.inf
+    if min_clear > ceiling:
+        return None
+    target = min(max(dist, min_clear), ceiling)
+    return Point(r.x + ux * target, r.y + uy * target)
+
+
 def main() -> None:
     municipality = get_municipality(municipality_arg_parser(__doc__).parse_args().municipio)
     files = MunicipalityFiles(municipality)
@@ -183,6 +228,17 @@ def main() -> None:
     sel = faces[face_ok]
     blocked = {i: blocked_intervals(g, obstacles) for i, g in sel.geometry.items()}
 
+    # Per-face context to clamp the lateral position to the matched road (see
+    # clamp_to_road): the road geometry, its nominal carriageway half-width,
+    # and the facade-probe arrays already computed above for that road.
+    empty_probe = (np.array([]), np.array([]), np.array([]))
+    sel_road_pos = match.loc[sel.index, "road"].to_numpy()
+    sel_road_label = roads.index.to_numpy()[sel_road_pos]
+    clamp_ctx = {
+        i: (roads.geometry.to_numpy()[p], roads["half"].to_numpy()[p] + CURB_SETBACK_M, probes.get(lbl, empty_probe))
+        for i, p, lbl in zip(sel.index, sel_road_pos, sel_road_label)
+    }
+
     # --- median slots (OSM, worst case) -----------------------------------------
     roads["half_worst"] = roads["half"] + uncertainty
     margin = np.where(roads["highway"] == "service", SERVICE_SETBACK_M, CURB_SETBACK_M)
@@ -220,15 +276,21 @@ def main() -> None:
     }
     for variant, cfg in VARIANTS.items():
         records = []
+        fora_de_alcance = 0
         for i, face in sel.iterrows():
             porte = PORTE_BY_CLASS[face["highway"]]
+            road_geom, min_clear, probe_entry = clamp_ctx[i]
             for pos in allocate_face(face.geometry, blocked[i], lambda _: cfg["spacing"](porte)):
+                point = clamp_to_road(face.geometry.interpolate(pos), road_geom, min_clear, probe_entry)
+                if point is None:
+                    fora_de_alcance += 1
+                    continue
                 records.append({
                     "tipo_vaga": "calcada", "porte": porte, "via_osm": face["highway"],
                     "logradouro": normalize_street_name(face["NM_TIP_LOG"], face["NM_TIT_LOG"], face["NM_LOG"]),
                     "cd_setor": face["CD_SETOR"], "cd_quadra": face["CD_QUADRA"], "cd_face": face["CD_FACE"],
-                    "posicao_face_m": round(pos, 1), "posicao_lateral": "indicativa (linha da face IBGE)",
-                    "geometry": face.geometry.interpolate(pos),
+                    "posicao_face_m": round(pos, 1), "posicao_lateral": "indicativa (ajustada à via OSM)",
+                    "geometry": point,
                 })
         for g in median_groups:
             portes = [next(p for lim, p in MEDIAN_PORTE_BY_WIDTH if w < lim) for w in g["width"]]
@@ -247,10 +309,12 @@ def main() -> None:
         points.to_crs("EPSG:4326").to_file(files.slots(variant, "geojson"), driver="GeoJSON")
         report["variantes"][variant] = {
             "label": cfg["label"], "pontos": len(points), "removidos_espacamento_minimo": before - len(points),
+            "removidos_sem_espaco_seguro_ate_fachada": fora_de_alcance,
             "por_tipo": points["tipo_vaga"].value_counts().to_dict(),
             "por_porte": points["porte"].value_counts().to_dict(),
         }
-        print(f"[{variant}] {len(points)} pontos (espaçamento mínimo removeu {before - len(points)})",
+        print(f"[{variant}] {len(points)} pontos (espaçamento mínimo removeu {before - len(points)}, "
+              f"sem espaço seguro até a fachada removeu {fora_de_alcance})",
               points["tipo_vaga"].value_counts().to_dict(), points["porte"].value_counts().to_dict())
 
     files.allocation_report.write_text(json.dumps(report, indent=2, ensure_ascii=False))
