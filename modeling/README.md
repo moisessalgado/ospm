@@ -6,10 +6,11 @@ o webmap deixa alternar entre eles para o mesmo município.
 
 ## Métodos
 
-O método de produção é `face_ibge`; os outros (`osm_eixo`, `osm_calcada`, `osm_calcada_lado`,
-`osm_overture`) existem para comparar visualmente o que cada fonte de dados
-consegue garantir — ver `ROAD_METHODS` e `generate_face_ibge` em
-`scripts/03_allocate_slots.py`.
+Na ordem do seletor do webmap: `osm_eixo` (padrão do mapa),
+`osm_calcada_lado`, `osm_calcada`, `face_ibge` e `osm_overture`. O
+`face_ibge` é o mais completo em metadados; os outros existem para comparar
+o que cada fonte de dados consegue garantir — ver `ROAD_METHODS` e
+`generate_face_ibge` em `scripts/03_allocate_slots.py`.
 
 ### face_ibge — método de produção
 
@@ -123,7 +124,9 @@ censitários são baixados automaticamente.
 ## Novo município
 
 Adicione uma entrada em `planting_slots/municipalities.py` com o código IBGE
-de 7 dígitos e o EPSG SIRGAS 2000/UTM da longitude do município.
+de 7 dígitos e o EPSG SIRGAS 2000/UTM da longitude do município. Passo a
+passo completo (faces do IBGE, publicação no webmap) no
+[README da raiz](../README.md#adicionar-um-novo-município).
 
 ## Estrutura
 

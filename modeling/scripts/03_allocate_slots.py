@@ -1,4 +1,4 @@
-"""Allocate tree-planting slots — four comparable methods, two spacings each.
+"""Allocate tree-planting slots — five comparable methods, two spacings each.
 
 Methods (increasing use of data, decreasing distance from the carriageway):
   - face_ibge: the production method. Each slot is linked to an IBGE street
@@ -6,8 +6,9 @@ Methods (increasing use of data, decreasing distance from the carriageway):
     clamped to the matched OSM road — see clamp_to_road. Slowest to compute,
     best metadata, and the only one with median (canteiro_central) slots.
   - osm_eixo: walks the raw OSM road centerline itself, no offset at all —
-    slots sit in the middle of the street on purpose. A deliberately wrong
-    baseline, kept only so the other methods can be judged against it.
+    slots sit in the middle of the street on purpose. Shows the spacing and
+    exclusions along each street; the other methods are judged against it
+    for lateral position. The webmap's default method.
   - osm_calcada: walks the raw OSM road centerline, offset to the estimated
     curb (carriageway_half_width + CURB_SETBACK_M) on both sides — no
     buildings involved. Cheap, but the offset is a guess: on an irregular
@@ -107,7 +108,7 @@ SPACINGS = {
 }
 
 # --- Methods ------------------------------------------------------------------
-# face_ibge is handled by its own (pre-existing) code path below; these three
+# face_ibge is handled by its own (pre-existing) code path below; these four
 # share allocate_from_roads, parametrized by whether they offset off the
 # centerline at all, and whether that offset is capped by a building facade.
 ROAD_METHODS = {
