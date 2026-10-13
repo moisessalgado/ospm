@@ -15,10 +15,11 @@ de cada uma.
 
 ## Mapa (`index.html`)
 
-- Basemap: tiles do Google Maps via endpoint XYZ não-oficial (`mt0-3.google.com/vt/...`),
-  sem necessidade de API key. Risco: não é um endpoint suportado oficialmente
-  pelo Google, podendo mudar ou ser bloqueado sem aviso.
-- OpenStreetMap: disponível como opção de mapa base (tiles raster padrão do OSM).
+- Basemap: abre no OpenStreetMap (tiles raster padrão) por padrão; também
+  disponíveis tiles do Google Maps via endpoint XYZ não-oficial
+  (`mt0-3.google.com/vt/...`), sem necessidade de API key — risco: não é um
+  endpoint suportado oficialmente pelo Google, podendo mudar ou ser bloqueado
+  sem aviso.
 - Clustering: até o zoom 14 os pontos são agregados em bolhas com contagem
   (clique para aproximar); a partir do 15 aparecem os pontos individuais.
 - Clique num ponto individual para ver seus detalhes (id, logradouro, porte,
@@ -32,17 +33,24 @@ de cada uma.
   voo — o mapa já nasce centrado ali) — mais próximo da calçada esperada sem
   depender da face do IBGE; os outros três ficam disponíveis no seletor para
   comparação.
-- Dois conjuntos de pontos, separados por camada:
+- Dois conjuntos de pontos, cada um com um checkbox próprio na legenda para
+  ligar/desligar a camada (`layer-slots-toggle`/`layer-rejected-toggle` em
+  `js/app.js`):
   - **Vagas de plantio** (cor por porte — pequeno/médio/grande).
   - **Vagas inviáveis**: candidatos que o algoritmo descartou, na mesma cor
     de porte (é o porte que a vaga teria), mas com um contorno colorido
-    indicando o motivo — afastamento de esquina, um obstáculo do OSM
+    indicando o motivo — afastamento de esquina, dentro de uma via
+    transversal (vaga empurrada para dentro de outra rua perto de um
+    cruzamento — ver `drop_crossing_road_points` em
+    `modeling/scripts/03_allocate_slots.py`), um obstáculo do OSM
     (travessia, acesso de garagem, ponto de ônibus, árvore existente) ou
     falta de espaço seguro até a fachada mais próxima; clique para o motivo
     por extenso. Só aparecem a partir do zoom 15 (ver `rejected-points` em
     `js/app.js`) — em zoom de cidade seriam um borrão cobrindo o mapa.
   Ambos vêm de `data/<municipio>/<variante>.json` (`points`/`rejeitados`),
-  gerado por `modeling/scripts/04_export_webmap.py`.
+  gerado por `modeling/scripts/04_export_webmap.py`. Textos explicativos da
+  legenda (o que é porte, o que são vagas inviáveis) ficam em tooltips
+  (`title`/`ⓘ`) para manter o painel enxuto, não em parágrafos fixos.
 - Medição de distância: botão "Medir" — cada clique adiciona um vértice, a
   linha segue o cursor mostrando a distância ao vivo; duplo clique, Enter ou
   Esc finalizam a linha (Backspace desfaz o último vértice). Com "Snap" ligado,

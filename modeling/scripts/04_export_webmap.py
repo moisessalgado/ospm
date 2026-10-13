@@ -30,7 +30,8 @@ REJECTED_STRIDE = 4
 LEGEND = {
     "porte": ["pequeno", "medio", "grande"],
     "tipo_vaga": ["calcada", "canteiro_central", "eixo_via"],
-    "motivo": ["sem_espaco_seguro", "esquina", "travessia", "acesso_garagem", "ponto_onibus", "arvore_existente"],
+    "motivo": ["sem_espaco_seguro", "esquina", "travessia", "acesso_garagem", "ponto_onibus", "arvore_existente",
+              "via_transversal"],
 }
 METHODS = {  # id -> label, in selector order
     "face_ibge": "Face de quadra (IBGE) — método atual",

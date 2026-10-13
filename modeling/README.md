@@ -76,10 +76,13 @@ silenciosa no webmap: `vagas_plantio_<variante>_sem_alocacao.geojson` (um por
 variante, quando há candidatos descartados) traz a posição aproximada e o
 porte que cada um teria, com o motivo em `properties.motivo` — `esquina`
 (afastamento de esquina), o nome do obstáculo do OSM (`travessia`,
-`acesso_garagem`, `ponto_onibus`, `arvore_existente`) ou `sem_espaco_seguro`
+`acesso_garagem`, `ponto_onibus`, `arvore_existente`), `sem_espaco_seguro`
 (não coube entre o leito carroçável e a fachada mais próxima — ver
-`clamp_to_road`/`allocate_from_roads`). Ver `blocked_intervals`/
-`allocate_face` para como cada motivo é atribuído.
+`clamp_to_road`/`allocate_from_roads`) ou `via_transversal` (limpou a própria
+via mas caiu dentro do leito carroçável de uma via transversal perto de um
+cruzamento — ver `drop_crossing_road_points`, aplicado a todos os métodos
+exceto `osm_eixo`, que fica no eixo de propósito). Ver `blocked_intervals`/
+`allocate_face` para como os outros motivos são atribuídos.
 
 ## Pipeline
 

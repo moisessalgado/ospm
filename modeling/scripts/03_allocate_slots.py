@@ -30,10 +30,11 @@ median slots.
 Every candidate dropped along the way is exported too (one
 `<variante>_sem_alocacao.geojson` per variant, same porte it would have had),
 tagged with why — "esquina" (corner setback), an obstacle name (see
-OBSTACLES), or "sem_espaco_seguro" (no safe room before the nearest facade)
-— so the webmap can show *where* and *why* a slot is missing instead of
-leaving an unexplained gap. See blocked_intervals/allocate_face and
-allocate_from_roads/generate_face_ibge.
+OBSTACLES), "sem_espaco_seguro" (no safe room before the nearest facade), or
+"via_transversal" (cleared its own road but still landed inside a different,
+intersecting one — see drop_crossing_road_points) — so the webmap can show
+*where* and *why* a slot is missing instead of leaving an unexplained gap.
+See blocked_intervals/allocate_face and allocate_from_roads/generate_face_ibge.
 """
 
 from __future__ import annotations
@@ -136,6 +137,16 @@ def match_faces_to_streets(faces: gpd.GeoDataFrame, roads: gpd.GeoDataFrame) -> 
             rows.append((f, r, road.distance(mid[f])))
     match = pd.DataFrame(rows, columns=["face", "road", "dist"]).sort_values("dist").drop_duplicates("face")
     return match.set_index("face")
+
+
+def local_bearing(line, pos: float, probe: float = 2.0) -> float:
+    """Direction of travel (degrees) right around arc-length pos — used to
+    tell a genuine crossing street apart from the next OSM way segment of
+    the *same* street (see drop_crossing_road_points), which shares roughly
+    the same bearing where they meet."""
+    a = line.interpolate(max(pos - probe, 0.0))
+    b = line.interpolate(min(pos + probe, line.length))
+    return float(np.degrees(np.arctan2(b.y - a.y, b.x - a.x))) % 360
 
 
 def blocked_intervals(line, obstacles: dict[str, np.ndarray]) -> list[tuple[float, float, str]]:
@@ -255,6 +266,7 @@ def allocate_from_roads(roads: gpd.GeoDataFrame, probes: dict, obstacles: dict, 
                 rejected.append({"motivo": motivo, "porte": porte, "logradouro": street_name, "geometry": point})
 
         for pos in positions:
+            own_bearing = local_bearing(road_geom, pos)
             for side_left in ([True, False] if offset else [None]):
                 if not offset:
                     point = road_geom.interpolate(pos)
@@ -275,7 +287,7 @@ def allocate_from_roads(roads: gpd.GeoDataFrame, probes: dict, obstacles: dict, 
                         continue
                 records.append({
                     "tipo_vaga": "calcada" if offset else "eixo_via", "porte": porte, "via_osm": row["highway"],
-                    "logradouro": street_name,
+                    "logradouro": street_name, "bearing": own_bearing,
                     "cd_setor": None, "cd_quadra": None, "cd_face": None, "posicao_face_m": round(pos, 1),
                     "posicao_lateral": "sobre o eixo da via" if not offset else
                                       ("deslocada por largura estimada (sem prédios)" if not clamp_building else
@@ -303,6 +315,57 @@ def enrich_with_ibge(points: gpd.GeoDataFrame, faces: gpd.GeoDataFrame) -> gpd.G
         has_name = points.loc[todo.index, "logradouro"].astype(bool).to_numpy()
         points.loc[todo.index, "logradouro"] = np.where(has_name, points.loc[todo.index, "logradouro"], ibge_name)
     return points
+
+
+def build_road_buffer_tree(roads: gpd.GeoDataFrame) -> shapely.STRtree:
+    """An STRtree of every eligible road's carriageway, each buffered out to
+    where a slot must clear it (half-width + CURB_SETBACK_M) — not just the
+    generation-class roads a slot is linked to, so a cross street of any
+    class still counts. Used to catch a slot that cleared *its own* matched
+    road but, near a junction, still lands inside a different, intersecting
+    one (see drop_crossing_road_points)."""
+    return shapely.STRtree(list(roads.geometry.buffer((roads["half"] + CURB_SETBACK_M).to_numpy())))
+
+
+CROSSING_ANGLE_MIN_DEG = 45.0  # above this, a road the point falls inside of counts as an actual crossing street
+
+
+def drop_crossing_road_points(points: gpd.GeoDataFrame, tree: shapely.STRtree,
+                              road_geoms: np.ndarray) -> tuple[gpd.GeoDataFrame, list[dict]]:
+    """Points that cleared their own matched/source road but still fall
+    inside some *other* road's carriageway — almost always a slot pushed
+    sideways near a junction landing in the middle of a crossing street.
+    `tree` indexes buffered `road_geoms` (see build_road_buffer_tree); a hit
+    only counts if that road's local bearing differs from the point's own
+    (points["bearing"], set when the record was built) by at least
+    CROSSING_ANGLE_MIN_DEG — the next OSM way segment of the *same* street
+    hits the same buffer test (two consecutive segments' buffers overlap
+    near the shared node) but shares roughly the same bearing there, so it's
+    not flagged. Dropped points come back as motivo=via_transversal so they
+    still show up in the webmap's "vagas inviáveis" layer instead of
+    silently vanishing."""
+    if not len(points):
+        return points, []
+    hit_pt, hit_road = tree.query(points.geometry.to_numpy(), predicate="within")
+    if not len(hit_pt):
+        return points, []
+    pts = points.geometry.to_numpy()
+    own_bearing = points["bearing"].to_numpy()
+    bad_mask = np.zeros(len(points), dtype=bool)
+    for pi, ri in zip(hit_pt, hit_road):
+        if bad_mask[pi]:
+            continue
+        road = road_geoms[ri]
+        hit_bearing = local_bearing(road, road.project(pts[pi]))
+        diff = min(angle_diff(own_bearing[pi], hit_bearing), angle_diff(own_bearing[pi], (hit_bearing + 180) % 360))
+        if diff >= CROSSING_ANGLE_MIN_DEG:
+            bad_mask[pi] = True
+    if not bad_mask.any():
+        return points, []
+    bad = points[bad_mask]
+    rejected = [{"motivo": "via_transversal", "porte": row.porte, "logradouro": row.logradouro,
+                "geometry": row.geometry} for row in bad.itertuples()]
+    return points[~bad_mask].reset_index(drop=True), rejected
 
 
 def main() -> None:
@@ -345,6 +408,10 @@ def main() -> None:
     roads_raw["geometry"] = ways_raw_geometry.loc[roads.index]
     gen_roads = roads[roads["highway"].isin(GENERATION_CLASSES)]
     gen_roads_raw = roads_raw[roads_raw["highway"].isin(GENERATION_CLASSES)]
+    road_tree = build_road_buffer_tree(roads)
+    road_tree_raw = build_road_buffer_tree(roads_raw)
+    road_geoms = roads.geometry.to_numpy()
+    road_geoms_raw = roads_raw.geometry.to_numpy()
 
     # --- sidewalk slots from the faces ------------------------------------------
     match = match_faces_to_streets(faces, roads)
@@ -428,7 +495,7 @@ def main() -> None:
                     continue
                 records.append({
                     "tipo_vaga": "calcada", "porte": porte, "via_osm": face["highway"],
-                    "logradouro": street_name,
+                    "logradouro": street_name, "bearing": local_bearing(road_geom, road_geom.project(point)),
                     "cd_setor": face["CD_SETOR"], "cd_quadra": face["CD_QUADRA"], "cd_face": face["CD_FACE"],
                     "posicao_face_m": round(pos, 1), "posicao_lateral": "indicativa (ajustada à via OSM)",
                     "geometry": point,
@@ -463,9 +530,22 @@ def main() -> None:
 
         for method_id, generate in methods.items():
             records, rejected, extra_stats = generate(spacing_fn)
-            points = gpd.GeoDataFrame(records, geometry="geometry", crs=crs)
+            points = gpd.GeoDataFrame(records, geometry="geometry", crs=crs).reset_index(drop=True)
             if method_id != "face_ibge":
                 points = enrich_with_ibge(points, faces)
+
+            # osm_eixo sits on the carriageway on purpose (see module
+            # docstring) — every other method offsets off it, so a slot
+            # still inside *some* road's carriageway near a junction is a
+            # cross street it was pushed into, not a legitimate position.
+            if method_id != "osm_eixo":
+                co_registered = method_id == "face_ibge" or ROAD_METHODS[method_id]["clamp_building"]
+                tree = road_tree if co_registered else road_tree_raw
+                geoms = road_geoms if co_registered else road_geoms_raw
+                points, crossing_rejected = drop_crossing_road_points(points, tree, geoms)
+                rejected += crossing_rejected
+            points = points.drop(columns="bearing", errors="ignore")
+
             before = len(points)
             min_sep = points["porte"].map(lambda porte: spacing_fn(porte)).to_numpy()
             points = enforce_min_separation(points, min_sep).reset_index(drop=True)

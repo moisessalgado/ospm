@@ -42,7 +42,7 @@ const style = {
     id: `basemap-${key}`,
     type: "raster",
     source: `basemap-${key}`,
-    layout: { visibility: key === "satellite" ? "visible" : "none" },
+    layout: { visibility: key === "osm" ? "visible" : "none" },
   })),
 };
 
@@ -63,6 +63,8 @@ const municipalitySelect = document.getElementById("municipality-select");
 const methodSelect = document.getElementById("method-select");
 const spacingSelect = document.getElementById("spacing-select");
 const basemapSelect = document.getElementById("basemap-select");
+const slotsToggle = document.getElementById("layer-slots-toggle");
+const rejectedToggle = document.getElementById("layer-rejected-toggle");
 const measureToggleBtn = document.getElementById("measure-toggle");
 const measureClearBtn = document.getElementById("measure-clear");
 const snapToggle = document.getElementById("snap-toggle");
@@ -155,6 +157,7 @@ function addSlotLayers() {
         "match", ["get", "motivo"],
         "sem_espaco_seguro", "#d64545",
         "esquina", "#fdd835",
+        "via_transversal", "#e91e63",
         "travessia", "#fb8c00",
         "acesso_garagem", "#8d6e63",
         "ponto_onibus", "#29b6f6",
@@ -213,6 +216,7 @@ const TIPO_VAGA_LABEL = { calcada: "Calçada", canteiro_central: "Canteiro centr
 const MOTIVO_LABEL = {
   sem_espaco_seguro: "Sem espaço seguro até a fachada",
   esquina: "Afastamento de esquina",
+  via_transversal: "Dentro de uma via transversal",
   travessia: "Travessia de pedestres",
   acesso_garagem: "Acesso de garagem",
   ponto_onibus: "Ponto de ônibus",
@@ -365,10 +369,8 @@ async function loadVariant(municipality, variant) {
   const payload = await resp.json();
   map.getSource("slots").setData(decodeCompactPoints(payload));
   map.getSource("rejected").setData(decodeRejectedPoints(payload.rejeitados ?? [], payload.legend));
-  const rejectedNote = variant.rejected_count ? ` · ${variant.rejected_count.toLocaleString("pt-BR")} vagas inviáveis` : "";
-  setStatus(
-    `${municipality.name} — ${variant.method_label}: ${variant.count.toLocaleString("pt-BR")} vagas de plantio${rejectedNote}`
-  );
+  const rejectedNote = variant.rejected_count ? ` · ${variant.rejected_count.toLocaleString("pt-BR")} inviáveis` : "";
+  setStatus(`${variant.count.toLocaleString("pt-BR")} vagas de plantio${rejectedNote}`);
 }
 
 municipalitySelect.addEventListener("change", (e) => selectMunicipality(e.target.value));
@@ -386,6 +388,15 @@ basemapSelect.addEventListener("change", (e) => {
   for (const key of Object.keys(BASEMAPS)) {
     map.setLayoutProperty(`basemap-${key}`, "visibility", key === e.target.value ? "visible" : "none");
   }
+});
+
+slotsToggle.addEventListener("change", (e) => {
+  const visibility = e.target.checked ? "visible" : "none";
+  for (const id of ["slot-clusters", "slot-cluster-count", "slot-points"]) map.setLayoutProperty(id, "visibility", visibility);
+});
+
+rejectedToggle.addEventListener("change", (e) => {
+  map.setLayoutProperty("rejected-points", "visibility", e.target.checked ? "visible" : "none");
 });
 
 // --- Measuring tool ---------------------------------------------------------

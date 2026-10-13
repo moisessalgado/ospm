@@ -222,18 +222,29 @@ html, body {
   line-height: 1.7;
 }
 
-#legend strong {
-  display: block;
+.legend-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  margin-top: 12px;
+  margin-bottom: 6px;
+}
+
+.legend-title:first-child {
+  margin-top: 0;
+}
+
+.legend-title input[type="checkbox"] {
+  margin: 0;
+}
+
+.legend-title strong {
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--muted);
-  margin-bottom: 6px;
-}
-
-#legend strong:not(:first-child) {
-  margin-top: 12px;
 }
 
 .legend-hint {
@@ -241,18 +252,6 @@ html, body {
   color: var(--muted);
   border-bottom: 1px dotted var(--muted);
   font-size: 11px;
-}
-
-.legend-note {
-  margin: 4px 0 0;
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.legend-note a {
-  color: var(--primary-dark);
-  font-weight: 600;
-  text-decoration: none;
 }
 
 .dot {
