@@ -38,7 +38,9 @@ para comparar o que cada fonte de dados consegue garantir:
 
 Espaçamentos: `10m` (genérico) e `porte` (6/8/11 m pelo porte da árvore, que
 vem da classe da via). Detalhes, parâmetros e limitações em
-[modeling/README.md](modeling/README.md) e na página de metodologia.
+[modeling/README.md](modeling/README.md) e na página de metodologia; a
+matemática de cada passo, com exemplos numéricos, em
+[modeling/ALGORITMOS.md](modeling/ALGORITMOS.md).
 
 ## Estrutura do repositório
 

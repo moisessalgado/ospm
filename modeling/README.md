@@ -6,6 +6,9 @@ o webmap deixa alternar entre eles para o mesmo município.
 
 ## Métodos
 
+Explicação didática dos algoritmos, com as fórmulas e exemplos numéricos, em
+[ALGORITMOS.md](ALGORITMOS.md).
+
 Na ordem do seletor do webmap: `osm_eixo` (padrão do mapa),
 `osm_calcada_lado`, `osm_calcada`, `face_ibge` e `osm_overture`. O
 `face_ibge` é o mais completo em metadados; os outros existem para comparar
