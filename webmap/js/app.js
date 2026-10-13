@@ -148,6 +148,7 @@ function addSlotLayers() {
     type: "circle",
     source: "rejected",
     minzoom: CLUSTER_MAX_ZOOM,
+    layout: { visibility: "none" }, // off by default; the legend checkbox turns it on
     paint: {
       "circle-radius": ["interpolate", ["linear"], ["zoom"], 15, 3, 18, 6, 21, 10],
       "circle-color": PORTE_COLOR_EXPRESSION,
@@ -399,6 +400,7 @@ slotsToggle.addEventListener("change", (e) => {
 
 rejectedToggle.addEventListener("change", (e) => {
   map.setLayoutProperty("rejected-points", "visibility", e.target.checked ? "visible" : "none");
+  document.getElementById("rejected-legend").hidden = !e.target.checked;
 });
 
 // --- Measuring tool ---------------------------------------------------------

@@ -8,7 +8,7 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ctext y='20' font-size='22'%3E%F0%9F%8C%B3%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
   <link rel="stylesheet" href="css/base.css?v=3" />
-  <link rel="stylesheet" href="css/style.css?v=7" />
+  <link rel="stylesheet" href="css/style.css?v=10" />
 </head>
 <body>
   <nav class="site-nav map-nav">
@@ -32,7 +32,7 @@
 
   <div id="panel">
     <h1>Vagas de plantio</h1>
-    <p class="subtitle">Pontos para o plantio de árvores em vias públicas</p>
+    <p id="status" class="subtitle"></p>
 
     <div class="field">
       <label for="municipality-select">Município</label>
@@ -85,11 +85,16 @@
       <div><span class="dot" style="background:#1565c0"></span> Médio</div>
       <div><span class="dot" style="background:#6a1b9a"></span> Grande</div>
 
+      <div class="panel-note">
+        <a href="metodologia.html">Como as vagas são calculadas →</a>
+      </div>
+
       <label class="legend-title">
-        <input type="checkbox" id="layer-rejected-toggle" checked />
+        <input type="checkbox" id="layer-rejected-toggle" />
         <strong>Vagas inviáveis</strong>
         <span class="legend-hint" title="Mesma cor de porte, com o contorno indicando o motivo. Só aparecem a partir do zoom 15.">i</span>
       </label>
+      <div id="rejected-legend" hidden>
       <div><span class="dot" style="background:#1565c0;outline:2.5px solid #d64545;outline-offset:1px"></span> Sem espaço até a fachada</div>
       <div><span class="dot" style="background:#1565c0;outline:2.5px solid #fdd835;outline-offset:1px"></span> Esquina</div>
       <div><span class="dot" style="background:#1565c0;outline:2.5px solid #e91e63;outline-offset:1px"></span> Via transversal</div>
@@ -98,16 +103,12 @@
       <div><span class="dot" style="background:#1565c0;outline:2.5px solid #8d6e63;outline-offset:1px"></span> Acesso de garagem</div>
       <div><span class="dot" style="background:#1565c0;outline:2.5px solid #29b6f6;outline-offset:1px"></span> Ponto de ônibus</div>
       <div><span class="dot" style="background:#1565c0;outline:2.5px solid #2e7d32;outline-offset:1px"></span> Árvore existente</div>
+      </div>
     </div>
 
-    <div id="status"></div>
-
-    <div class="panel-note">
-      <a href="metodologia.html">Como as vagas são calculadas →</a>
-    </div>
   </div>
 
   <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-  <script src="js/app.js?v=13"></script>
+  <script src="js/app.js?v=14"></script>
 </body>
 </html>

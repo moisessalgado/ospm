@@ -34,7 +34,9 @@ de cada uma.
   em `js/app.js`, sem animação de voo — o mapa já nasce centrado ali).
 - Dois conjuntos de pontos, cada um com um checkbox próprio na legenda para
   ligar/desligar a camada (`layer-slots-toggle`/`layer-rejected-toggle` em
-  `js/app.js`):
+  `js/app.js`). As vagas inviáveis abrem desligadas e com a legenda recolhida;
+  ao ligar o checkbox a camada e a legenda aparecem. A contagem "N vagas de
+  plantio · M inviáveis" fica no topo do painel (`#status`):
   - **Vagas de plantio** (cor por porte — pequeno/médio/grande).
   - **Vagas inviáveis**: candidatos que o algoritmo descartou, na mesma cor
     de porte (é o porte que a vaga teria), mas com um contorno colorido
