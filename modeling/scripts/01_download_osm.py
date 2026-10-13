@@ -1,118 +1,117 @@
-"""Download the municipal boundary (Nominatim) and road network (Overpass)
-for a given município.
+"""Download OpenStreetMap inputs for a municipality: boundary (Nominatim),
+road network clipped to the boundary, and point/line obstacles (Overpass).
 
-Pilot for the tree-planting-slot modeling prototype. Single city at a time,
-so Overpass API is fine here (country-wide would instead use a Geofabrik
-.osm.pbf extract).
+Downloads are cached in the municipality's data dir; delete a file to refresh it.
 """
 
 from __future__ import annotations
 
 import json
-import sys
 import time
-from pathlib import Path
 
+import geopandas as gpd
 import httpx
+from shapely.geometry import LineString, shape
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from common.municipios import get_municipio, municipio_arg_parser  # noqa: E402
+from planting_slots.municipalities import get_municipality, municipality_arg_parser
+from planting_slots.paths import OSM_ROADS_LAYER, MunicipalityFiles
 
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
+HEADERS = {"User-Agent": "ospm-vagas-plantio/0.1 (contato: moises.pgser@gmail.com)"}
 
-HEADERS = {"User-Agent": "coordenada-geo-arvores-prototype/0.1 (contato: moises.pgser@gmail.com)"}
+ROAD_TAGS = ["highway", "name", "oneway", "lanes", "sidewalk", "width", "surface", "junction"]
+OBSTACLE_QUERY = """
+  node["highway"="bus_stop"]({bb});
+  node["public_transport"="platform"]({bb});
+  way["public_transport"="platform"]({bb});
+  node["natural"="tree"]({bb});
+  way["highway"="footway"]["footway"="crossing"]({bb});
+  node["highway"="crossing"]({bb});
+  node["amenity"="parking_entrance"]({bb});
+  way["service"="driveway"]({bb});
+"""
 
 
-def fetch_boundary(data_dir: Path, nome: str, uf: str) -> dict:
-    out_path = data_dir / "boundary.geojson"
-    if out_path.exists():
-        print(f"[boundary] cache hit -> {out_path}")
-        return json.loads(out_path.read_text())
+def overpass(query: str, timeout_s: int) -> dict:
+    for attempt in range(1, 4):
+        try:
+            resp = httpx.post(OVERPASS_URL, data={"data": query}, headers=HEADERS, timeout=timeout_s + 30)
+            resp.raise_for_status()
+            return resp.json()
+        except Exception as exc:  # noqa: BLE001 — Overpass fails transiently under load
+            print(f"  tentativa {attempt} falhou: {exc}")
+            time.sleep(15 * attempt)
+    raise RuntimeError("Overpass falhou após 3 tentativas")
 
-    params = {
-        "city": nome,
-        "state": uf,
-        "country": "Brazil",
-        "format": "json",
-        "polygon_geojson": 1,
-        "limit": 1,
-    }
+
+def fetch_boundary(files: MunicipalityFiles) -> dict:
+    if files.boundary.exists():
+        return json.loads(files.boundary.read_text())
+    m = files.municipality
+    params = {"city": m.name, "state": m.state, "country": "Brazil", "format": "json", "polygon_geojson": 1, "limit": 1}
     resp = httpx.get(NOMINATIM_URL, params=params, headers=HEADERS, timeout=60)
     resp.raise_for_status()
     results = resp.json()
     if not results:
-        raise RuntimeError(f"Nominatim returned no results for {nome}, {uf}")
-
-    feature = {
-        "type": "Feature",
-        "geometry": results[0]["geojson"],
-        "properties": {
-            "display_name": results[0]["display_name"],
-            "osm_id": results[0]["osm_id"],
-            "osm_type": results[0]["osm_type"],
-        },
-    }
-    fc = {"type": "FeatureCollection", "features": [feature]}
-    out_path.write_text(json.dumps(fc))
-    print(f"[boundary] saved -> {out_path}")
+        raise SystemExit(f"Nominatim não encontrou {m.name}, {m.state}")
+    fc = {"type": "FeatureCollection", "features": [
+        {"type": "Feature", "geometry": results[0]["geojson"],
+         "properties": {"display_name": results[0]["display_name"], "osm_id": results[0]["osm_id"]}}
+    ]}
+    files.boundary.write_text(json.dumps(fc))
+    print(f"[limite] salvo -> {files.boundary}")
     return fc
 
 
-def fetch_highways(data_dir: Path, bbox: tuple[float, float, float, float]) -> dict:
-    out_path = data_dir / "highways_raw.json"
-    if out_path.exists():
-        print(f"[highways] cache hit -> {out_path}")
-        return json.loads(out_path.read_text())
+def bbox_of(boundary: dict) -> dict:
+    west, south, east, north = shape(boundary["features"][0]["geometry"]).bounds
+    return {"south": south, "west": west, "north": north, "east": east}
 
-    south, west, north, east = bbox
-    query = f"""
-    [out:json][timeout:180];
-    (
-      way["highway"]({south},{west},{north},{east});
-    );
-    out body geom;
-    """
-    for attempt in range(1, 4):
-        try:
-            resp = httpx.post(OVERPASS_URL, data={"data": query}, headers=HEADERS, timeout=200)
-            resp.raise_for_status()
-            data = resp.json()
-            out_path.write_text(json.dumps(data))
-            print(f"[highways] saved -> {out_path} ({len(data.get('elements', []))} ways)")
-            return data
-        except Exception as exc:  # noqa: BLE001 — retry on transient Overpass failures
-            print(f"[highways] attempt {attempt} failed: {exc}")
-            time.sleep(10)
-    raise RuntimeError("Failed to fetch highways from Overpass after 3 attempts")
+
+def fetch_roads(files: MunicipalityFiles, bb: str) -> dict:
+    if files.osm_roads_raw.exists():
+        return json.loads(files.osm_roads_raw.read_text())
+    print("[vias] consultando Overpass…")
+    data = overpass(f'[out:json][timeout:180];way["highway"]({bb});out body geom;', 180)
+    files.osm_roads_raw.write_text(json.dumps(data))
+    print(f"[vias] {len(data['elements'])} vias -> {files.osm_roads_raw}")
+    return data
+
+
+def fetch_obstacles(files: MunicipalityFiles, bb: str) -> None:
+    if files.osm_obstacles.exists():
+        return
+    print("[obstáculos] consultando Overpass…")
+    data = overpass(f"[out:json][timeout:300];({OBSTACLE_QUERY.format(bb=bb)});out body geom;", 300)
+    files.osm_obstacles.write_text(json.dumps(data))
+    print(f"[obstáculos] {len(data['elements'])} elementos -> {files.osm_obstacles}")
+
+
+def clip_roads(files: MunicipalityFiles, raw: dict, boundary: dict) -> None:
+    rows = []
+    for el in raw["elements"]:
+        if el.get("type") != "way" or len(el.get("geometry", [])) < 2:
+            continue
+        tags = el.get("tags", {})
+        rows.append({"osm_id": el["id"], **{t: tags.get(t) for t in ROAD_TAGS},
+                     "geometry": LineString([(p["lon"], p["lat"]) for p in el["geometry"]])})
+    roads = gpd.GeoDataFrame(rows, geometry="geometry", crs="EPSG:4326")
+    limit = gpd.GeoDataFrame(geometry=[shape(boundary["features"][0]["geometry"])], crs="EPSG:4326")
+    clipped = gpd.clip(roads, limit).to_crs(files.municipality.epsg)
+    clipped.to_file(files.osm_roads, layer=OSM_ROADS_LAYER, driver="GPKG")
+    print(f"[vias] {len(clipped)} vias no limite do município -> {files.osm_roads}")
 
 
 def main() -> None:
-    args = municipio_arg_parser(__doc__).parse_args()
-    municipio = get_municipio(args.municipio)
-
-    data_dir = Path(__file__).resolve().parent.parent / "data" / municipio.slug
-    data_dir.mkdir(parents=True, exist_ok=True)
-
-    boundary_fc = fetch_boundary(data_dir, municipio.nome, municipio.uf)
-    geom = boundary_fc["features"][0]["geometry"]
-
-    coords = []
-    if geom["type"] == "Polygon":
-        rings = geom["coordinates"]
-    else:  # MultiPolygon
-        rings = [ring for poly in geom["coordinates"] for ring in poly]
-    for ring in rings:
-        coords.extend(ring)
-    lons = [c[0] for c in coords]
-    lats = [c[1] for c in coords]
-    bbox = (min(lats), min(lons), max(lats), max(lons))
-    print(f"[bbox] south,west,north,east = {bbox}")
-
-    bbox_path = data_dir / "bbox.json"
-    bbox_path.write_text(json.dumps({"south": bbox[0], "west": bbox[1], "north": bbox[2], "east": bbox[3]}))
-
-    fetch_highways(data_dir, bbox)
+    files = MunicipalityFiles(get_municipality(municipality_arg_parser(__doc__).parse_args().municipio))
+    files.ensure_dirs()
+    boundary = fetch_boundary(files)
+    bbox = bbox_of(boundary)
+    files.bbox.write_text(json.dumps(bbox))
+    bb = f"{bbox['south']},{bbox['west']},{bbox['north']},{bbox['east']}"
+    clip_roads(files, fetch_roads(files, bb), boundary)
+    fetch_obstacles(files, bb)
 
 
 if __name__ == "__main__":

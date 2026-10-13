@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "planting-slots"
+version = "0.1.0"
+description = "Modelagem de vagas de plantio de árvores em vias públicas a partir de OSM, IBGE e Overture Maps"
+requires-python = ">=3.11"
+authors = [{ name = "Moisés Salgado", email = "moises.pgser@gmail.com" }]
+dependencies = [
+    "geopandas>=1.0",
+    "shapely>=2.0",
+    "pandas",
+    "numpy",
+    "scipy",
+    "pyarrow",
+    "httpx",
+    "overturemaps",
+]
+
+[project.optional-dependencies]
+dev = ["pyflakes", "playwright"]
+
+[tool.setuptools]
+packages = ["planting_slots"]

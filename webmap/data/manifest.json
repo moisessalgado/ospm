@@ -1,14 +1,46 @@
 {
-  "municipios": [
+  "municipalities": [
     {
       "slug": "sorocaba",
-      "nome": "Sorocaba",
-      "uf": "São Paulo",
+      "name": "Sorocaba",
+      "state": "São Paulo",
       "center": [
         -47.43649430000001,
         -23.469435599999997
       ],
-      "count": 553413
+      "variants": [
+        {
+          "id": "espacamento_10m",
+          "label": "Espaçamento genérico de 10 m",
+          "count": 351378
+        },
+        {
+          "id": "espacamento_porte",
+          "label": "Espaçamento por porte (6/8/11 m)",
+          "count": 419671
+        }
+      ]
+    },
+    {
+      "slug": "suzano",
+      "name": "Suzano",
+      "state": "São Paulo",
+      "center": [
+        -46.31920425,
+        -23.6154758
+      ],
+      "variants": [
+        {
+          "id": "espacamento_10m",
+          "label": "Espaçamento genérico de 10 m",
+          "count": 131691
+        },
+        {
+          "id": "espacamento_porte",
+          "label": "Espaçamento por porte (6/8/11 m)",
+          "count": 160553
+        }
+      ]
     }
   ]
 }

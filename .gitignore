@@ -4,3 +4,4 @@ docs/
 modeling/data/
 modeling/output/
 __pycache__/
+*.egg-info/

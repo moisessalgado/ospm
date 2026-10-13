@@ -13,13 +13,15 @@ gerados pelo módulo `modeling/`, sobre um basemap do Google Maps.
   linha segue o cursor mostrando a distância ao vivo; duplo clique, Enter ou
   Esc finalizam a linha (Backspace desfaz o último vértice). Com "Snap" ligado,
   o cursor gruda em qualquer ponto de vaga sob ele (zoom 15+).
-- Pontos de vagas de plantio: carregados de `data/<slug>.json`, gerado pelo
-  `modeling/scripts/10_export_web.py`. Não é GeoJSON — é um array plano
-  `[lon, lat, porte_code, slot_code, ...]` mais uma tabela `legend` para
-  decodificar os códigos, o que reduz bastante o tamanho do arquivo
-  (sem perder nenhum ponto). `js/app.js` reconstrói o GeoJSON no navegador
-  antes de passar para o MapLibre. `data/manifest.json` lista os municípios
-  disponíveis no seletor.
+- Vagas de plantio: carregadas de `data/<municipio>/<variante>.json`, gerado
+  por `modeling/scripts/04_export_webmap.py`. Não é GeoJSON — é um array plano
+  `[lon, lat, porte, tipo_vaga, ...]` em que os atributos são índices da
+  tabela `legend`, o que reduz bastante o tamanho do arquivo sem perder
+  nenhuma vaga. `js/app.js` reconstrói o GeoJSON no navegador antes de passar
+  para o MapLibre. `data/manifest.json` lista municípios e variantes de
+  espaçamento disponíveis nos seletores.
+- A posição lateral das vagas é indicativa (linha da face de quadra do IBGE);
+  ver `modeling/README.md`.
 
 ## Testar localmente
 

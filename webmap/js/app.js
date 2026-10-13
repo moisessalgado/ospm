@@ -1,7 +1,7 @@
 "use strict";
 
-// Tiles do Google Maps via endpoint XYZ não-oficial (sem necessidade de API key).
-// lyrs: m = ruas, s = satélite, y = híbrido (satélite + rótulos/vias).
+// Google Maps tiles through the unofficial XYZ endpoint (no API key).
+// lyrs: m = roadmap, s = satellite, y = hybrid (satellite + labels/roads).
 function googleTileUrls(lyrs) {
   return [0, 1, 2, 3].map(
     (s) => `https://mt${s}.google.com/vt/lyrs=${lyrs}&x={x}&y={y}&z={z}`
@@ -19,8 +19,8 @@ const BASEMAPS = {
   },
 };
 
-// Clustering: abaixo deste zoom os pontos são agregados em bolhas com contagem.
-// Acima dele os pontos individuais aparecem (e o snap da medição funciona).
+// Up to this zoom slots are aggregated into counted clusters; above it individual
+// slots are drawn (and the measuring tool can snap to them).
 const CLUSTER_MAX_ZOOM = 14;
 const CLUSTER_RADIUS = 50;
 
@@ -29,8 +29,8 @@ const FONT = ["Open Sans Semibold"];
 
 const style = {
   version: 8,
-  // Sem "glyphs" nenhuma camada de texto (contagem de cluster, rótulos de
-  // distância) é criada pelo MapLibre.
+  // Without "glyphs" MapLibre silently skips every text layer (cluster counts,
+  // distance labels).
   glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
   sources: Object.fromEntries(
     Object.entries(BASEMAPS).map(([key, b]) => [
@@ -56,7 +56,8 @@ map.addControl(new maplibregl.NavigationControl(), "top-right");
 map.addControl(new maplibregl.ScaleControl({ unit: "metric" }), "bottom-right");
 
 const statusEl = document.getElementById("status");
-const municipioSelect = document.getElementById("municipio-select");
+const municipalitySelect = document.getElementById("municipality-select");
+const variantSelect = document.getElementById("variant-select");
 const basemapSelect = document.getElementById("basemap-select");
 const measureToggleBtn = document.getElementById("measure-toggle");
 const measureClearBtn = document.getElementById("measure-clear");
@@ -64,7 +65,7 @@ const snapToggle = document.getElementById("snap-toggle");
 const measureStatusEl = document.getElementById("measure-status");
 const cursorLabel = document.getElementById("cursor-label");
 
-let manifest = { municipios: [] };
+let manifest = { municipalities: [] };
 
 const emptyFC = () => ({ type: "FeatureCollection", features: [] });
 
@@ -73,15 +74,15 @@ function setStatus(msg) {
 }
 
 map.on("load", async () => {
-  addVagasLayers();
+  addSlotLayers();
   addMeasureLayers();
   await loadManifest();
 });
 
-// --- Camada de vagas (com clustering) ---------------------------------------
+// --- Planting slots layer (clustered) ---------------------------------------
 
-function addVagasLayers() {
-  map.addSource("vagas", {
+function addSlotLayers() {
+  map.addSource("slots", {
     type: "geojson",
     data: emptyFC(),
     cluster: true,
@@ -90,9 +91,9 @@ function addVagasLayers() {
   });
 
   map.addLayer({
-    id: "vagas-clusters",
+    id: "slot-clusters",
     type: "circle",
-    source: "vagas",
+    source: "slots",
     filter: ["has", "point_count"],
     paint: {
       "circle-radius": ["step", ["get", "point_count"], 14, 100, 18, 1000, 24, 10000, 32],
@@ -103,9 +104,9 @@ function addVagasLayers() {
     },
   });
   map.addLayer({
-    id: "vagas-cluster-count",
+    id: "slot-cluster-count",
     type: "symbol",
-    source: "vagas",
+    source: "slots",
     filter: ["has", "point_count"],
     layout: {
       "text-field": ["get", "point_count_abbreviated"],
@@ -117,9 +118,9 @@ function addVagasLayers() {
   });
 
   map.addLayer({
-    id: "vagas-points",
+    id: "slot-points",
     type: "circle",
-    source: "vagas",
+    source: "slots",
     filter: ["!", ["has", "point_count"]],
     paint: {
       "circle-radius": ["interpolate", ["linear"], ["zoom"], 15, 3, 18, 6, 21, 10],
@@ -137,22 +138,23 @@ function addVagasLayers() {
     },
   });
 
-  map.on("click", "vagas-clusters", async (e) => {
+  map.on("click", "slot-clusters", async (e) => {
     if (measure.active) return;
     const feature = e.features[0];
-    const zoom = await map.getSource("vagas").getClusterExpansionZoom(feature.properties.cluster_id);
+    const zoom = await map.getSource("slots").getClusterExpansionZoom(feature.properties.cluster_id);
     map.easeTo({ center: feature.geometry.coordinates, zoom });
   });
-  map.on("mouseenter", "vagas-clusters", () => {
+  map.on("mouseenter", "slot-clusters", () => {
     if (!measure.active) map.getCanvas().style.cursor = "pointer";
   });
-  map.on("mouseleave", "vagas-clusters", () => {
+  map.on("mouseleave", "slot-clusters", () => {
     if (!measure.active) map.getCanvas().style.cursor = "";
   });
 }
 
-// Formato compacto exportado por modeling/scripts/10_export_web.py:
-// points = [lon, lat, porte_code, slot_code, ...]; legend decodifica os códigos.
+// Compact format written by modeling/scripts/04_export_webmap.py:
+// points = [lon, lat, porte, tipo_vaga, ...] where the two attributes are
+// indices into legend. Rebuilt here as GeoJSON for MapLibre.
 function decodeCompactPoints(payload) {
   const { legend, points } = payload;
   const features = new Array(points.length / 4);
@@ -162,7 +164,7 @@ function decodeCompactPoints(payload) {
       geometry: { type: "Point", coordinates: [points[i], points[i + 1]] },
       properties: {
         porte: legend.porte[points[i + 2]] ?? null,
-        slot_type: legend.slot_type[points[i + 3]] ?? null,
+        tipo_vaga: legend.tipo_vaga[points[i + 3]] ?? null,
       },
     };
   }
@@ -172,26 +174,37 @@ function decodeCompactPoints(payload) {
 async function loadManifest() {
   const resp = await fetch("data/manifest.json");
   manifest = await resp.json();
-  municipioSelect.innerHTML = manifest.municipios
-    .map((m) => `<option value="${m.slug}">${m.nome} — ${m.uf}</option>`)
+  municipalitySelect.innerHTML = manifest.municipalities
+    .map((m) => `<option value="${m.slug}">${m.name} — ${m.state}</option>`)
     .join("");
-  if (manifest.municipios.length) {
-    await loadMunicipio(manifest.municipios[0].slug);
+  if (manifest.municipalities.length) {
+    await selectMunicipality(manifest.municipalities[0].slug);
   }
 }
 
-async function loadMunicipio(slug) {
-  const entry = manifest.municipios.find((m) => m.slug === slug);
-  if (!entry) return;
-  setStatus(`Carregando ${entry.nome}…`);
-  const resp = await fetch(`data/${slug}.json`);
-  const geojson = decodeCompactPoints(await resp.json());
-  map.getSource("vagas").setData(geojson);
-  map.flyTo({ center: entry.center, zoom: 12 });
-  setStatus(`${entry.nome}: ${entry.count.toLocaleString("pt-BR")} vagas de plantio`);
+async function selectMunicipality(slug) {
+  const municipality = manifest.municipalities.find((m) => m.slug === slug);
+  if (!municipality) return;
+  variantSelect.innerHTML = municipality.variants
+    .map((v) => `<option value="${v.id}">${v.label}</option>`)
+    .join("");
+  await loadVariant(municipality, municipality.variants[0].id);
+  map.flyTo({ center: municipality.center, zoom: 12 });
 }
 
-municipioSelect.addEventListener("change", (e) => loadMunicipio(e.target.value));
+async function loadVariant(municipality, variantId) {
+  const variant = municipality.variants.find((v) => v.id === variantId);
+  setStatus(`Carregando ${municipality.name}…`);
+  const resp = await fetch(`data/${municipality.slug}/${variant.id}.json`);
+  map.getSource("slots").setData(decodeCompactPoints(await resp.json()));
+  setStatus(`${municipality.name}: ${variant.count.toLocaleString("pt-BR")} vagas de plantio`);
+}
+
+municipalitySelect.addEventListener("change", (e) => selectMunicipality(e.target.value));
+variantSelect.addEventListener("change", (e) => {
+  const municipality = manifest.municipalities.find((m) => m.slug === municipalitySelect.value);
+  loadVariant(municipality, e.target.value);
+});
 
 basemapSelect.addEventListener("change", (e) => {
   for (const key of Object.keys(BASEMAPS)) {
@@ -199,18 +212,17 @@ basemapSelect.addEventListener("change", (e) => {
   }
 });
 
-// --- Ferramenta de medição ---------------------------------------------------
-// Clique adiciona um vértice; a linha "elástica" segue o cursor mostrando a
-// distância ao vivo. Duplo clique, Enter ou Esc finalizam a linha atual (ela
-// fica no mapa) e o próximo clique começa uma nova. Com snap ligado, o cursor
-// gruda no ponto de vaga mais próximo sob ele (qualquer ponto visível, não
-// só vizinhos), para medir com precisão a distância entre árvores.
+// --- Measuring tool ---------------------------------------------------------
+// Each click adds a vertex; a rubber-band segment follows the cursor showing the
+// live distance. Double-click, Enter or Esc finish the current line (it stays on
+// the map) and the next click starts a new one. With snap on, the cursor locks
+// onto the nearest visible slot under it, to measure tree-to-tree distances.
 
 const measure = {
   active: false,
-  lines: [], // linhas finalizadas: [[lon, lat], ...]
-  current: [], // linha em desenho
-  cursor: null, // posição atual do cursor (já com snap aplicado)
+  lines: [], // finished lines: [[lon, lat], ...]
+  current: [], // line being drawn
+  cursor: null, // current cursor position (snap already applied)
   snapped: false,
 };
 
@@ -308,7 +320,7 @@ function snapTarget(point) {
     [point.x - SNAP_RADIUS_PX, point.y - SNAP_RADIUS_PX],
     [point.x + SNAP_RADIUS_PX, point.y + SNAP_RADIUS_PX],
   ];
-  const candidates = map.queryRenderedFeatures(box, { layers: ["vagas-points"] });
+  const candidates = map.queryRenderedFeatures(box, { layers: ["slot-points"] });
   let best = null;
   let bestDist = Infinity;
   for (const f of candidates) {
@@ -330,7 +342,7 @@ function resolvePosition(e) {
 
 function onMeasureClick(e) {
   if (!measure.active) return;
-  // O segundo click de um duplo clique chega aqui também; detail===2 é tratado no dblclick.
+  // The second click of a double-click also lands here; it is handled by dblclick.
   if (e.originalEvent.detail > 1) return;
   measure.current.push(resolvePosition(e));
   renderMeasure();
@@ -417,7 +429,7 @@ function setMeasureActive(active) {
   if (!active) finishCurrentLine();
   measureToggleBtn.classList.toggle("active", active);
   measureToggleBtn.textContent = active ? "Parar" : "Medir";
-  // Duplo clique finaliza a linha em vez de dar zoom enquanto mede.
+  // While measuring, double-click finishes the line instead of zooming.
   if (active) map.doubleClickZoom.disable();
   else map.doubleClickZoom.enable();
   map.getCanvas().style.cursor = active ? "crosshair" : "";
