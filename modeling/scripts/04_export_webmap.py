@@ -1,12 +1,13 @@
 """Export allocated slots to the webmap in a compact format and update its manifest.
 
-Each variant becomes webmap/data/<municipality>/<variant>.json:
+Each variant (method x spacing) becomes webmap/data/<municipality>/<variant>.json:
   {"legend": {...}, "points": [lon, lat, porte, tipo_vaga, logradouro, face, posicao_face_m, ...]}
 i.e. a flat numeric array (7 numbers per slot) whose categorical attributes
 are indices into "legend" — no per-feature GeoJSON boilerplate. "face" indexes
 legend.face, a [cd_setor, cd_quadra, cd_face] triple (-1, and posicao_face_m
--1, for median slots, which have none). The webmap rebuilds the GeoJSON
-client-side.
+-1, for slots with no IBGE match close enough). The webmap rebuilds the
+GeoJSON client-side. The manifest lists each variant's method and spacing
+separately so the webmap can offer them as two selectors.
 """
 
 from __future__ import annotations
@@ -22,11 +23,17 @@ COORD_DECIMALS = 5  # ~1.1 m — enough for display
 POINT_STRIDE = 7
 LEGEND = {
     "porte": ["pequeno", "medio", "grande"],
-    "tipo_vaga": ["calcada", "canteiro_central"],
+    "tipo_vaga": ["calcada", "canteiro_central", "eixo_via"],
 }
-VARIANTS = {  # id -> label shown in the webmap, in selector order
-    "espacamento_10m": "Espaçamento genérico de 10 m",
-    "espacamento_porte": "Espaçamento por porte (6/8/11 m)",
+METHODS = {  # id -> label, in selector order
+    "face_ibge": "Face de quadra (IBGE) — método atual",
+    "osm_eixo": "Eixo da via (OSM), sem deslocamento",
+    "osm_calcada": "Calçada estimada por OSM, sem prédios",
+    "osm_overture": "Calçada validada com prédios (OSM + Overture)",
+}
+SPACINGS = {
+    "10m": "Espaçamento genérico de 10 m",
+    "porte": "Espaçamento por porte (6/8/11 m)",
 }
 
 
@@ -73,16 +80,21 @@ def main() -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     variants = []
-    for variant_id, label in VARIANTS.items():
-        src = files.slots(variant_id, "geojson")
-        if not src.exists():
-            continue
-        payload = compact(json.loads(src.read_text()))
-        out = out_dir / f"{variant_id}.json"
-        out.write_text(json.dumps(payload, separators=(",", ":")))
-        count = len(payload["points"]) // POINT_STRIDE
-        variants.append({"id": variant_id, "label": label, "count": count})
-        print(f"[webmap] {variant_id}: {count} vagas -> {out} ({out.stat().st_size / 1e6:.1f} MB)")
+    for method_id, method_label in METHODS.items():
+        for spacing_id, spacing_label in SPACINGS.items():
+            variant_id = f"{method_id}_{spacing_id}"
+            src = files.slots(variant_id, "geojson")
+            if not src.exists():
+                continue
+            payload = compact(json.loads(src.read_text()))
+            out = out_dir / f"{variant_id}.json"
+            out.write_text(json.dumps(payload, separators=(",", ":")))
+            count = len(payload["points"]) // POINT_STRIDE
+            variants.append({
+                "id": variant_id, "method": method_id, "method_label": method_label,
+                "spacing": spacing_id, "spacing_label": spacing_label, "count": count,
+            })
+            print(f"[webmap] {variant_id}: {count} vagas -> {out} ({out.stat().st_size / 1e6:.1f} MB)")
     if not variants:
         raise SystemExit(f"Nenhuma saída de alocação em {files.output_dir}; rode antes o 03_allocate_slots.py.")
 

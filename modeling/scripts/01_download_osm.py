@@ -17,7 +17,13 @@ from planting_slots.municipalities import get_municipality, municipality_arg_par
 from planting_slots.paths import OSM_ROADS_LAYER, MunicipalityFiles
 
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
-OVERPASS_URL = "https://overpass-api.de/api/interpreter"
+# Mirrors to try in order — the main instance times out on heavier queries
+# (a large/irregular municipality) even when it would eventually succeed.
+OVERPASS_URLS = [
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.kumi.systems/api/interpreter",
+    "https://lz4.overpass-api.de/api/interpreter",
+]
 HEADERS = {"User-Agent": "ospm-vagas-plantio/0.1 (contato: moises.pgser@gmail.com)"}
 
 ROAD_TAGS = ["highway", "name", "oneway", "lanes", "sidewalk", "width", "surface", "junction"]
@@ -34,15 +40,18 @@ OBSTACLE_QUERY = """
 
 
 def overpass(query: str, timeout_s: int) -> dict:
-    for attempt in range(1, 4):
-        try:
-            resp = httpx.post(OVERPASS_URL, data={"data": query}, headers=HEADERS, timeout=timeout_s + 30)
-            resp.raise_for_status()
-            return resp.json()
-        except Exception as exc:  # noqa: BLE001 — Overpass fails transiently under load
-            print(f"  tentativa {attempt} falhou: {exc}")
-            time.sleep(15 * attempt)
-    raise RuntimeError("Overpass falhou após 3 tentativas")
+    attempt = 0
+    for url in OVERPASS_URLS:
+        for _ in range(2):
+            attempt += 1
+            try:
+                resp = httpx.post(url, data={"data": query}, headers=HEADERS, timeout=timeout_s + 30)
+                resp.raise_for_status()
+                return resp.json()
+            except Exception as exc:  # noqa: BLE001 — Overpass fails transiently under load
+                print(f"  tentativa {attempt} ({url}) falhou: {exc}")
+                time.sleep(15 * attempt)
+    raise RuntimeError("Overpass falhou em todos os espelhos")
 
 
 def fetch_boundary(files: MunicipalityFiles) -> dict:
@@ -73,7 +82,7 @@ def fetch_roads(files: MunicipalityFiles, bb: str) -> dict:
     if files.osm_roads_raw.exists():
         return json.loads(files.osm_roads_raw.read_text())
     print("[vias] consultando Overpass…")
-    data = overpass(f'[out:json][timeout:180];way["highway"]({bb});out body geom;', 180)
+    data = overpass(f'[out:json][timeout:300];way["highway"]({bb});out body geom;', 300)
     files.osm_roads_raw.write_text(json.dumps(data))
     print(f"[vias] {len(data['elements'])} vias -> {files.osm_roads_raw}")
     return data

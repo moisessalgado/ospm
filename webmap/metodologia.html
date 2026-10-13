@@ -209,6 +209,66 @@
     </p>
   </section>
 
+  <!-- Quatro métodos -->
+  <section class="story-section alt" id="metodos">
+    <p class="eyebrow reveal">Quatro métodos, lado a lado</p>
+    <h2 class="reveal">Nem toda fonte de dados dá a mesma margem de segurança</h2>
+    <p class="lead reveal">
+      O webmap deixa alternar entre os quatro métodos abaixo para o mesmo município — útil para ver,
+      visualmente, o que cada fonte de dados consegue garantir e o que ela só consegue estimar. Pontos
+      do método 1 aparecem com contorno vermelho no mapa, como lembrete de que ali a vaga está
+      deliberadamente sobre a via.
+    </p>
+
+    <div class="variant-grid">
+      <div class="variant-card reveal">
+        <span class="tag">1 · osm_eixo</span>
+        <h3>Eixo da via (OSM), sem deslocamento</h3>
+        <ul>
+          <li><strong>Vantagem:</strong> o mais simples e rápido de calcular; só precisa do OSM.</li>
+          <li><strong>Desvantagem:</strong> a vaga fica sobre o próprio eixo da rua — viola a regra
+            de nunca ficar no meio da via. Existe só como referência de comparação, não para uso real.</li>
+        </ul>
+      </div>
+      <div class="variant-card reveal">
+        <span class="tag">2 · osm_calcada</span>
+        <h3>Calçada estimada por OSM, sem prédios</h3>
+        <ul>
+          <li><strong>Vantagem:</strong> ainda depende só do OSM; desloca a vaga para a largura de
+            calçada estimada pela classe da via (residencial, arterial etc.).</li>
+          <li><strong>Desvantagem:</strong> a largura é uma estimativa por classe, não uma medição.
+            Em vias mais estreitas que o estimado, a vaga pode continuar na rua; em lotes com recuo
+            irregular, pode passar da calçada e cair dentro do terreno.</li>
+        </ul>
+      </div>
+      <div class="variant-card reveal">
+        <span class="tag">3 · osm_overture</span>
+        <h3>Calçada validada com prédios (OSM + Overture)</h3>
+        <ul>
+          <li><strong>Vantagem:</strong> o mesmo deslocamento do método 2, mas nunca além da fachada
+            do prédio mais próximo medida na Overture — corrige o maior risco do método anterior.</li>
+          <li><strong>Desvantagem:</strong> depende da cobertura e atualização das edificações da
+            Overture; onde não há prédio mapeado por perto, cai de volta na estimativa do método 2.</li>
+        </ul>
+      </div>
+      <div class="variant-card reveal">
+        <span class="tag">4 · face_ibge</span>
+        <h3>Face de quadra (IBGE) — método atual</h3>
+        <ul>
+          <li><strong>Vantagem:</strong> metadados oficiais completos (setor, quadra, face, logradouro)
+            e o único método com canteiros centrais; é o mais testado dos quatro.</li>
+          <li><strong>Desvantagem:</strong> mais lento de calcular; depende do download manual das
+            faces de logradouro do IBGE por estado, que nem sempre está disponível.</li>
+        </ul>
+      </div>
+    </div>
+    <p class="lead reveal" style="margin-top:24px">
+      Todos os quatro usam o IBGE para identificar setor, quadra, face e logradouro oficial de cada
+      vaga sempre que há uma face a menos de 25 m — no método 4 isso já vem do vínculo direto; nos
+      outros três é um pareamento à parte, só para preencher metadados, que nunca move o ponto.
+    </p>
+  </section>
+
   <!-- Variantes de espaçamento -->
   <section class="story-section" id="variantes">
     <p class="eyebrow reveal">Duas variantes</p>
@@ -297,6 +357,6 @@
     <p class="fine">Fontes: IBGE (Censo 2022), OpenStreetMap, Overture Maps · Coletâneas Brasileiras de Arborização Urbana, MMA.</p>
   </footer>
 
-  <script src="js/metodologia.js?v=3"></script>
+  <script src="js/metodologia.js?v=4"></script>
 </body>
 </html>

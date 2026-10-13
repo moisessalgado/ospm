@@ -1,8 +1,17 @@
 # modeling
 
-Modelagem de vagas de plantio de árvores em vias públicas, por município.
+Modelagem de vagas de plantio de árvores em vias públicas, por município, com
+quatro métodos de alocação comparáveis entre si (ver `## Métodos` abaixo) —
+o webmap deixa alternar entre eles para o mesmo município.
 
-## Método
+## Métodos
+
+O método de produção é `face_ibge`; os outros três (`osm_eixo`, `osm_calcada`,
+`osm_overture`) existem para comparar visualmente o que cada fonte de dados
+consegue garantir — ver `ROAD_METHODS` e `generate_face_ibge` em
+`scripts/03_allocate_slots.py`.
+
+### face_ibge — método de produção
 
 Cada vaga é **vinculada a uma face de quadra** da Base de Faces de Logradouros
 do IBGE (Censo 2022): setor, quadra, face, logradouro e posição ao longo da
@@ -24,8 +33,27 @@ mais próxima medida na Overture; uma face sem espaço seguro entre os dois
 limites não gera vaga ali (`scripts/03_allocate_slots.py`,
 `clamp_to_road`).
 
-Regras de alocação (parâmetros das Coletâneas Brasileiras de Arborização
-Urbana, MMA 2026):
+### osm_eixo, osm_calcada, osm_overture — comparação
+
+Os três métodos de comparação não usam a face do IBGE: caminham diretamente
+sobre o eixo da via do OSM.
+
+- `osm_eixo` não desloca o ponto — fica sobre o próprio eixo, de propósito,
+  como referência de quanto os outros métodos conseguem melhorar.
+- `osm_calcada` desloca o ponto, dos dois lados da via, até a largura de
+  calçada estimada pela classe/tag da via (`carriageway_half_width` +
+  `CURB_SETBACK_M`) — sem checar prédios.
+- `osm_overture` faz o mesmo deslocamento, mas usa o OSM já co-registrado às
+  edificações e nunca passa da fachada mais próxima (mesma lógica de
+  `clamp_to_road`, sem depender da face do IBGE).
+
+Nos três, a vaga recebe metadados do IBGE (setor/quadra/face, logradouro
+oficial) por proximidade — a face mais perto dentro de `IBGE_MATCH_M`,
+só para preencher atributos, nunca para mover o ponto (`enrich_with_ibge`).
+
+### Regras comuns
+
+Parâmetros das Coletâneas Brasileiras de Arborização Urbana, MMA 2026:
 
 - apenas faces em **setores censitários urbanos** (IBGE, CD_SIT 1–3) voltadas
   para uma via do OSM de classe elegível (`residential` a `primary`);
@@ -39,9 +67,9 @@ Urbana, MMA 2026):
   variante** (10 m fixo em `espacamento_10m`; 6/8/11 m pelo porte da maior
   das duas vagas em `espacamento_porte`), inclusive entre vagas de calçada e
   de canteiro central;
-- duas variantes de espaçamento (critérios do MMA ainda pendentes):
-  `espacamento_10m` e `espacamento_porte` (6/8/11 m pelo porte, que vem da
-  classe da via).
+- duas variantes de espaçamento por método (critérios do MMA ainda
+  pendentes): `10m` e `porte` (6/8/11 m pelo porte, que vem da classe da
+  via) — oito arquivos de saída por município (4 métodos × 2 espaçamentos).
 
 ## Pipeline
 
@@ -50,9 +78,12 @@ pip install -e ".[dev]"     # a partir de modeling/
 
 python scripts/01_download_osm.py --municipio suzano        # limite, vias e obstáculos (OSM)
 python scripts/02_download_buildings.py --municipio suzano  # edificações (Overture Maps)
-python scripts/03_allocate_slots.py --municipio suzano      # alocação das vagas
+python scripts/03_allocate_slots.py --municipio suzano      # alocação das vagas (4 métodos x 2 espaçamentos)
 python scripts/04_export_webmap.py --municipio suzano       # dados do webmap
 ```
+
+Municípios processados: Sorocaba e Suzano (SP), Tremembé (SP), Florianópolis
+(SC) — ver `planting_slots/municipalities.py`.
 
 As faces de logradouro do IBGE ficam atrás de uma verificação anti-robô e
 precisam ser baixadas manualmente: "Base de Faces de Logradouros por
@@ -75,7 +106,7 @@ planting_slots/          pacote Python (código em inglês)
 scripts/                 etapas do pipeline, na ordem de execução
 data/<municipio>/        insumos baixados (fora do git)
 data/ibge/               setores censitários e faces de logradouro (fora do git)
-output/<municipio>/      vagas_plantio_<variante>.gpkg/.geojson e relatorio_alocacao.json (fora do git)
+output/<municipio>/      vagas_plantio_<metodo>_<espacamento>.gpkg/.geojson e relatorio_alocacao.json (fora do git)
 ```
 
 Convenção: código (módulos, funções, variáveis) em inglês; arquivos de dados,

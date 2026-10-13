@@ -50,23 +50,27 @@ async function loadResults() {
     const manifest = await resp.json();
     const municipalities = manifest.municipalities || [];
 
-    const totalsByVariant = {};
+    // The production method only — osm_eixo/osm_calcada/osm_overture are
+    // comparison baselines (see #metodos) and would otherwise overwhelm
+    // this chart with 4x the rows for every municipality.
+    const PRODUCTION_METHOD = "face_ibge";
+    const totalsBySpacing = {}; // spacing id -> { label, total }
     const rows = [];
     for (const m of municipalities) {
       for (const v of m.variants) {
-        totalsByVariant[v.id] = (totalsByVariant[v.id] || 0) + v.count;
-        rows.push({ municipality: m.name, state: m.state, variant: v.label, count: v.count });
+        if (v.method && v.method !== PRODUCTION_METHOD) continue;
+        const spacingId = v.spacing ?? v.id;
+        const spacingLabel = v.spacing_label ?? v.label;
+        const entry = totalsBySpacing[spacingId] ?? { label: spacingLabel, total: 0 };
+        entry.total += v.count;
+        totalsBySpacing[spacingId] = entry;
+        rows.push({ municipality: m.name, state: m.state, variant: spacingLabel, count: v.count });
       }
     }
 
     const stats = [
       { value: municipalities.length, label: "município(s) modelados", suffix: "" },
-      ...Object.entries(totalsByVariant).map(([id, total]) => ({
-        value: total,
-        label: municipalities.find((m) => m.variants.some((v) => v.id === id)).variants.find((v) => v.id === id)
-          .label,
-        suffix: "",
-      })),
+      ...Object.values(totalsBySpacing).map(({ label, total }) => ({ value: total, label, suffix: "" })),
     ];
 
     statGrid.innerHTML = stats

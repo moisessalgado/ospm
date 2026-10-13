@@ -1,36 +1,31 @@
-"""Allocate tree-planting slots linked to IBGE street faces (Censo 2022).
+"""Allocate tree-planting slots — four comparable methods, two spacings each.
 
-No source available nationwide locates the curb better than ±2-3 m (OSM x IBGE
-x buildings), which exceeds a typical sidewalk width. Each slot is therefore
-linked to an IBGE street face (sector, block, face, street name, position along
-the face): counts and spacing along the face are exact, while the lateral
-position is indicative.
+Methods (increasing use of data, decreasing distance from the carriageway):
+  - face_ibge: the production method. Each slot is linked to an IBGE street
+    face (sector, block, face, street name, position along the face), then
+    clamped to the matched OSM road — see clamp_to_road. Slowest to compute,
+    best metadata, and the only one with median (canteiro_central) slots.
+  - osm_eixo: walks the raw OSM road centerline itself, no offset at all —
+    slots sit in the middle of the street on purpose. A deliberately wrong
+    baseline, kept only so the other methods can be judged against it.
+  - osm_calcada: walks the raw OSM road centerline, offset to the estimated
+    curb (carriageway_half_width + CURB_SETBACK_M) on both sides — no
+    buildings involved. Cheap, but the offset is a guess: on an irregular
+    block it can land the slot short of the real sidewalk or past it.
+  - osm_overture: same offset as osm_calcada, but computed on the OSM road
+    already co-registered to the Overture buildings (see coregistration_field)
+    and capped by the nearest facade (CURB_SETBACK_M short of it) — closest
+    to face_ibge's safety without needing IBGE at all.
 
-The face line itself is not always trustworthy for that lateral position: on
-many blocks it is digitized hugging the street axis rather than the lot line,
-which would place the point inside the carriageway (checked directly against
-the OSM road geometry — see CURB_SETBACK_M). Each point is therefore clamped,
-perpendicular to the matched OSM road, to never fall closer to the road than
-its carriageway plus CURB_SETBACK_M, and never farther than the nearest
-Overture building facade minus CURB_SETBACK_M; a face with no room between
-the two (street wider than the gap to the facade) contributes no slot there.
+Every method's slots get IBGE metadata (sector/block/face, street name) from
+the nearest street face within IBGE_MATCH_M, when there is one close enough
+— see enrich_with_ibge. For face_ibge the metadata already comes from the
+linked face and this is a no-op.
 
-Sidewalk slots, for each face in an urban census tract that faces an eligible
-OSM road (parallel and within FACE_STREET_MATCH_M):
-  - keep CORNER_SETBACK_M clear at both ends of the face (corners);
-  - skip stretches near OSM obstacles projected onto the face (crossings,
-    driveways, bus stops, existing trees);
-  - place slots with each variant's spacing;
-  - clamp each slot's lateral position as described above.
-
-Median slots come from OSM divided roads co-registered to the buildings; a
-slot is accepted only outside every carriageway grown by the registration
-uncertainty measured against IBGE (worst case), corners and obstacles.
-
-Finally, no two slots are closer than the variant's own spacing for the
-larger-porte slot of the pair (10 m flat for espacamento_10m; 6/8/11 m by
-porte for espacamento_porte) — the same rule used to place slots along a
-single face, now enforced across faces and between sidewalk and median slots.
+Finally, no two slots of the same variant (method + spacing) are closer than
+the spacing for the larger-porte slot of the pair (10 m flat for the generic
+spacing; 6/8/11 m by porte otherwise) — including between sidewalk and
+median slots.
 """
 
 from __future__ import annotations
@@ -91,11 +86,22 @@ MEDIAN_PORTE_BY_WIDTH = [(2.0, "pequeno"), (3.5, "medio"), (np.inf, "grande")]
 MIN_MEDIAN_WIDTH_M = 1.0
 
 # --- Spacing variants (pending MMA criteria) -----------------------------------
-VARIANTS = {
-    "espacamento_10m": {"label": "Espaçamento genérico de 10 m", "spacing": lambda porte: 10.0},
-    "espacamento_porte": {"label": "Espaçamento por porte (6/8/11 m)",
-                          "spacing": lambda porte: {"pequeno": 6.0, "medio": 8.0, "grande": 11.0}[porte]},
+SPACINGS = {
+    "10m": {"label": "Espaçamento genérico de 10 m", "spacing": lambda porte: 10.0},
+    "porte": {"label": "Espaçamento por porte (6/8/11 m)",
+             "spacing": lambda porte: {"pequeno": 6.0, "medio": 8.0, "grande": 11.0}[porte]},
 }
+
+# --- Methods ------------------------------------------------------------------
+# face_ibge is handled by its own (pre-existing) code path below; these three
+# share allocate_from_roads, parametrized by whether they offset off the
+# centerline at all, and whether that offset is capped by a building facade.
+ROAD_METHODS = {
+    "osm_eixo": {"label": "Eixo da via (OSM) — sem deslocamento", "offset": False, "clamp_building": False},
+    "osm_calcada": {"label": "Calçada estimada por OSM (sem prédios)", "offset": True, "clamp_building": False},
+    "osm_overture": {"label": "Calçada validada com prédios (OSM + Overture)", "offset": True, "clamp_building": True},
+}
+IBGE_MATCH_M = 25.0  # metadata-only nearest-face search radius for non-face_ibge methods
 
 
 def load_ways(files: MunicipalityFiles) -> gpd.GeoDataFrame:
@@ -193,6 +199,82 @@ def clamp_to_road(point: Point, road, min_clear: float, probe_entry) -> Point | 
     return None
 
 
+def point_at_offset(road, pos: float, side_left: bool, offset: float) -> Point:
+    """The point offset perpendicular to the road at arc-length pos, on the
+    given side, by offset metres (0 = on the centerline)."""
+    r = road.interpolate(pos)
+    ahead = road.interpolate(min(pos + 0.5, road.length))
+    behind = road.interpolate(max(pos - 0.5, 0.0))
+    tx, ty = ahead.x - behind.x, ahead.y - behind.y
+    tn = np.hypot(tx, ty) or 1.0
+    nx, ny = -ty / tn, tx / tn
+    sign = 1 if side_left else -1
+    return Point(r.x + sign * nx * offset, r.y + sign * ny * offset)
+
+
+def allocate_from_roads(roads: gpd.GeoDataFrame, probes: dict, obstacles: dict, offset: bool,
+                        clamp_building: bool, spacing_fn) -> tuple[list[dict], int]:
+    """Slots walked directly along eligible roads (no IBGE face involved),
+    for the three OSM-only comparison methods — see module docstring."""
+    empty_probe = (np.array([]), np.array([]), np.array([]))
+    records, skipped = [], 0
+    for idx, row in roads.iterrows():
+        porte = PORTE_BY_CLASS[row["highway"]]
+        road_geom = row.geometry
+        positions = allocate_face(road_geom, blocked_intervals(road_geom, obstacles), lambda _: spacing_fn(porte))
+        if not positions:
+            continue
+        probe_entry = probes.get(idx, empty_probe) if clamp_building else empty_probe
+        for pos in positions:
+            for side_left in ([True, False] if offset else [None]):
+                if not offset:
+                    point = road_geom.interpolate(pos)
+                else:
+                    floor = row["half"] + CURB_SETBACK_M
+                    ceiling = np.inf
+                    if clamp_building and len(probe_entry[0]):
+                        facade_d = local_facade(np.array([pos]), probe_entry[0],
+                                                probe_entry[1] if side_left else probe_entry[2])[0]
+                        ceiling = (facade_d - CURB_SETBACK_M) if not np.isnan(facade_d) else np.inf
+                    if floor > ceiling:
+                        skipped += 1
+                        continue
+                    point = point_at_offset(road_geom, pos, side_left, floor)
+                    if clamp_building and road_geom.distance(point) < floor - 1e-6:
+                        skipped += 1
+                        continue
+                records.append({
+                    "tipo_vaga": "calcada" if offset else "eixo_via", "porte": porte, "via_osm": row["highway"],
+                    "logradouro": normalize_street_name(row.get("name")),
+                    "cd_setor": None, "cd_quadra": None, "cd_face": None, "posicao_face_m": round(pos, 1),
+                    "posicao_lateral": "sobre o eixo da via" if not offset else
+                                      ("deslocada por largura estimada (sem prédios)" if not clamp_building else
+                                       "deslocada e validada contra a fachada mais próxima (Overture)"),
+                    "geometry": point,
+                })
+    return records, skipped
+
+
+def enrich_with_ibge(points: gpd.GeoDataFrame, faces: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    """Attach IBGE sector/block/face and, when the slot has no OSM street
+    name, the IBGE one — from the nearest street face within IBGE_MATCH_M.
+    Metadata only: it never moves a point. A no-op for rows that already
+    have cd_setor (the face_ibge method links its own face upstream)."""
+    todo = points[points["cd_setor"].isna()]
+    if not todo.empty:
+        cols = ["CD_SETOR", "CD_QUADRA", "CD_FACE", "NM_TIP_LOG", "NM_TIT_LOG", "NM_LOG", "geometry"]
+        nearest = gpd.sjoin_nearest(todo, faces[cols], max_distance=IBGE_MATCH_M, how="left", distance_col="_d")
+        nearest = nearest[~nearest.index.duplicated(keep="first")]
+        points.loc[todo.index, "cd_setor"] = nearest["CD_SETOR"]
+        points.loc[todo.index, "cd_quadra"] = nearest["CD_QUADRA"]
+        points.loc[todo.index, "cd_face"] = nearest["CD_FACE"]
+        ibge_name = [normalize_street_name(t, ti, n)
+                    for t, ti, n in zip(nearest["NM_TIP_LOG"], nearest["NM_TIT_LOG"], nearest["NM_LOG"])]
+        has_name = points.loc[todo.index, "logradouro"].astype(bool).to_numpy()
+        points.loc[todo.index, "logradouro"] = np.where(has_name, points.loc[todo.index, "logradouro"], ibge_name)
+    return points
+
+
 def main() -> None:
     municipality = get_municipality(municipality_arg_parser(__doc__).parse_args().municipio)
     files = MunicipalityFiles(municipality)
@@ -207,6 +289,7 @@ def main() -> None:
 
     # --- OSM co-registered to the buildings (road class, obstacles, medians)
     ways = load_ways(files)
+    ways_raw_geometry = ways.geometry.copy()  # pre-shift: osm_eixo/osm_calcada use raw OSM, not Overture-corrected
     pairs = find_divided_pairs(ways)
     ways["paired"] = ways.index.isin(pairs.keys())
     buildings = load_overture_buildings(files.buildings, crs)
@@ -219,13 +302,19 @@ def main() -> None:
     print(f"Incerteza de registro OSM x IBGE (p90, {n_ways} vias): {uncertainty:.1f} m")
 
     obstacles = {}
+    obstacles_raw = {}
     for name, (flt, radius) in OBSTACLES.items():
         geoms = load_osm_elements(files.osm_obstacles, flt, crs).geometry.values
+        obstacles_raw[name] = (geoms, radius)
         obstacles[name] = (apply_shift(geoms, gx, gy, shift), radius)
 
     roads = ways[ways["highway"].isin(DEFAULT_WIDTH_BY_CLASS)].copy()
     roads["half"] = [carriageway_half_width(r, p, np.nan, municipality.min_sidewalk_width_m)[0]
                      for r, p in zip(roads.to_dict("records"), roads["paired"])]
+    roads_raw = roads.copy()
+    roads_raw["geometry"] = ways_raw_geometry.loc[roads.index]
+    gen_roads = roads[roads["highway"].isin(GENERATION_CLASSES)]
+    gen_roads_raw = roads_raw[roads_raw["highway"].isin(GENERATION_CLASSES)]
 
     # --- sidewalk slots from the faces ------------------------------------------
     match = match_faces_to_streets(faces, roads)
@@ -278,10 +367,9 @@ def main() -> None:
         ok[np.unique(hit)] = False
         median_groups.append({"row": ways.loc[a], "dists": d, "pts": mids, "width": width, "ok": ok})
 
-    # --- allocation per variant -------------------------------------------------
+    # --- allocation per method x spacing -----------------------------------------
     report = {
         "municipio": municipality.slug,
-        "metodo": "vagas vinculadas às faces de logradouro IBGE 2022; posição lateral indicativa",
         "parametros": {
             "afastamento_esquina_m": CORNER_SETBACK_M,
             "incerteza_registro_canteiros_m": round(uncertainty, 2),
@@ -289,13 +377,13 @@ def main() -> None:
         "faces": summary,
         "variantes": {},
     }
-    for variant, cfg in VARIANTS.items():
-        records = []
-        fora_de_alcance = 0
+
+    def generate_face_ibge(spacing_fn):
+        records, fora_de_alcance = [], 0
         for i, face in sel.iterrows():
             porte = PORTE_BY_CLASS[face["highway"]]
             road_geom, min_clear, probe_entry = clamp_ctx[i]
-            for pos in allocate_face(face.geometry, blocked[i], lambda _: cfg["spacing"](porte)):
+            for pos in allocate_face(face.geometry, blocked[i], lambda _: spacing_fn(porte)):
                 point = clamp_to_road(face.geometry.interpolate(pos), road_geom, min_clear, probe_entry)
                 if point is None:
                     fora_de_alcance += 1
@@ -309,29 +397,51 @@ def main() -> None:
                 })
         for g in median_groups:
             portes = [next(p for lim, p in MEDIAN_PORTE_BY_WIDTH if w < lim) for w in g["width"]]
-            for i in greedy_walk(g["dists"], g["ok"], lambda i: cfg["spacing"](portes[i])):
+            for i in greedy_walk(g["dists"], g["ok"], lambda i: spacing_fn(portes[i])):
                 records.append({
                     "tipo_vaga": "canteiro_central", "porte": portes[i], "via_osm": g["row"]["highway"],
                     "logradouro": normalize_street_name(g["row"]["name"]),
                     "cd_setor": None, "cd_quadra": None, "cd_face": None, "posicao_face_m": None,
                     "posicao_lateral": "pior caso (OSM co-registrado)", "geometry": g["pts"][i],
                 })
+        return records, {"removidos_sem_espaco_seguro_ate_fachada": fora_de_alcance}
 
-        points = gpd.GeoDataFrame(records, geometry="geometry", crs=crs)
-        before = len(points)
-        min_sep = points["porte"].map(lambda porte: cfg["spacing"](porte)).to_numpy()
-        points = enforce_min_separation(points, min_sep).reset_index(drop=True)
-        points.to_file(files.slots(variant, "gpkg"), layer="vagas_plantio", driver="GPKG")
-        points.to_crs("EPSG:4326").to_file(files.slots(variant, "geojson"), driver="GeoJSON")
-        report["variantes"][variant] = {
-            "label": cfg["label"], "pontos": len(points), "removidos_espacamento_minimo": before - len(points),
-            "removidos_sem_espaco_seguro_ate_fachada": fora_de_alcance,
-            "por_tipo": points["tipo_vaga"].value_counts().to_dict(),
-            "por_porte": points["porte"].value_counts().to_dict(),
-        }
-        print(f"[{variant}] {len(points)} pontos (espaçamento mínimo removeu {before - len(points)}, "
-              f"sem espaço seguro até a fachada removeu {fora_de_alcance})",
-              points["tipo_vaga"].value_counts().to_dict(), points["porte"].value_counts().to_dict())
+    for spacing_id, spacing_cfg in SPACINGS.items():
+        spacing_fn = spacing_cfg["spacing"]
+
+        def generate_road_method(spacing_fn, roads, obs, mcfg):
+            records, skipped = allocate_from_roads(roads, probes, obs, mcfg["offset"], mcfg["clamp_building"], spacing_fn)
+            stats = {"removidos_sem_espaco_seguro_ate_fachada": skipped} if mcfg["clamp_building"] else {}
+            return records, stats
+
+        methods = {"face_ibge": generate_face_ibge}
+        for method_id, mcfg in ROAD_METHODS.items():
+            roads_for_method = gen_roads if mcfg["clamp_building"] else gen_roads_raw
+            obstacles_for_method = obstacles if mcfg["clamp_building"] else obstacles_raw
+            methods[method_id] = lambda spacing_fn, roads=roads_for_method, obs=obstacles_for_method, mcfg=mcfg: (
+                generate_road_method(spacing_fn, roads, obs, mcfg)
+            )
+
+        for method_id, generate in methods.items():
+            records, extra_stats = generate(spacing_fn)
+            points = gpd.GeoDataFrame(records, geometry="geometry", crs=crs)
+            if method_id != "face_ibge":
+                points = enrich_with_ibge(points, faces)
+            before = len(points)
+            min_sep = points["porte"].map(lambda porte: spacing_fn(porte)).to_numpy()
+            points = enforce_min_separation(points, min_sep).reset_index(drop=True)
+
+            variant = f"{method_id}_{spacing_id}"
+            points.to_file(files.slots(variant, "gpkg"), layer="vagas_plantio", driver="GPKG")
+            points.to_crs("EPSG:4326").to_file(files.slots(variant, "geojson"), driver="GeoJSON")
+            report["variantes"][variant] = {
+                "metodo": method_id, "espacamento": spacing_id, "pontos": len(points),
+                "removidos_espacamento_minimo": before - len(points), **extra_stats,
+                "por_tipo": points["tipo_vaga"].value_counts().to_dict(),
+                "por_porte": points["porte"].value_counts().to_dict(),
+            }
+            print(f"[{variant}] {len(points)} pontos (espaçamento mínimo removeu {before - len(points)})",
+                  points["tipo_vaga"].value_counts().to_dict(), points["porte"].value_counts().to_dict())
 
     files.allocation_report.write_text(json.dumps(report, indent=2, ensure_ascii=False))
 

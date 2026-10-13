@@ -1,6 +1,81 @@
 {
   "municipalities": [
     {
+      "slug": "florianopolis",
+      "name": "Florianópolis",
+      "state": "Santa Catarina",
+      "center": [
+        -48.48603015,
+        -27.611144449999998
+      ],
+      "variants": [
+        {
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE) — método atual",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento genérico de 10 m",
+          "count": 100086
+        },
+        {
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE) — método atual",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (6/8/11 m)",
+          "count": 116648
+        },
+        {
+          "id": "osm_eixo_10m",
+          "method": "osm_eixo",
+          "method_label": "Eixo da via (OSM), sem deslocamento",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento genérico de 10 m",
+          "count": 88175
+        },
+        {
+          "id": "osm_eixo_porte",
+          "method": "osm_eixo",
+          "method_label": "Eixo da via (OSM), sem deslocamento",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (6/8/11 m)",
+          "count": 104078
+        },
+        {
+          "id": "osm_calcada_10m",
+          "method": "osm_calcada",
+          "method_label": "Calçada estimada por OSM, sem prédios",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento genérico de 10 m",
+          "count": 166741
+        },
+        {
+          "id": "osm_calcada_porte",
+          "method": "osm_calcada",
+          "method_label": "Calçada estimada por OSM, sem prédios",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (6/8/11 m)",
+          "count": 210873
+        },
+        {
+          "id": "osm_overture_10m",
+          "method": "osm_overture",
+          "method_label": "Calçada validada com prédios (OSM + Overture)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento genérico de 10 m",
+          "count": 141848
+        },
+        {
+          "id": "osm_overture_porte",
+          "method": "osm_overture",
+          "method_label": "Calçada validada com prédios (OSM + Overture)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (6/8/11 m)",
+          "count": 175769
+        }
+      ]
+    },
+    {
       "slug": "sorocaba",
       "name": "Sorocaba",
       "state": "São Paulo",
@@ -10,14 +85,68 @@
       ],
       "variants": [
         {
-          "id": "espacamento_10m",
-          "label": "Espaçamento genérico de 10 m",
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE) — método atual",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento genérico de 10 m",
           "count": 152469
         },
         {
-          "id": "espacamento_porte",
-          "label": "Espaçamento por porte (6/8/11 m)",
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE) — método atual",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (6/8/11 m)",
           "count": 183812
+        },
+        {
+          "id": "osm_eixo_10m",
+          "method": "osm_eixo",
+          "method_label": "Eixo da via (OSM), sem deslocamento",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento genérico de 10 m",
+          "count": 155971
+        },
+        {
+          "id": "osm_eixo_porte",
+          "method": "osm_eixo",
+          "method_label": "Eixo da via (OSM), sem deslocamento",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (6/8/11 m)",
+          "count": 189140
+        },
+        {
+          "id": "osm_calcada_10m",
+          "method": "osm_calcada",
+          "method_label": "Calçada estimada por OSM, sem prédios",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento genérico de 10 m",
+          "count": 283681
+        },
+        {
+          "id": "osm_calcada_porte",
+          "method": "osm_calcada",
+          "method_label": "Calçada estimada por OSM, sem prédios",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (6/8/11 m)",
+          "count": 367415
+        },
+        {
+          "id": "osm_overture_10m",
+          "method": "osm_overture",
+          "method_label": "Calçada validada com prédios (OSM + Overture)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento genérico de 10 m",
+          "count": 253592
+        },
+        {
+          "id": "osm_overture_porte",
+          "method": "osm_overture",
+          "method_label": "Calçada validada com prédios (OSM + Overture)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (6/8/11 m)",
+          "count": 324430
         }
       ]
     },
@@ -31,14 +160,143 @@
       ],
       "variants": [
         {
-          "id": "espacamento_10m",
-          "label": "Espaçamento genérico de 10 m",
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE) — método atual",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento genérico de 10 m",
           "count": 58378
         },
         {
-          "id": "espacamento_porte",
-          "label": "Espaçamento por porte (6/8/11 m)",
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE) — método atual",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (6/8/11 m)",
           "count": 71499
+        },
+        {
+          "id": "osm_eixo_10m",
+          "method": "osm_eixo",
+          "method_label": "Eixo da via (OSM), sem deslocamento",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento genérico de 10 m",
+          "count": 59779
+        },
+        {
+          "id": "osm_eixo_porte",
+          "method": "osm_eixo",
+          "method_label": "Eixo da via (OSM), sem deslocamento",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (6/8/11 m)",
+          "count": 74916
+        },
+        {
+          "id": "osm_calcada_10m",
+          "method": "osm_calcada",
+          "method_label": "Calçada estimada por OSM, sem prédios",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento genérico de 10 m",
+          "count": 112216
+        },
+        {
+          "id": "osm_calcada_porte",
+          "method": "osm_calcada",
+          "method_label": "Calçada estimada por OSM, sem prédios",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (6/8/11 m)",
+          "count": 152674
+        },
+        {
+          "id": "osm_overture_10m",
+          "method": "osm_overture",
+          "method_label": "Calçada validada com prédios (OSM + Overture)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento genérico de 10 m",
+          "count": 94998
+        },
+        {
+          "id": "osm_overture_porte",
+          "method": "osm_overture",
+          "method_label": "Calçada validada com prédios (OSM + Overture)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (6/8/11 m)",
+          "count": 127401
+        }
+      ]
+    },
+    {
+      "slug": "tremembe",
+      "name": "Tremembé",
+      "state": "São Paulo",
+      "center": [
+        -45.603594099999995,
+        -22.93800495
+      ],
+      "variants": [
+        {
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE) — método atual",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento genérico de 10 m",
+          "count": 14145
+        },
+        {
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE) — método atual",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (6/8/11 m)",
+          "count": 17274
+        },
+        {
+          "id": "osm_eixo_10m",
+          "method": "osm_eixo",
+          "method_label": "Eixo da via (OSM), sem deslocamento",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento genérico de 10 m",
+          "count": 23188
+        },
+        {
+          "id": "osm_eixo_porte",
+          "method": "osm_eixo",
+          "method_label": "Eixo da via (OSM), sem deslocamento",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (6/8/11 m)",
+          "count": 28852
+        },
+        {
+          "id": "osm_calcada_10m",
+          "method": "osm_calcada",
+          "method_label": "Calçada estimada por OSM, sem prédios",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento genérico de 10 m",
+          "count": 43740
+        },
+        {
+          "id": "osm_calcada_porte",
+          "method": "osm_calcada",
+          "method_label": "Calçada estimada por OSM, sem prédios",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (6/8/11 m)",
+          "count": 58943
+        },
+        {
+          "id": "osm_overture_10m",
+          "method": "osm_overture",
+          "method_label": "Calçada validada com prédios (OSM + Overture)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento genérico de 10 m",
+          "count": 39806
+        },
+        {
+          "id": "osm_overture_porte",
+          "method": "osm_overture",
+          "method_label": "Calçada validada com prédios (OSM + Overture)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (6/8/11 m)",
+          "count": 53228
         }
       ]
     }

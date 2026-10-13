@@ -57,7 +57,8 @@ map.addControl(new maplibregl.ScaleControl({ unit: "metric" }), "bottom-right");
 
 const statusEl = document.getElementById("status");
 const municipalitySelect = document.getElementById("municipality-select");
-const variantSelect = document.getElementById("variant-select");
+const methodSelect = document.getElementById("method-select");
+const spacingSelect = document.getElementById("spacing-select");
 const basemapSelect = document.getElementById("basemap-select");
 const measureToggleBtn = document.getElementById("measure-toggle");
 const measureClearBtn = document.getElementById("measure-clear");
@@ -133,8 +134,8 @@ function addSlotLayers() {
         "#999999",
       ],
       "circle-opacity": 0.9,
-      "circle-stroke-width": 1,
-      "circle-stroke-color": "#ffffff",
+      "circle-stroke-width": ["match", ["get", "tipo_vaga"], "eixo_via", 2, 1],
+      "circle-stroke-color": ["match", ["get", "tipo_vaga"], "eixo_via", "#d64545", "#ffffff"],
     },
   });
 
@@ -164,7 +165,7 @@ function addSlotLayers() {
 }
 
 const PORTE_LABEL = { pequeno: "Pequeno", medio: "Médio", grande: "Grande" };
-const TIPO_VAGA_LABEL = { calcada: "Calçada", canteiro_central: "Canteiro central" };
+const TIPO_VAGA_LABEL = { calcada: "Calçada", canteiro_central: "Canteiro central", eixo_via: "Eixo da via (comparação)" };
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -179,7 +180,7 @@ function showSlotPopup(feature) {
     p.cd_setor
       ? `<div><strong>Setor/quadra/face:</strong> ${escapeHtml(p.cd_setor)} / ${escapeHtml(p.cd_quadra)} / ${escapeHtml(p.cd_face)}</div>`
       : "",
-    p.posicao_face_m != null ? `<div><strong>Posição na face:</strong> ${p.posicao_face_m} m</div>` : "",
+    p.posicao_face_m != null ? `<div><strong>Posição ao longo da via/face:</strong> ${p.posicao_face_m} m</div>` : "",
   ].join("");
   new maplibregl.Popup({ closeButton: true, maxWidth: "260px" })
     .setLngLat(feature.geometry.coordinates)
@@ -222,6 +223,22 @@ function decodeCompactPoints(payload) {
 // rerun, and a stale manifest/variant here means wrong slot counts and
 // positions silently shown to the user (not just a stale style).
 const CACHE_BUST = Date.now();
+const DEFAULT_MUNICIPALITY = "suzano";
+const DEFAULT_METHOD = "face_ibge"; // the production method; others are comparison baselines
+
+// A municipality's variants each carry a method and a spacing (see
+// modeling/scripts/04_export_webmap.py); the two selects below combine to
+// pick one. uniqueBy keeps the manifest's own order (method/spacing loop
+// order at export time), so the selects list options consistently.
+function uniqueBy(items, keyFn) {
+  const seen = new Set();
+  return items.filter((item) => {
+    const key = keyFn(item);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
 
 async function loadManifest() {
   const resp = await fetch(`data/manifest.json?t=${CACHE_BUST}`);
@@ -230,32 +247,45 @@ async function loadManifest() {
     .map((m) => `<option value="${m.slug}">${m.name} — ${m.state}</option>`)
     .join("");
   if (manifest.municipalities.length) {
-    await selectMunicipality(manifest.municipalities[0].slug);
+    const initial = manifest.municipalities.find((m) => m.slug === DEFAULT_MUNICIPALITY) ?? manifest.municipalities[0];
+    municipalitySelect.value = initial.slug;
+    await selectMunicipality(initial.slug);
   }
 }
 
 async function selectMunicipality(slug) {
   const municipality = manifest.municipalities.find((m) => m.slug === slug);
   if (!municipality) return;
-  variantSelect.innerHTML = municipality.variants
-    .map((v) => `<option value="${v.id}">${v.label}</option>`)
-    .join("");
-  await loadVariant(municipality, municipality.variants[0].id);
+  const methods = uniqueBy(municipality.variants, (v) => v.method);
+  methodSelect.innerHTML = methods.map((v) => `<option value="${v.method}">${v.method_label}</option>`).join("");
+  const initialMethod = methods.find((v) => v.method === DEFAULT_METHOD) ?? methods[0];
+  methodSelect.value = initialMethod.method;
+  await selectMethod(municipality, initialMethod.method);
   map.flyTo({ center: municipality.center, zoom: 12 });
 }
 
-async function loadVariant(municipality, variantId) {
-  const variant = municipality.variants.find((v) => v.id === variantId);
+async function selectMethod(municipality, method) {
+  const spacings = municipality.variants.filter((v) => v.method === method);
+  spacingSelect.innerHTML = spacings.map((v) => `<option value="${v.spacing}">${v.spacing_label}</option>`).join("");
+  await loadVariant(municipality, spacings[0]);
+}
+
+async function loadVariant(municipality, variant) {
   setStatus(`Carregando ${municipality.name}…`);
   const resp = await fetch(`data/${municipality.slug}/${variant.id}.json?t=${CACHE_BUST}`);
   map.getSource("slots").setData(decodeCompactPoints(await resp.json()));
-  setStatus(`${municipality.name}: ${variant.count.toLocaleString("pt-BR")} vagas de plantio`);
+  setStatus(`${municipality.name} — ${variant.method_label}: ${variant.count.toLocaleString("pt-BR")} vagas de plantio`);
 }
 
 municipalitySelect.addEventListener("change", (e) => selectMunicipality(e.target.value));
-variantSelect.addEventListener("change", (e) => {
+methodSelect.addEventListener("change", (e) => {
   const municipality = manifest.municipalities.find((m) => m.slug === municipalitySelect.value);
-  loadVariant(municipality, e.target.value);
+  selectMethod(municipality, e.target.value);
+});
+spacingSelect.addEventListener("change", (e) => {
+  const municipality = manifest.municipalities.find((m) => m.slug === municipalitySelect.value);
+  const variant = municipality.variants.find((v) => v.method === methodSelect.value && v.spacing === e.target.value);
+  loadVariant(municipality, variant);
 });
 
 basemapSelect.addEventListener("change", (e) => {

@@ -62,6 +62,9 @@ class Municipality:
 MUNICIPALITIES: dict[str, Municipality] = {
     "sorocaba": Municipality(slug="sorocaba", name="Sorocaba", state="São Paulo", ibge_code="3552205", epsg="EPSG:31983"),
     "suzano": Municipality(slug="suzano", name="Suzano", state="São Paulo", ibge_code="3552502", epsg="EPSG:31983"),
+    "tremembe": Municipality(slug="tremembe", name="Tremembé", state="São Paulo", ibge_code="3554805", epsg="EPSG:31983"),
+    "florianopolis": Municipality(slug="florianopolis", name="Florianópolis", state="Santa Catarina",
+                                   ibge_code="4205407", epsg="EPSG:31982"),
 }
 
 
