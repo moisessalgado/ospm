@@ -460,3 +460,19 @@ document.addEventListener("keydown", (e) => {
     renderMeasure();
   }
 });
+
+// --- Mobile panel toggle -----------------------------------------------
+
+const panelToggle = document.getElementById("panel-toggle");
+
+function setPanelCollapsed(collapsed) {
+  document.body.classList.toggle("panel-collapsed", collapsed);
+  panelToggle.setAttribute("aria-expanded", String(!collapsed));
+  panelToggle.textContent = collapsed ? "Controles" : "Fechar";
+}
+
+panelToggle.addEventListener("click", () => setPanelCollapsed(!document.body.classList.contains("panel-collapsed")));
+
+// On first load, keep the map front and center on narrow screens; the panel
+// opens on demand via the toggle button.
+if (window.matchMedia("(max-width: 560px)").matches) setPanelCollapsed(true);

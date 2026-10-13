@@ -1,0 +1,199 @@
+/* Tokens, reset e componentes compartilhados entre index.html e metodologia.html */
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap");
+
+:root {
+  --bg: #f6f7f3;
+  --fg: #16261c;
+  --muted: #5a6a60;
+  --primary: #1f6f4a;
+  --primary-dark: #124a30;
+  --primary-light: #e7f3ec;
+  --accent: #e2693a;
+  --surface: rgba(255, 255, 255, 0.82);
+  --surface-solid: #ffffff;
+  --border: rgba(22, 38, 28, 0.1);
+  --shadow: 0 10px 34px rgba(18, 38, 28, 0.14);
+  --shadow-sm: 0 2px 10px rgba(18, 38, 28, 0.1);
+  --radius: 14px;
+  --font-ui: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Fraunces", Georgia, serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111713;
+    --fg: #eef2ee;
+    --muted: #9fb0a6;
+    --primary: #4caf7d;
+    --primary-dark: #2e7d55;
+    --primary-light: rgba(76, 175, 125, 0.14);
+    --accent: #f08a5d;
+    --surface: rgba(24, 32, 27, 0.82);
+    --surface-solid: #1a221d;
+    --border: rgba(238, 242, 238, 0.12);
+    --shadow: 0 10px 34px rgba(0, 0, 0, 0.45);
+    --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.35);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  color: var(--fg);
+  background: var(--bg);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font-family: inherit;
+}
+
+/* --- Nav bar ---------------------------------------------------------- */
+
+.site-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 22px;
+  font-size: 14px;
+  transition: background 0.25s ease, box-shadow 0.25s ease, backdrop-filter 0.25s ease;
+}
+
+.site-nav.is-floating {
+  background: transparent;
+}
+
+.site-nav.is-solid,
+.site-nav.is-floating.scrolled {
+  background: var(--surface);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  box-shadow: var(--shadow-sm);
+  border-bottom: 1px solid var(--border);
+}
+
+.site-nav .brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 15px;
+  text-decoration: none;
+  letter-spacing: -0.01em;
+}
+
+.site-nav .brand .leaf {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  color: var(--primary);
+}
+
+.site-nav .links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.site-nav .links a {
+  text-decoration: none;
+  font-weight: 500;
+  padding: 7px 14px;
+  border-radius: 999px;
+  color: var(--muted);
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.site-nav .links a:hover {
+  color: var(--fg);
+  background: var(--primary-light);
+}
+
+.site-nav .links a.active {
+  color: var(--primary-dark);
+  background: var(--primary-light);
+}
+
+/* --- Buttons ------------------------------------------------------------ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 14px;
+  padding: 11px 20px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 6px 18px rgba(31, 111, 74, 0.35);
+}
+
+.btn-primary:hover {
+  background: var(--primary-dark);
+}
+
+.btn-ghost {
+  background: var(--surface);
+  color: var(--fg);
+  border-color: var(--border);
+}
+
+.btn-ghost:hover {
+  border-color: var(--primary);
+  color: var(--primary-dark);
+}
+
+/* --- Scroll-reveal utility ------------------------------------------------ */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1), transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.reveal.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+}

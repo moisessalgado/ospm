@@ -4,30 +4,59 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Vagas de Plantio — Webmap</title>
-  <link rel="icon" href="data:,">
+  <meta name="description" content="Mapa das vagas de plantio de árvores em vias públicas, calculadas a partir de dados do IBGE, OpenStreetMap e Overture Maps." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ctext y='20' font-size='22'%3E%F0%9F%8C%B3%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
+  <link rel="stylesheet" href="css/base.css" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
+  <nav class="site-nav map-nav">
+    <a class="brand" href="index.html">
+      <svg class="leaf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M4 14c0-6 4.5-10 11-10 1 5-1 11-7 11-2.3 0-3.6-.4-4-1Z" />
+        <path d="M4 14c3 0 6-1.5 7-5" />
+      </svg>
+      Vagas de Plantio
+    </a>
+    <div class="links">
+      <a href="index.html" class="active">Mapa</a>
+      <a href="metodologia.html">Metodologia</a>
+    </div>
+  </nav>
+
   <div id="map"></div>
   <div id="cursor-label" hidden></div>
 
+  <button class="panel-toggle" id="panel-toggle" type="button" aria-expanded="true">Controles</button>
+
   <div id="panel">
     <h1>Vagas de plantio</h1>
+    <p class="subtitle">Pontos para o plantio de árvores em vias públicas</p>
 
-    <label for="municipality-select">Município</label>
-    <select id="municipality-select"></select>
+    <div class="field">
+      <label for="municipality-select">Município</label>
+      <div class="select-wrap"><select id="municipality-select"></select></div>
+    </div>
 
-    <label for="variant-select">Espaçamento</label>
-    <select id="variant-select"></select>
+    <div class="field">
+      <label for="variant-select">Espaçamento</label>
+      <div class="select-wrap"><select id="variant-select"></select></div>
+    </div>
 
-    <label for="basemap-select">Mapa base</label>
-    <select id="basemap-select">
-      <option value="roadmap">Google — Ruas</option>
-      <option value="satellite" selected>Google — Satélite</option>
-      <option value="hybrid">Google — Híbrido</option>
-      <option value="osm">OpenStreetMap</option>
-    </select>
+    <div class="field">
+      <label for="basemap-select">Mapa base</label>
+      <div class="select-wrap">
+        <select id="basemap-select">
+          <option value="roadmap">Google — Ruas</option>
+          <option value="satellite" selected>Google — Satélite</option>
+          <option value="hybrid">Google — Híbrido</option>
+          <option value="osm">OpenStreetMap</option>
+        </select>
+      </div>
+    </div>
+
+    <hr class="divider" />
 
     <label>Medir distância</label>
     <div id="measure-controls">
@@ -48,6 +77,10 @@
     </div>
 
     <div id="status"></div>
+
+    <div class="panel-note">
+      <a href="metodologia.html">Como as vagas são calculadas →</a>
+    </div>
   </div>
 
   <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>

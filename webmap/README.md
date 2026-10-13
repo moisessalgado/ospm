@@ -1,7 +1,19 @@
 # webmap
 
-Site estático (sem build) que apresenta os pontos de vagas de plantio
-gerados pelo módulo `modeling/`, sobre um basemap do Google Maps.
+Site estático (sem build) com duas páginas:
+
+- `index.html` — o mapa interativo, que apresenta os pontos de vagas de
+  plantio gerados pelo módulo `modeling/` sobre um basemap do Google Maps.
+- `metodologia.html` — apresentação em formato de scrollytelling da
+  metodologia de alocação, fontes de dados e limites de precisão, com os
+  números do resultado carregados ao vivo de `data/manifest.json`.
+
+`css/base.css` reúne os tokens visuais (cores, tipografia, nav, botões,
+utilitário `.reveal` para animações de entrada) compartilhados pelas duas
+páginas; `css/style.css` e `css/metodologia.css` têm os estilos específicos
+de cada uma.
+
+## Mapa (`index.html`)
 
 - Basemap: tiles do Google Maps via endpoint XYZ não-oficial (`mt0-3.google.com/vt/...`),
   sem necessidade de API key. Risco: não é um endpoint suportado oficialmente
@@ -22,6 +34,18 @@ gerados pelo módulo `modeling/`, sobre um basemap do Google Maps.
   espaçamento disponíveis nos seletores.
 - A posição lateral das vagas é indicativa (linha da face de quadra do IBGE);
   ver `modeling/README.md`.
+- Em telas estreitas (≤560px) o painel de controles inicia recolhido; o botão
+  "Controles" alterna a exibição (`js/app.js`).
+
+## Metodologia (`metodologia.html`)
+
+- As seções revelam ao rolar via `IntersectionObserver` (classe `.reveal`,
+  alternada para `.in-view`); respeita `prefers-reduced-motion`.
+- Os diagramas são SVG inline (sem imagens externas), com animações próprias
+  (`.pop`, `.fade`, `.draw-path`) definidas em `css/metodologia.css`.
+- O bloco "Resultado" não tem números fixos no HTML: `js/metodologia.js` busca
+  `data/manifest.json` em tempo de execução e monta os cartões e o gráfico de
+  barras a partir dele, então atualiza sozinho a cada novo município exportado.
 
 ## Testar localmente
 
