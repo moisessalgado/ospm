@@ -633,12 +633,6 @@ measureClearBtn.addEventListener("click", () => {
   renderMeasure();
 });
 
-snapToggle.addEventListener("change", () => {
-  if (snapToggle.checked && map.getZoom() <= CLUSTER_MAX_ZOOM) {
-    measureStatusEl.textContent = `Snap funciona com os pontos individuais — aproxime o zoom (nível ${CLUSTER_MAX_ZOOM + 1}+).`;
-  }
-});
-
 document.addEventListener("keydown", (e) => {
   if (!measure.active) return;
   if (e.key === "Escape" || e.key === "Enter") finishCurrentLine();

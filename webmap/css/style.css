@@ -122,7 +122,8 @@ html, body {
   cursor: pointer;
 }
 
-#panel label.checkbox input {
+#panel label.checkbox input,
+.legend-title input[type="checkbox"] {
   margin: 0;
   width: 15px;
   height: 15px;
@@ -233,10 +234,6 @@ html, body {
 
 .legend-title:first-child {
   margin-top: 0;
-}
-
-.legend-title input[type="checkbox"] {
-  margin: 0;
 }
 
 .legend-title strong {
