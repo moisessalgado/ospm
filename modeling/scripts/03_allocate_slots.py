@@ -27,17 +27,19 @@ the spacing for the larger-porte slot of the pair (10 m flat for the generic
 spacing; 6/8/11 m by porte otherwise) — including between sidewalk and
 median slots.
 
-Two things that keep a slot from existing somewhere are exported too, so the
-webmap can show *why* a gap is there instead of leaving it unexplained:
-obstacles (one file per municipality, shared by every variant — see
-OBSTACLES) and candidates dropped for lack of safe room between the
-carriageway and the nearest facade (one `<variante>_sem_alocacao.geojson`
-per variant — see allocate_from_roads/generate_face_ibge).
+Every candidate dropped along the way is exported too (one
+`<variante>_sem_alocacao.geojson` per variant, same porte it would have had),
+tagged with why — "esquina" (corner setback), an obstacle name (see
+OBSTACLES), or "sem_espaco_seguro" (no safe room before the nearest facade)
+— so the webmap can show *where* and *why* a slot is missing instead of
+leaving an unexplained gap. See blocked_intervals/allocate_face and
+allocate_from_roads/generate_face_ibge.
 """
 
 from __future__ import annotations
 
 import json
+from collections import Counter
 
 import geopandas as gpd
 import numpy as np
@@ -45,7 +47,7 @@ import pandas as pd
 import shapely
 from shapely.geometry import Point
 
-from planting_slots.allocation import enforce_min_separation, greedy_walk
+from planting_slots.allocation import enforce_min_separation, greedy_walk, greedy_walk_reasons
 from planting_slots.buildings import facade_probes, load_overture_buildings, local_facade
 from planting_slots.ibge import load_street_faces, load_urban_area
 from planting_slots.municipalities import get_municipality, municipality_arg_parser
@@ -136,27 +138,35 @@ def match_faces_to_streets(faces: gpd.GeoDataFrame, roads: gpd.GeoDataFrame) -> 
     return match.set_index("face")
 
 
-def blocked_intervals(face, obstacles: dict[str, np.ndarray]) -> list[tuple[float, float]]:
-    out = []
+def blocked_intervals(line, obstacles: dict[str, np.ndarray]) -> list[tuple[float, float, str]]:
+    """Intervals (m from the line start) where a slot can't go, each tagged
+    with why — the corner setback at both ends, plus a radius around every
+    nearby obstacle. Fed to allocate_face, which uses the tag to report not
+    just that a candidate was dropped there but which rule dropped it."""
+    length = line.length
+    out = [(0.0, CORNER_SETBACK_M, "esquina"), (max(length - CORNER_SETBACK_M, CORNER_SETBACK_M), length, "esquina")]
     for name, (geoms, radius) in obstacles.items():
         if not len(geoms):
             continue
-        near = geoms[shapely.dwithin(geoms, face, OBSTACLE_TO_FACE_M)]
+        near = geoms[shapely.dwithin(geoms, line, OBSTACLE_TO_FACE_M)]
         for g in near:
-            p = face.project(g.centroid if g.geom_type != "Point" else g)
-            out.append((p - radius, p + radius))
+            p = line.project(g.centroid if g.geom_type != "Point" else g)
+            out.append((p - radius, p + radius, name))
     return out
 
 
-def allocate_face(face, blocked, spacing_at) -> list[float]:
-    """Positions (m from the face start) of the slots on one face."""
-    dists = np.arange(CORNER_SETBACK_M, face.length - CORNER_SETBACK_M + 1e-9, SAMPLE_STEP_M)
+def allocate_face(line, blocked, spacing_at) -> tuple[list[float], list[tuple[float, str]]]:
+    """Positions (m from the line start) of the slots on one face/road, and
+    the positions+reasons where a slot was attempted (same spacing cadence)
+    but excluded by a blocked interval (corner, obstacle — see
+    blocked_intervals) instead of silently leaving a gap."""
+    dists = np.arange(0.0, line.length + 1e-9, SAMPLE_STEP_M)
     if not len(dists):
-        return []
-    ok = np.ones(len(dists), dtype=bool)
-    for a, b in blocked:
-        ok &= ~((dists >= a) & (dists <= b))
-    return [float(dists[i]) for i in greedy_walk(dists, ok, spacing_at)]
+        return [], []
+    placed_idx, rejected_idx = greedy_walk_reasons(dists, blocked, spacing_at)
+    placed = [float(dists[i]) for i in placed_idx]
+    rejected = [(float(dists[i]), motivo) for i, motivo in rejected_idx]
+    return placed, rejected
 
 
 CLAMP_MAX_ITER = 6
@@ -220,42 +230,46 @@ def point_at_offset(road, pos: float, side_left: bool, offset: float) -> Point:
 
 
 def allocate_from_roads(roads: gpd.GeoDataFrame, probes: dict, obstacles: dict, offset: bool,
-                        clamp_building: bool, spacing_fn) -> tuple[list[dict], list[dict], int]:
+                        clamp_building: bool, spacing_fn) -> tuple[list[dict], list[dict]]:
     """Slots walked directly along eligible roads (no IBGE face involved),
     for the three OSM-only comparison methods — see module docstring. Also
-    returns the candidates that had to be dropped for lack of safe room
-    between the carriageway and the nearest facade (motivo=sem_espaco_seguro),
-    kept at their best-guess position so the webmap can show *where* and
-    *why* a slot is missing, instead of just leaving a silent gap."""
+    returns every candidate dropped along the way — by the corner setback,
+    by a nearby obstacle (see blocked_intervals), or for lack of safe room
+    between the carriageway and the nearest facade (motivo=sem_espaco_seguro)
+    — at its best-guess position, so the webmap can show *where* and *why*
+    a slot is missing instead of just leaving a silent gap."""
     empty_probe = (np.array([]), np.array([]), np.array([]))
-    records, rejected, skipped = [], [], 0
+    records, rejected = [], []
     for idx, row in roads.iterrows():
         porte = PORTE_BY_CLASS[row["highway"]]
         road_geom = row.geometry
         street_name = normalize_street_name(row.get("name"))
-        positions = allocate_face(road_geom, blocked_intervals(road_geom, obstacles), lambda _: spacing_fn(porte))
-        if not positions:
-            continue
+        positions, blocked_rej = allocate_face(road_geom, blocked_intervals(road_geom, obstacles),
+                                               lambda _: spacing_fn(porte))
         probe_entry = probes.get(idx, empty_probe) if clamp_building else empty_probe
+        floor = row["half"] + CURB_SETBACK_M
+
+        for pos, motivo in blocked_rej:
+            for side_left in ([True, False] if offset else [None]):
+                point = point_at_offset(road_geom, pos, side_left, floor) if offset else road_geom.interpolate(pos)
+                rejected.append({"motivo": motivo, "porte": porte, "logradouro": street_name, "geometry": point})
+
         for pos in positions:
             for side_left in ([True, False] if offset else [None]):
                 if not offset:
                     point = road_geom.interpolate(pos)
                 else:
-                    floor = row["half"] + CURB_SETBACK_M
                     ceiling = np.inf
                     if clamp_building and len(probe_entry[0]):
                         facade_d = local_facade(np.array([pos]), probe_entry[0],
                                                 probe_entry[1] if side_left else probe_entry[2])[0]
                         ceiling = (facade_d - CURB_SETBACK_M) if not np.isnan(facade_d) else np.inf
                     if floor > ceiling:
-                        skipped += 1
                         rejected.append({"motivo": "sem_espaco_seguro", "porte": porte,
                                         "logradouro": street_name, "geometry": road_geom.interpolate(pos)})
                         continue
                     point = point_at_offset(road_geom, pos, side_left, floor)
                     if clamp_building and road_geom.distance(point) < floor - 1e-6:
-                        skipped += 1
                         rejected.append({"motivo": "sem_espaco_seguro", "porte": porte,
                                         "logradouro": street_name, "geometry": point})
                         continue
@@ -268,7 +282,7 @@ def allocate_from_roads(roads: gpd.GeoDataFrame, probes: dict, obstacles: dict, 
                                        "deslocada e validada contra a fachada mais próxima (Overture)"),
                     "geometry": point,
                 })
-    return records, rejected, skipped
+    return records, rejected
 
 
 def enrich_with_ibge(points: gpd.GeoDataFrame, faces: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
@@ -323,17 +337,6 @@ def main() -> None:
         geoms = load_osm_elements(files.osm_obstacles, flt, crs).geometry.values
         obstacles_raw[name] = (geoms, radius)
         obstacles[name] = (apply_shift(geoms, gx, gy, shift), radius)
-
-    # Exported once (shared by every method/spacing) so the webmap can show
-    # *why* the generic spacing looks irregular in places — the gaps are
-    # these exclusion zones, not noise in the allocation.
-    obstacle_records = [
-        {"motivo": name, "geometry": g.centroid if g.geom_type != "Point" else g}
-        for name, (geoms, _radius) in obstacles_raw.items() for g in geoms
-    ]
-    if obstacle_records:
-        gpd.GeoDataFrame(obstacle_records, geometry="geometry", crs=crs) \
-            .to_crs("EPSG:4326").to_file(files.obstacles("geojson"), driver="GeoJSON")
 
     roads = ways[ways["highway"].isin(DEFAULT_WIDTH_BY_CLASS)].copy()
     roads["half"] = [carriageway_half_width(r, p, np.nan, municipality.min_sidewalk_width_m)[0]
@@ -411,7 +414,11 @@ def main() -> None:
             porte = PORTE_BY_CLASS[face["highway"]]
             road_geom, min_clear, probe_entry = clamp_ctx[i]
             street_name = normalize_street_name(face["NM_TIP_LOG"], face["NM_TIT_LOG"], face["NM_LOG"])
-            for pos in allocate_face(face.geometry, blocked[i], lambda _: spacing_fn(porte)):
+            positions, blocked_rej = allocate_face(face.geometry, blocked[i], lambda _: spacing_fn(porte))
+            for pos, motivo in blocked_rej:
+                rejected.append({"motivo": motivo, "porte": porte, "logradouro": street_name,
+                                "geometry": face.geometry.interpolate(pos)})
+            for pos in positions:
                 candidate = face.geometry.interpolate(pos)
                 point = clamp_to_road(candidate, road_geom, min_clear, probe_entry)
                 if point is None:
@@ -441,7 +448,8 @@ def main() -> None:
         spacing_fn = spacing_cfg["spacing"]
 
         def generate_road_method(spacing_fn, roads, obs, mcfg):
-            records, rejected, skipped = allocate_from_roads(roads, probes, obs, mcfg["offset"], mcfg["clamp_building"], spacing_fn)
+            records, rejected = allocate_from_roads(roads, probes, obs, mcfg["offset"], mcfg["clamp_building"], spacing_fn)
+            skipped = sum(1 for r in rejected if r["motivo"] == "sem_espaco_seguro")
             stats = {"removidos_sem_espaco_seguro_ate_fachada": skipped} if mcfg["clamp_building"] else {}
             return records, rejected, stats
 
@@ -472,6 +480,7 @@ def main() -> None:
             report["variantes"][variant] = {
                 "metodo": method_id, "espacamento": spacing_id, "pontos": len(points),
                 "removidos_espacamento_minimo": before - len(points), "pontos_sem_alocacao": len(rejected),
+                "sem_alocacao_por_motivo": dict(Counter(r["motivo"] for r in rejected)),
                 **extra_stats,
                 "por_tipo": points["tipo_vaga"].value_counts().to_dict(),
                 "por_porte": points["porte"].value_counts().to_dict(),

@@ -2,21 +2,17 @@
 
 Each variant (method x spacing) becomes webmap/data/<municipality>/<variant>.json:
   {"legend": {...}, "points": [lon, lat, porte, tipo_vaga, logradouro, face, posicao_face_m, ...],
-   "rejeitados": [lon, lat, porte, ...]}
+   "rejeitados": [lon, lat, porte, motivo, ...]}
 "points" is a flat numeric array (7 numbers per slot) whose categorical
 attributes are indices into "legend" — no per-feature GeoJSON boilerplate.
 "face" indexes legend.face, a [cd_setor, cd_quadra, cd_face] triple (-1, and
-posicao_face_m -1, for slots with no IBGE match close enough). "rejeitados"
-is the candidates dropped for lack of safe room before the nearest facade
-(3 numbers per point: lon, lat, porte) — there is currently one reason
-(sem_espaco_seguro), so it isn't indexed. The webmap rebuilds the GeoJSON
-client-side. The manifest lists each variant's method and spacing separately
-so the webmap can offer them as two selectors.
-
-Obstacles (crossings, driveways, bus stops, existing trees) are the same for
-every variant of a municipality, so they get their own
-webmap/data/<municipality>/obstaculos.json: {"legend": [...], "points": [lon,
-lat, motivo, ...]} (3 numbers per point, motivo indexing "legend").
+posicao_face_m -1, for slots with no IBGE match close enough). "rejeitados" is
+every candidate the allocator dropped (4 numbers per point: lon, lat, porte,
+motivo — the porte and position it would have had, and why it didn't become a
+slot: corner setback, an obstacle, or no safe room before the nearest
+facade), indexing legend.porte and legend.motivo the same way. The webmap
+rebuilds the GeoJSON client-side. The manifest lists each variant's method
+and spacing separately so the webmap can offer them as two selectors.
 """
 
 from __future__ import annotations
@@ -30,11 +26,11 @@ from planting_slots.paths import WEBMAP_DATA_DIR, MunicipalityFiles
 
 COORD_DECIMALS = 5  # ~1.1 m — enough for display
 POINT_STRIDE = 7
-REJECTED_STRIDE = 3
-OBSTACLE_STRIDE = 3
+REJECTED_STRIDE = 4
 LEGEND = {
     "porte": ["pequeno", "medio", "grande"],
     "tipo_vaga": ["calcada", "canteiro_central", "eixo_via"],
+    "motivo": ["sem_espaco_seguro", "esquina", "travessia", "acesso_garagem", "ponto_onibus", "arvore_existente"],
 }
 METHODS = {  # id -> label, in selector order
     "face_ibge": "Face de quadra (IBGE) — método atual",
@@ -86,22 +82,14 @@ def compact(geojson: dict) -> dict:
 
 def compact_rejected(geojson: dict) -> list[float | int]:
     porte_index = {v: i for i, v in enumerate(LEGEND["porte"])}
+    motivo_index = {v: i for i, v in enumerate(LEGEND["motivo"])}
     flat: list[float | int] = []
     for feat in geojson["features"]:
         lon, lat = feat["geometry"]["coordinates"]
+        props = feat["properties"]
         flat += [round(lon, COORD_DECIMALS), round(lat, COORD_DECIMALS),
-                porte_index.get(feat["properties"].get("porte"), -1)]
+                porte_index.get(props.get("porte"), -1), motivo_index.get(props.get("motivo"), -1)]
     return flat
-
-
-def compact_obstacles(geojson: dict) -> dict:
-    motivo_values, get_motivo = vocabulary()
-    flat: list[float | int] = []
-    for feat in geojson["features"]:
-        lon, lat = feat["geometry"]["coordinates"]
-        flat += [round(lon, COORD_DECIMALS), round(lat, COORD_DECIMALS),
-                get_motivo(feat["properties"].get("motivo"))]
-    return {"legend": motivo_values, "points": flat}
 
 
 def main() -> None:
@@ -135,20 +123,10 @@ def main() -> None:
     if not variants:
         raise SystemExit(f"Nenhuma saída de alocação em {files.output_dir}; rode antes o 03_allocate_slots.py.")
 
-    obstacles_count = 0
-    obstacles_src = files.obstacles("geojson")
-    if obstacles_src.exists():
-        obstacles_payload = compact_obstacles(json.loads(obstacles_src.read_text()))
-        obstacles_out = out_dir / "obstaculos.json"
-        obstacles_out.write_text(json.dumps(obstacles_payload, separators=(",", ":")))
-        obstacles_count = len(obstacles_payload["points"]) // OBSTACLE_STRIDE
-        print(f"[webmap] obstaculos: {obstacles_count} -> {obstacles_out}")
-
     boundary = shape(json.loads(files.boundary.read_text())["features"][0]["geometry"])
     west, south, east, north = boundary.bounds
     entry = {"slug": municipality.slug, "name": municipality.name, "state": municipality.state,
-             "center": [(west + east) / 2, (south + north) / 2], "variants": variants,
-             "obstacles_count": obstacles_count}
+             "center": [(west + east) / 2, (south + north) / 2], "variants": variants}
 
     manifest_path = WEBMAP_DATA_DIR / "manifest.json"
     manifest = json.loads(manifest_path.read_text()) if manifest_path.exists() else {}

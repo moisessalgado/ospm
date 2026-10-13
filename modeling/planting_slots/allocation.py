@@ -18,6 +18,30 @@ def greedy_walk(dists, ok, spacing_at) -> list[int]:
     return placed
 
 
+def greedy_walk_reasons(dists, blocked, spacing_at) -> tuple[list[int], list[tuple[int, str]]]:
+    """Like greedy_walk, but instead of silently skipping a blocked sample it
+    attempts a slot there too — same spacing cadence as a real placement —
+    and records why: `blocked` is [(start, end, motivo), ...] (first match
+    wins), so the caller gets back not just where slots were placed but
+    where one was attempted and excluded, and by which rule."""
+    n = len(dists)
+    motivo = np.full(n, None, dtype=object)
+    for a, b, m in blocked:
+        mask = (dists >= a) & (dists <= b) & (motivo == None)  # noqa: E711 (vectorized None check)
+        motivo[mask] = m
+
+    placed, rejected, next_allowed = [], [], -np.inf
+    for i, d in enumerate(dists):
+        if d < next_allowed:
+            continue
+        if motivo[i] is None:
+            placed.append(i)
+        else:
+            rejected.append((i, motivo[i]))
+        next_allowed = d + spacing_at(i)
+    return placed, rejected
+
+
 def enforce_min_separation(points: gpd.GeoDataFrame, min_sep) -> gpd.GeoDataFrame:
     """Greedy dedup guaranteeing no two kept points closer than min_sep.
 

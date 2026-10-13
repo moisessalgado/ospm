@@ -27,17 +27,22 @@ de cada uma.
 - Dois seletores — **Método de alocação** e **Espaçamento** — escolhem a
   variante: 4 métodos (`face_ibge`, o de produção, e três comparações só com
   o OSM — `osm_eixo`, `osm_calcada`, `osm_overture`; ver `modeling/README.md`)
-  x 2 espaçamentos. O webmap abre em `osm_calcada` por padrão (`DEFAULT_METHOD`
-  em `js/app.js`) — mais próximo da calçada esperada sem depender da face do
-  IBGE; os outros três ficam disponíveis no seletor para comparação.
-- Pontos cinza com contorno vermelho ("Vagas não alocadas" na legenda) são
-  candidatos que não couberam entre o leito carroçável e a fachada mais
-  próxima (`sem_espaco_seguro`); clique para o motivo. Um checkbox liga a
-  camada de obstáculos do OSM (travessias, acessos de garagem, pontos de
-  ônibus, árvores existentes) que explicam os demais espaços irregulares —
-  ambos vêm de `data/<municipio>/<variante>.json` (`rejeitados`) e
-  `data/<municipio>/obstaculos.json`, gerados por
-  `modeling/scripts/04_export_webmap.py`.
+  x 2 espaçamentos. O webmap abre em Suzano/`osm_calcada` por padrão
+  (`DEFAULT_MUNICIPALITY`/`DEFAULT_METHOD` em `js/app.js`, sem animação de
+  voo — o mapa já nasce centrado ali) — mais próximo da calçada esperada sem
+  depender da face do IBGE; os outros três ficam disponíveis no seletor para
+  comparação.
+- Dois conjuntos de pontos, separados por camada:
+  - **Vagas de plantio** (cor por porte — pequeno/médio/grande).
+  - **Vagas inviáveis**: candidatos que o algoritmo descartou, na mesma cor
+    de porte (é o porte que a vaga teria), mas com um contorno colorido
+    indicando o motivo — afastamento de esquina, um obstáculo do OSM
+    (travessia, acesso de garagem, ponto de ônibus, árvore existente) ou
+    falta de espaço seguro até a fachada mais próxima; clique para o motivo
+    por extenso. Só aparecem a partir do zoom 15 (ver `rejected-points` em
+    `js/app.js`) — em zoom de cidade seriam um borrão cobrindo o mapa.
+  Ambos vêm de `data/<municipio>/<variante>.json` (`points`/`rejeitados`),
+  gerado por `modeling/scripts/04_export_webmap.py`.
 - Medição de distância: botão "Medir" — cada clique adiciona um vértice, a
   linha segue o cursor mostrando a distância ao vivo; duplo clique, Enter ou
   Esc finalizam a linha (Backspace desfaz o último vértice). Com "Snap" ligado,
@@ -49,10 +54,12 @@ de cada uma.
   (7 números por vaga) em que os atributos categóricos são índices da tabela
   `legend` (`face` indexa `legend.face`, uma tripla `[cd_setor, cd_quadra,
   cd_face]`), o que reduz bastante o tamanho do arquivo sem perder nenhuma
-  vaga nem atributo. `js/app.js` reconstrói o GeoJSON no navegador antes de
-  passar para o MapLibre. `data/manifest.json` lista, por município, cada
-  variante com seu `method`/`method_label` e `spacing`/`spacing_label`, que
-  os dois seletores usam para se popular.
+  vaga nem atributo. O mesmo arquivo traz `rejeitados`: `[lon, lat, porte,
+  motivo, ...]` (4 números por ponto) para as vagas inviáveis, `motivo`
+  indexando `legend.motivo`. `js/app.js` reconstrói o GeoJSON no navegador
+  antes de passar para o MapLibre. `data/manifest.json` lista, por município,
+  cada variante com seu `method`/`method_label` e `spacing`/`spacing_label`,
+  que os dois seletores usam para se popular.
 - A posição lateral das vagas é indicativa (linha da face de quadra do IBGE);
   ver `modeling/README.md`.
 - Em telas estreitas (≤560px) o painel de controles inicia recolhido; o botão

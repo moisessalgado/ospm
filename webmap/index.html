@@ -61,11 +61,6 @@
       </div>
     </div>
 
-    <label class="checkbox">
-      <input type="checkbox" id="obstacles-toggle" />
-      Mostrar obstáculos (travessias, acessos, pontos de ônibus, árvores)
-    </label>
-
     <hr class="divider" />
 
     <label>Medir distância</label>
@@ -86,15 +81,14 @@
       <div><span class="dot" style="background:#6a1b9a"></span> Grande <span class="legend-hint" title="Vias arteriais (secundária, primária) — espaçamento mínimo de 11 m.">ⓘ</span></div>
       <p class="legend-note">O porte é estimado pela classificação da via no OSM. <a href="metodologia.html#variantes">Como funciona →</a></p>
 
-      <strong>Obstáculos</strong>
-      <div><span class="dot" style="background:#fb8c00"></span> Travessia de pedestres</div>
-      <div><span class="dot" style="background:#8d6e63"></span> Acesso de garagem</div>
-      <div><span class="dot" style="background:#29b6f6"></span> Ponto de ônibus</div>
-      <div><span class="dot" style="background:#2e7d32"></span> Árvore existente</div>
-
-      <strong>Vagas não alocadas</strong>
-      <div><span class="dot" style="background:#bdbdbd;outline:2px solid #d64545;outline-offset:1px"></span> Sem espaço seguro até a fachada</div>
-      <p class="legend-note">Obstáculos e vagas não alocadas só aparecem a partir do zoom 15.</p>
+      <strong>Vagas inviáveis</strong>
+      <p class="legend-note">Mesma cor de porte, com o contorno indicando o motivo — a partir do zoom 15.</p>
+      <div><span class="dot" style="background:#1565c0;outline:2.5px solid #d64545;outline-offset:1px"></span> Sem espaço seguro até a fachada</div>
+      <div><span class="dot" style="background:#1565c0;outline:2.5px solid #fdd835;outline-offset:1px"></span> Afastamento de esquina</div>
+      <div><span class="dot" style="background:#1565c0;outline:2.5px solid #fb8c00;outline-offset:1px"></span> Travessia de pedestres</div>
+      <div><span class="dot" style="background:#1565c0;outline:2.5px solid #8d6e63;outline-offset:1px"></span> Acesso de garagem</div>
+      <div><span class="dot" style="background:#1565c0;outline:2.5px solid #29b6f6;outline-offset:1px"></span> Ponto de ônibus</div>
+      <div><span class="dot" style="background:#1565c0;outline:2.5px solid #2e7d32;outline-offset:1px"></span> Árvore existente</div>
     </div>
 
     <div id="status"></div>
@@ -105,6 +99,6 @@
   </div>
 
   <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-  <script src="js/app.js?v=8"></script>
+  <script src="js/app.js?v=9"></script>
 </body>
 </html>
