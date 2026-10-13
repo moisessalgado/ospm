@@ -315,7 +315,7 @@ function decodeRejectedPoints(flat, legend) {
 // positions silently shown to the user (not just a stale style).
 const CACHE_BUST = Date.now();
 const DEFAULT_MUNICIPALITY = "suzano";
-const DEFAULT_METHOD = "osm_calcada"; // closest to the expected sidewalk position without IBGE's face lines
+const DEFAULT_METHOD = "osm_eixo"; // first in the selector; see METHODS in 04_export_webmap.py
 
 // A municipality's variants each carry a method and a spacing (see
 // modeling/scripts/04_export_webmap.py); the two selects below combine to

@@ -3,7 +3,7 @@
 Site estático (sem build) com duas páginas:
 
 - `index.html` — o mapa interativo, que apresenta os pontos de vagas de
-  plantio gerados pelo módulo `modeling/` sobre um basemap do Google Maps.
+  plantio gerados pelo módulo `modeling/` sobre um basemap do OpenStreetMap.
 - `metodologia.html` — apresentação em formato de scrollytelling da
   metodologia de alocação, fontes de dados e limites de precisão, com os
   números do resultado carregados ao vivo de `data/manifest.json`.
@@ -26,13 +26,12 @@ de cada uma.
   tipo, setor/quadra/face do IBGE e posição ao longo da via/face), num popup
   do MapLibre (`showSlotPopup` em `js/app.js`).
 - Dois seletores — **Método de alocação** e **Espaçamento** — escolhem a
-  variante: 5 métodos (`face_ibge`, o de produção, e quatro comparações só com
-  o OSM — `osm_eixo`, `osm_calcada`, `osm_calcada_lado`, `osm_overture`; ver `modeling/README.md`)
-  x 2 espaçamentos. O webmap abre em Suzano/`osm_calcada` por padrão
-  (`DEFAULT_MUNICIPALITY`/`DEFAULT_METHOD` em `js/app.js`, sem animação de
-  voo — o mapa já nasce centrado ali) — mais próximo da calçada esperada sem
-  depender da face do IBGE; os outros três ficam disponíveis no seletor para
-  comparação.
+  variante: 5 métodos x 2 espaçamentos, na ordem do seletor — `osm_eixo`
+  (padrão), `osm_calcada_lado` (um lado da via), `osm_calcada` (dois lados),
+  `face_ibge` e `osm_overture`; ver `modeling/README.md`. A ordem e os rótulos
+  vêm de `METHODS` em `modeling/scripts/04_export_webmap.py` (via manifesto).
+  O webmap abre em Suzano/`osm_eixo` (`DEFAULT_MUNICIPALITY`/`DEFAULT_METHOD`
+  em `js/app.js`, sem animação de voo — o mapa já nasce centrado ali).
 - Dois conjuntos de pontos, cada um com um checkbox próprio na legenda para
   ligar/desligar a camada (`layer-slots-toggle`/`layer-rejected-toggle` em
   `js/app.js`):

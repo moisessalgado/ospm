@@ -32,7 +32,7 @@
     <h1>Onde cabe uma árvore <em>sem</em> tirar uma vaga da rua</h1>
     <p class="lede">
       Como calculamos, município por município, pontos de plantio em vias públicas a partir de
-      dados abertos — com quatro métodos diferentes, cada um com suas vantagens e limites, que
+      dados abertos — com cinco métodos diferentes, cada um com suas vantagens e limites, que
       explicamos em detalhe nesta página.
     </p>
     <div class="cta-row">
@@ -120,12 +120,12 @@
     </p>
   </section>
 
-  <!-- Regras comuns aos quatro métodos -->
+  <!-- Regras comuns aos cinco métodos -->
   <section class="story-section alt" id="pedra-fundamental">
     <p class="eyebrow reveal">Regras comuns</p>
     <h2 class="reveal">Mesma malha elegível, mesmo porte, mesmas exclusões — o que muda é a distância até o meio-fio</h2>
     <p class="lead reveal">
-      Os quatro métodos de alocação (ver "Quatro métodos, lado a lado" logo abaixo) partem da mesma
+      Os cinco métodos de alocação (ver "Cinco métodos, lado a lado" logo abaixo) partem da mesma
       base: só vias de classe elegível (residencial a primária) entram no cálculo, o porte da árvore
       vem da classe da via, e as mesmas zonas de exclusão valem para todos. O que muda de um método
       para outro é só a distância da vaga até o leito carroçável — da calçada estimada até,
@@ -133,7 +133,7 @@
     </p>
 
     <div class="diagram reveal">
-      <svg viewBox="0 0 600 220" role="img" aria-label="Comparação entre uma vaga no eixo da via, usada como referência de comparação, e uma vaga fora do leito carroçável, usada pelos outros três métodos">
+      <svg viewBox="0 0 600 220" role="img" aria-label="Comparação entre uma vaga no eixo da via, usada como referência de comparação, e uma vaga fora do leito carroçável, usada pelos outros quatro métodos">
         <rect x="0" y="16" width="168" height="188" rx="6" fill="var(--primary-light)" stroke="var(--border)" />
         <rect x="432" y="16" width="168" height="188" rx="6" fill="var(--primary-light)" stroke="var(--border)" />
         <rect x="168" y="16" width="30" height="188" fill="var(--surface-solid)" stroke="var(--border)" />
@@ -144,17 +144,17 @@
         <g class="pop">
           <circle cx="300" cy="110" r="9" fill="#9e9e9e" stroke="#ffffff" stroke-width="2" />
         </g>
-        <text class="pop fade" x="300" y="150" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--muted)">Eixo da via — 1 de 4 métodos</text>
+        <text class="pop fade" x="300" y="150" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--muted)">Eixo da via — 1 de 5 métodos</text>
 
         <g class="pop delay-2">
           <circle cx="183" cy="60" r="8" fill="var(--primary)" stroke="#ffffff" stroke-width="2" />
         </g>
-        <text class="pop delay-2 fade" x="183" y="40" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--primary-dark)">Fora do leito — 3 de 4 métodos</text>
+        <text class="pop delay-2 fade" x="183" y="40" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--primary-dark)">Fora do leito — 4 de 5 métodos</text>
       </svg>
       <p class="caption">Esquema ilustrativo de uma via: calçadas nas bordas, leito carroçável ao centro.</p>
     </div>
 
-    <p class="lead reveal" style="margin-top:28px">Trechos próximos a obstáculos mapeados no OSM ficam sem vaga, com uma distância que varia por tipo — a mesma regra vale nos quatro métodos:</p>
+    <p class="lead reveal" style="margin-top:28px">Trechos próximos a obstáculos mapeados no OSM ficam sem vaga, com uma distância que varia por tipo — a mesma regra vale nos cinco métodos:</p>
     <div class="card-grid">
       <article class="source-card reveal"><h3>Travessia</h3><p>3 m de cada lado.</p></article>
       <article class="source-card reveal"><h3>Acesso de garagem</h3><p>2 m de cada lado.</p></article>
@@ -190,7 +190,7 @@
           <circle cx="570" cy="110" r="6" fill="var(--primary)" />
         </g>
       </svg>
-      <p class="caption">Vagas (verde) espaçadas ao longo da via ou face de quadra, respeitando esquinas e obstáculos — mesma lógica nos quatro métodos.</p>
+      <p class="caption">Vagas (verde) espaçadas ao longo da via ou face de quadra, respeitando esquinas e obstáculos — mesma lógica nos cinco métodos.</p>
     </div>
 
     <p class="lead reveal" style="margin-top:28px">
@@ -206,68 +206,70 @@
     </p>
   </section>
 
-  <!-- Quatro métodos -->
+  <!-- Cinco métodos -->
   <section class="story-section" id="metodos">
-    <p class="eyebrow reveal">Quatro métodos, lado a lado</p>
+    <p class="eyebrow reveal">Cinco métodos, lado a lado</p>
     <h2 class="reveal">Nem toda fonte de dados dá a mesma margem de segurança</h2>
     <p class="lead reveal">
-      O webmap deixa alternar entre os quatro métodos abaixo para o mesmo município, um de cada vez —
+      O webmap deixa alternar entre os cinco métodos abaixo para o mesmo município, um de cada vez —
       útil para comparar visualmente o que cada fonte de dados consegue garantir e o que ela só
-      consegue estimar. O método 2 tem ainda uma variante (2b) que aloca vagas só num lado de cada rua. O método 1 nunca é o resultado final: existe só como referência visual de
-      quanto os outros três conseguem melhorar a posição da vaga.
+      consegue estimar. O método 1 abre por padrão e fica sobre o eixo da via, de propósito: é a
+      referência de quanto os outros quatro conseguem melhorar a posição lateral da vaga.
     </p>
 
     <div class="variant-grid">
       <div class="variant-card reveal">
         <span class="tag">1 · osm_eixo</span>
-        <h3>Eixo da via (OSM), sem deslocamento</h3>
+        <h3>Eixo da via (OSM)</h3>
         <ul>
-          <li><strong>Vantagem:</strong> o mais simples e rápido de calcular; só precisa do OSM.</li>
+          <li><strong>Vantagem:</strong> o mais simples e rápido de calcular; só precisa do OSM. Mostra
+            bem o espaçamento e as exclusões (esquinas e obstáculos) ao longo da rua.</li>
           <li><strong>Desvantagem:</strong> a vaga fica sobre o próprio eixo da rua, de propósito —
-            existe só como baseline de comparação, nunca como resultado a ser usado no plantio real.</li>
+            ou seja, no leito carroçável. Serve para ver a distribuição ao longo da via, não a
+            posição lateral final.</li>
         </ul>
       </div>
       <div class="variant-card reveal">
-        <span class="tag">2 · osm_calcada</span>
-        <h3>Calçada estimada por OSM, sem prédios</h3>
+        <span class="tag">2 · osm_calcada_lado</span>
+        <h3>Calçada alocada em um dos lados da via (OSM)</h3>
+        <ul>
+          <li><strong>Vantagem:</strong> mesma posição do método 3, mas só num lado de cada rua — o
+            lado cujas faces de quadra do IBGE somam menos endereços (menos portões e acessos de
+            garagem); se só um lado tem face IBGE, como numa rua ao longo de uma praça, esse lado.</li>
+          <li><strong>Desvantagem:</strong> cerca de metade das vagas do método 3; em vias fora dos
+            setores urbanos do IBGE não há dado para escolher o lado, e fica o lado esquerdo do
+            traçado do OSM.</li>
+        </ul>
+      </div>
+      <div class="variant-card reveal">
+        <span class="tag">3 · osm_calcada</span>
+        <h3>Calçada alocada nos dois lados da via (OSM)</h3>
         <ul>
           <li><strong>Vantagem:</strong> ainda depende só do OSM; desloca a vaga para a largura de
-            calçada estimada pela classe da via (residencial, arterial etc.).</li>
+            calçada estimada pela classe da via (residencial, arterial etc.), nos dois lados.</li>
           <li><strong>Desvantagem:</strong> a largura é uma estimativa por classe, não uma medição.
             Em vias mais estreitas que o estimado, a vaga pode continuar perto da rua; em lotes com
             recuo irregular, pode passar da calçada e cair dentro do terreno.</li>
         </ul>
       </div>
       <div class="variant-card reveal">
-        <span class="tag">2b · osm_calcada_lado</span>
-        <h3>Calçada estimada por OSM, um lado só</h3>
-        <ul>
-          <li><strong>Vantagem:</strong> mesma posição do método 2, mas só num lado de cada rua — o
-            lado cujas faces de quadra do IBGE somam menos endereços (menos portões e acessos de
-            garagem); se só um lado tem face IBGE, como numa rua ao longo de uma praça, esse lado.</li>
-          <li><strong>Desvantagem:</strong> cerca de metade das vagas do método 2; em vias fora dos
-            setores urbanos do IBGE não há dado para escolher o lado, e fica o lado esquerdo do
-            traçado do OSM.</li>
-        </ul>
-      </div>
-      <div class="variant-card reveal">
-        <span class="tag">3 · osm_overture</span>
-        <h3>Calçada validada com prédios (OSM + Overture)</h3>
-        <ul>
-          <li><strong>Vantagem:</strong> o mesmo deslocamento do método 2, mas nunca além da fachada
-            do prédio mais próximo medida na Overture — corrige o maior risco do método anterior.</li>
-          <li><strong>Desvantagem:</strong> depende da cobertura e atualização das edificações da
-            Overture; onde não há prédio mapeado por perto, cai de volta na estimativa do método 2.</li>
-        </ul>
-      </div>
-      <div class="variant-card reveal">
         <span class="tag">4 · face_ibge</span>
-        <h3>Face de quadra (IBGE) — método atual</h3>
+        <h3>Face de quadra (IBGE)</h3>
         <ul>
           <li><strong>Vantagem:</strong> metadados oficiais completos (setor, quadra, face, logradouro)
-            e o único método com canteiros centrais; é o mais testado dos quatro — ver detalhe abaixo.</li>
+            e o único método com canteiros centrais; é o mais testado dos cinco — ver detalhe abaixo.</li>
           <li><strong>Desvantagem:</strong> mais lento de calcular; depende do download manual das
             faces de logradouro do IBGE por estado, que nem sempre está disponível.</li>
+        </ul>
+      </div>
+      <div class="variant-card reveal">
+        <span class="tag">5 · osm_overture</span>
+        <h3>Calçada ajustada com prédios (OSM + Overture)</h3>
+        <ul>
+          <li><strong>Vantagem:</strong> o mesmo deslocamento do método 3, mas nunca além da fachada
+            do prédio mais próximo medida na Overture — corrige o maior risco do método 3.</li>
+          <li><strong>Desvantagem:</strong> depende da cobertura e atualização das edificações da
+            Overture; onde não há prédio mapeado por perto, cai de volta na estimativa do método 3.</li>
         </ul>
       </div>
     </div>
@@ -283,7 +285,7 @@
     <p class="eyebrow reveal">Método em detalhe — face de quadra (IBGE)</p>
     <h2 class="reveal">Cada vaga pertence a uma face de quadra</h2>
     <p class="lead reveal">
-      Dos quatro métodos, este é o mais testado e o único com metadados oficiais completos desde a
+      Dos cinco métodos, este é o mais testado e o único com metadados oficiais completos desde a
       origem. Em vez de deduzir uma posição lateral exata, ele vincula cada vaga à <strong>face de
       quadra oficial do IBGE</strong>: ela sabe em qual setor, quadra, face e logradouro está, e sua
       posição ao longo da face é exata. A posição lateral — de qual lado da linha, a que distância do
@@ -317,7 +319,7 @@
     <p class="lead reveal" style="margin-top:28px">
       Canteiros centrais de avenidas de pista dupla também recebem vagas — identificados a partir de
       pares de vias paralelas no OSM, co-registrados contra as edificações, com a mesma margem de
-      segurança medida na comparação com o IBGE. É a única categoria de vaga que os outros três
+      segurança medida na comparação com o IBGE. É a única categoria de vaga que os outros quatro
       métodos não geram.
     </p>
   </section>
@@ -327,7 +329,7 @@
     <p class="eyebrow reveal">Duas variantes</p>
     <h2 class="reveal">Dois critérios de espaçamento, lado a lado</h2>
     <p class="lead reveal">
-      Geramos as duas versões em paralelo, para cada um dos quatro métodos, para comparar o resultado
+      Geramos as duas versões em paralelo, para cada um dos cinco métodos, para comparar o resultado
       de cada critério sem precisar reprocessar o restante do pipeline.
     </p>
 
@@ -380,7 +382,7 @@
       <div class="pipeline-step reveal">
         <div class="num">03</div>
         <h3>Alocar as vagas</h3>
-        <p>Gera os quatro métodos (e a variante 2b) x duas variantes de espaçamento, com as mesmas regras comuns.</p>
+        <p>Gera os cinco métodos x duas variantes de espaçamento, com as mesmas regras comuns.</p>
         <code>03_allocate_slots.py</code>
       </div>
       <div class="pipeline-step reveal">

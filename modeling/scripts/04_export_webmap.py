@@ -34,11 +34,11 @@ LEGEND = {
               "via_transversal", "espacamento_minimo"],
 }
 METHODS = {  # id -> label, in selector order
-    "face_ibge": "Face de quadra (IBGE) — método atual",
-    "osm_eixo": "Eixo da via (OSM), sem deslocamento",
-    "osm_calcada": "Calçada estimada por OSM, sem prédios",
-    "osm_calcada_lado": "Calçada estimada por OSM, um lado só (menos endereços IBGE)",
-    "osm_overture": "Calçada validada com prédios (OSM + Overture)",
+    "osm_eixo": "Eixo da via (OSM)",
+    "osm_calcada_lado": "Calçada alocada em um dos lados da via (OSM)",
+    "osm_calcada": "Calçada alocada nos dois lados da via (OSM)",
+    "face_ibge": "Face de quadra (IBGE)",
+    "osm_overture": "Calçada ajustada com prédios (OSM + Overture)",
 }
 SPACINGS = {
     "10m": "Espaçamento genérico de 10 m",

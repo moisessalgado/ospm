@@ -10,27 +10,9 @@
       ],
       "variants": [
         {
-          "id": "face_ibge_10m",
-          "method": "face_ibge",
-          "method_label": "Face de quadra (IBGE) — método atual",
-          "spacing": "10m",
-          "spacing_label": "Espaçamento genérico de 10 m",
-          "count": 117683,
-          "rejected_count": 126981
-        },
-        {
-          "id": "face_ibge_porte",
-          "method": "face_ibge",
-          "method_label": "Face de quadra (IBGE) — método atual",
-          "spacing": "porte",
-          "spacing_label": "Espaçamento por porte (6/8/11 m)",
-          "count": 137972,
-          "rejected_count": 146613
-        },
-        {
           "id": "osm_eixo_10m",
           "method": "osm_eixo",
-          "method_label": "Eixo da via (OSM), sem deslocamento",
+          "method_label": "Eixo da via (OSM)",
           "spacing": "10m",
           "spacing_label": "Espaçamento genérico de 10 m",
           "count": 139602,
@@ -39,34 +21,16 @@
         {
           "id": "osm_eixo_porte",
           "method": "osm_eixo",
-          "method_label": "Eixo da via (OSM), sem deslocamento",
+          "method_label": "Eixo da via (OSM)",
           "spacing": "porte",
           "spacing_label": "Espaçamento por porte (6/8/11 m)",
           "count": 165059,
           "rejected_count": 23669
         },
         {
-          "id": "osm_calcada_10m",
-          "method": "osm_calcada",
-          "method_label": "Calçada estimada por OSM, sem prédios",
-          "spacing": "10m",
-          "spacing_label": "Espaçamento genérico de 10 m",
-          "count": 257577,
-          "rejected_count": 62215
-        },
-        {
-          "id": "osm_calcada_porte",
-          "method": "osm_calcada",
-          "method_label": "Calçada estimada por OSM, sem prédios",
-          "spacing": "porte",
-          "spacing_label": "Espaçamento por porte (6/8/11 m)",
-          "count": 305255,
-          "rejected_count": 66029
-        },
-        {
           "id": "osm_calcada_lado_10m",
           "method": "osm_calcada_lado",
-          "method_label": "Calçada estimada por OSM, um lado só (menos endereços IBGE)",
+          "method_label": "Calçada alocada em um dos lados da via (OSM)",
           "spacing": "10m",
           "spacing_label": "Espaçamento genérico de 10 m",
           "count": 135225,
@@ -75,16 +39,52 @@
         {
           "id": "osm_calcada_lado_porte",
           "method": "osm_calcada_lado",
-          "method_label": "Calçada estimada por OSM, um lado só (menos endereços IBGE)",
+          "method_label": "Calçada alocada em um dos lados da via (OSM)",
           "spacing": "porte",
           "spacing_label": "Espaçamento por porte (6/8/11 m)",
           "count": 159451,
           "rejected_count": 27840
         },
         {
+          "id": "osm_calcada_10m",
+          "method": "osm_calcada",
+          "method_label": "Calçada alocada nos dois lados da via (OSM)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento genérico de 10 m",
+          "count": 257577,
+          "rejected_count": 62215
+        },
+        {
+          "id": "osm_calcada_porte",
+          "method": "osm_calcada",
+          "method_label": "Calçada alocada nos dois lados da via (OSM)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (6/8/11 m)",
+          "count": 305255,
+          "rejected_count": 66029
+        },
+        {
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento genérico de 10 m",
+          "count": 117683,
+          "rejected_count": 126981
+        },
+        {
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (6/8/11 m)",
+          "count": 137972,
+          "rejected_count": 146613
+        },
+        {
           "id": "osm_overture_10m",
           "method": "osm_overture",
-          "method_label": "Calçada validada com prédios (OSM + Overture)",
+          "method_label": "Calçada ajustada com prédios (OSM + Overture)",
           "spacing": "10m",
           "spacing_label": "Espaçamento genérico de 10 m",
           "count": 217994,
@@ -93,7 +93,7 @@
         {
           "id": "osm_overture_porte",
           "method": "osm_overture",
-          "method_label": "Calçada validada com prédios (OSM + Overture)",
+          "method_label": "Calçada ajustada com prédios (OSM + Overture)",
           "spacing": "porte",
           "spacing_label": "Espaçamento por porte (6/8/11 m)",
           "count": 256878,
@@ -111,27 +111,9 @@
       ],
       "variants": [
         {
-          "id": "face_ibge_10m",
-          "method": "face_ibge",
-          "method_label": "Face de quadra (IBGE) — método atual",
-          "spacing": "10m",
-          "spacing_label": "Espaçamento genérico de 10 m",
-          "count": 169905,
-          "rejected_count": 243100
-        },
-        {
-          "id": "face_ibge_porte",
-          "method": "face_ibge",
-          "method_label": "Face de quadra (IBGE) — método atual",
-          "spacing": "porte",
-          "spacing_label": "Espaçamento por porte (6/8/11 m)",
-          "count": 205754,
-          "rejected_count": 282320
-        },
-        {
           "id": "osm_eixo_10m",
           "method": "osm_eixo",
-          "method_label": "Eixo da via (OSM), sem deslocamento",
+          "method_label": "Eixo da via (OSM)",
           "spacing": "10m",
           "spacing_label": "Espaçamento genérico de 10 m",
           "count": 240761,
@@ -140,34 +122,16 @@
         {
           "id": "osm_eixo_porte",
           "method": "osm_eixo",
-          "method_label": "Eixo da via (OSM), sem deslocamento",
+          "method_label": "Eixo da via (OSM)",
           "spacing": "porte",
           "spacing_label": "Espaçamento por porte (6/8/11 m)",
           "count": 292713,
           "rejected_count": 47589
         },
         {
-          "id": "osm_calcada_10m",
-          "method": "osm_calcada",
-          "method_label": "Calçada estimada por OSM, sem prédios",
-          "spacing": "10m",
-          "spacing_label": "Espaçamento genérico de 10 m",
-          "count": 432925,
-          "rejected_count": 132155
-        },
-        {
-          "id": "osm_calcada_porte",
-          "method": "osm_calcada",
-          "method_label": "Calçada estimada por OSM, sem prédios",
-          "spacing": "porte",
-          "spacing_label": "Espaçamento por porte (6/8/11 m)",
-          "count": 528188,
-          "rejected_count": 141120
-        },
-        {
           "id": "osm_calcada_lado_10m",
           "method": "osm_calcada_lado",
-          "method_label": "Calçada estimada por OSM, um lado só (menos endereços IBGE)",
+          "method_label": "Calçada alocada em um dos lados da via (OSM)",
           "spacing": "10m",
           "spacing_label": "Espaçamento genérico de 10 m",
           "count": 226981,
@@ -176,16 +140,52 @@
         {
           "id": "osm_calcada_lado_porte",
           "method": "osm_calcada_lado",
-          "method_label": "Calçada estimada por OSM, um lado só (menos endereços IBGE)",
+          "method_label": "Calçada alocada em um dos lados da via (OSM)",
           "spacing": "porte",
           "spacing_label": "Espaçamento por porte (6/8/11 m)",
           "count": 274674,
           "rejected_count": 62899
         },
         {
+          "id": "osm_calcada_10m",
+          "method": "osm_calcada",
+          "method_label": "Calçada alocada nos dois lados da via (OSM)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento genérico de 10 m",
+          "count": 432925,
+          "rejected_count": 132155
+        },
+        {
+          "id": "osm_calcada_porte",
+          "method": "osm_calcada",
+          "method_label": "Calçada alocada nos dois lados da via (OSM)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (6/8/11 m)",
+          "count": 528188,
+          "rejected_count": 141120
+        },
+        {
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento genérico de 10 m",
+          "count": 169905,
+          "rejected_count": 243100
+        },
+        {
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (6/8/11 m)",
+          "count": 205754,
+          "rejected_count": 282320
+        },
+        {
           "id": "osm_overture_10m",
           "method": "osm_overture",
-          "method_label": "Calçada validada com prédios (OSM + Overture)",
+          "method_label": "Calçada ajustada com prédios (OSM + Overture)",
           "spacing": "10m",
           "spacing_label": "Espaçamento genérico de 10 m",
           "count": 390860,
@@ -194,7 +194,7 @@
         {
           "id": "osm_overture_porte",
           "method": "osm_overture",
-          "method_label": "Calçada validada com prédios (OSM + Overture)",
+          "method_label": "Calçada ajustada com prédios (OSM + Overture)",
           "spacing": "porte",
           "spacing_label": "Espaçamento por porte (6/8/11 m)",
           "count": 475611,
@@ -212,27 +212,9 @@
       ],
       "variants": [
         {
-          "id": "face_ibge_10m",
-          "method": "face_ibge",
-          "method_label": "Face de quadra (IBGE) — método atual",
-          "spacing": "10m",
-          "spacing_label": "Espaçamento genérico de 10 m",
-          "count": 69026,
-          "rejected_count": 88819
-        },
-        {
-          "id": "face_ibge_porte",
-          "method": "face_ibge",
-          "method_label": "Face de quadra (IBGE) — método atual",
-          "spacing": "porte",
-          "spacing_label": "Espaçamento por porte (6/8/11 m)",
-          "count": 84859,
-          "rejected_count": 105682
-        },
-        {
           "id": "osm_eixo_10m",
           "method": "osm_eixo",
-          "method_label": "Eixo da via (OSM), sem deslocamento",
+          "method_label": "Eixo da via (OSM)",
           "spacing": "10m",
           "spacing_label": "Espaçamento genérico de 10 m",
           "count": 95235,
@@ -241,34 +223,16 @@
         {
           "id": "osm_eixo_porte",
           "method": "osm_eixo",
-          "method_label": "Eixo da via (OSM), sem deslocamento",
+          "method_label": "Eixo da via (OSM)",
           "spacing": "porte",
           "spacing_label": "Espaçamento por porte (6/8/11 m)",
           "count": 119064,
           "rejected_count": 10317
         },
         {
-          "id": "osm_calcada_10m",
-          "method": "osm_calcada",
-          "method_label": "Calçada estimada por OSM, sem prédios",
-          "spacing": "10m",
-          "spacing_label": "Espaçamento genérico de 10 m",
-          "count": 178439,
-          "rejected_count": 29893
-        },
-        {
-          "id": "osm_calcada_porte",
-          "method": "osm_calcada",
-          "method_label": "Calçada estimada por OSM, sem prédios",
-          "spacing": "porte",
-          "spacing_label": "Espaçamento por porte (6/8/11 m)",
-          "count": 222146,
-          "rejected_count": 32472
-        },
-        {
           "id": "osm_calcada_lado_10m",
           "method": "osm_calcada_lado",
-          "method_label": "Calçada estimada por OSM, um lado só (menos endereços IBGE)",
+          "method_label": "Calçada alocada em um dos lados da via (OSM)",
           "spacing": "10m",
           "spacing_label": "Espaçamento genérico de 10 m",
           "count": 91638,
@@ -277,16 +241,52 @@
         {
           "id": "osm_calcada_lado_porte",
           "method": "osm_calcada_lado",
-          "method_label": "Calçada estimada por OSM, um lado só (menos endereços IBGE)",
+          "method_label": "Calçada alocada em um dos lados da via (OSM)",
           "spacing": "porte",
           "spacing_label": "Espaçamento por porte (6/8/11 m)",
           "count": 113644,
           "rejected_count": 14790
         },
         {
+          "id": "osm_calcada_10m",
+          "method": "osm_calcada",
+          "method_label": "Calçada alocada nos dois lados da via (OSM)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento genérico de 10 m",
+          "count": 178439,
+          "rejected_count": 29893
+        },
+        {
+          "id": "osm_calcada_porte",
+          "method": "osm_calcada",
+          "method_label": "Calçada alocada nos dois lados da via (OSM)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (6/8/11 m)",
+          "count": 222146,
+          "rejected_count": 32472
+        },
+        {
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento genérico de 10 m",
+          "count": 69026,
+          "rejected_count": 88819
+        },
+        {
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (6/8/11 m)",
+          "count": 84859,
+          "rejected_count": 105682
+        },
+        {
           "id": "osm_overture_10m",
           "method": "osm_overture",
-          "method_label": "Calçada validada com prédios (OSM + Overture)",
+          "method_label": "Calçada ajustada com prédios (OSM + Overture)",
           "spacing": "10m",
           "spacing_label": "Espaçamento genérico de 10 m",
           "count": 149519,
@@ -295,7 +295,7 @@
         {
           "id": "osm_overture_porte",
           "method": "osm_overture",
-          "method_label": "Calçada validada com prédios (OSM + Overture)",
+          "method_label": "Calçada ajustada com prédios (OSM + Overture)",
           "spacing": "porte",
           "spacing_label": "Espaçamento por porte (6/8/11 m)",
           "count": 185590,
@@ -313,27 +313,9 @@
       ],
       "variants": [
         {
-          "id": "face_ibge_10m",
-          "method": "face_ibge",
-          "method_label": "Face de quadra (IBGE) — método atual",
-          "spacing": "10m",
-          "spacing_label": "Espaçamento genérico de 10 m",
-          "count": 16014,
-          "rejected_count": 21911
-        },
-        {
-          "id": "face_ibge_porte",
-          "method": "face_ibge",
-          "method_label": "Face de quadra (IBGE) — método atual",
-          "spacing": "porte",
-          "spacing_label": "Espaçamento por porte (6/8/11 m)",
-          "count": 19700,
-          "rejected_count": 25637
-        },
-        {
           "id": "osm_eixo_10m",
           "method": "osm_eixo",
-          "method_label": "Eixo da via (OSM), sem deslocamento",
+          "method_label": "Eixo da via (OSM)",
           "spacing": "10m",
           "spacing_label": "Espaçamento genérico de 10 m",
           "count": 37011,
@@ -342,34 +324,16 @@
         {
           "id": "osm_eixo_porte",
           "method": "osm_eixo",
-          "method_label": "Eixo da via (OSM), sem deslocamento",
+          "method_label": "Eixo da via (OSM)",
           "spacing": "porte",
           "spacing_label": "Espaçamento por porte (6/8/11 m)",
           "count": 46023,
           "rejected_count": 3829
         },
         {
-          "id": "osm_calcada_10m",
-          "method": "osm_calcada",
-          "method_label": "Calçada estimada por OSM, sem prédios",
-          "spacing": "10m",
-          "spacing_label": "Espaçamento genérico de 10 m",
-          "count": 69720,
-          "rejected_count": 10628
-        },
-        {
-          "id": "osm_calcada_porte",
-          "method": "osm_calcada",
-          "method_label": "Calçada estimada por OSM, sem prédios",
-          "spacing": "porte",
-          "spacing_label": "Espaçamento por porte (6/8/11 m)",
-          "count": 86337,
-          "rejected_count": 11263
-        },
-        {
           "id": "osm_calcada_lado_10m",
           "method": "osm_calcada_lado",
-          "method_label": "Calçada estimada por OSM, um lado só (menos endereços IBGE)",
+          "method_label": "Calçada alocada em um dos lados da via (OSM)",
           "spacing": "10m",
           "spacing_label": "Espaçamento genérico de 10 m",
           "count": 35839,
@@ -378,16 +342,52 @@
         {
           "id": "osm_calcada_lado_porte",
           "method": "osm_calcada_lado",
-          "method_label": "Calçada estimada por OSM, um lado só (menos endereços IBGE)",
+          "method_label": "Calçada alocada em um dos lados da via (OSM)",
           "spacing": "porte",
           "spacing_label": "Espaçamento por porte (6/8/11 m)",
           "count": 44188,
           "rejected_count": 5184
         },
         {
+          "id": "osm_calcada_10m",
+          "method": "osm_calcada",
+          "method_label": "Calçada alocada nos dois lados da via (OSM)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento genérico de 10 m",
+          "count": 69720,
+          "rejected_count": 10628
+        },
+        {
+          "id": "osm_calcada_porte",
+          "method": "osm_calcada",
+          "method_label": "Calçada alocada nos dois lados da via (OSM)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (6/8/11 m)",
+          "count": 86337,
+          "rejected_count": 11263
+        },
+        {
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento genérico de 10 m",
+          "count": 16014,
+          "rejected_count": 21911
+        },
+        {
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (6/8/11 m)",
+          "count": 19700,
+          "rejected_count": 25637
+        },
+        {
           "id": "osm_overture_10m",
           "method": "osm_overture",
-          "method_label": "Calçada validada com prédios (OSM + Overture)",
+          "method_label": "Calçada ajustada com prédios (OSM + Overture)",
           "spacing": "10m",
           "spacing_label": "Espaçamento genérico de 10 m",
           "count": 63847,
@@ -396,7 +396,7 @@
         {
           "id": "osm_overture_porte",
           "method": "osm_overture",
-          "method_label": "Calçada validada com prédios (OSM + Overture)",
+          "method_label": "Calçada ajustada com prédios (OSM + Overture)",
           "spacing": "porte",
           "spacing_label": "Espaçamento por porte (6/8/11 m)",
           "count": 78814,

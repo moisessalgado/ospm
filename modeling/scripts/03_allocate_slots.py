@@ -111,11 +111,11 @@ SPACINGS = {
 # share allocate_from_roads, parametrized by whether they offset off the
 # centerline at all, and whether that offset is capped by a building facade.
 ROAD_METHODS = {
-    "osm_eixo": {"label": "Eixo da via (OSM) — sem deslocamento", "offset": False, "clamp_building": False},
-    "osm_calcada": {"label": "Calçada estimada por OSM (sem prédios)", "offset": True, "clamp_building": False},
-    "osm_calcada_lado": {"label": "Calçada estimada por OSM, um lado só (menos endereços IBGE)", "offset": True,
+    "osm_eixo": {"label": "Eixo da via (OSM)", "offset": False, "clamp_building": False},
+    "osm_calcada": {"label": "Calçada alocada nos dois lados da via (OSM)", "offset": True, "clamp_building": False},
+    "osm_calcada_lado": {"label": "Calçada alocada em um dos lados da via (OSM)", "offset": True,
                          "clamp_building": False, "one_side": True},
-    "osm_overture": {"label": "Calçada validada com prédios (OSM + Overture)", "offset": True, "clamp_building": True},
+    "osm_overture": {"label": "Calçada ajustada com prédios (OSM + Overture)", "offset": True, "clamp_building": True},
 }
 IBGE_MATCH_M = 25.0  # metadata-only nearest-face search radius for non-face_ibge methods
 
