@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from planting_slots.canopy import CANOPY_SOURCES
 from planting_slots.municipalities import Municipality
 
 MODELING_DIR = Path(__file__).resolve().parent.parent
@@ -30,7 +31,7 @@ class MunicipalityFiles:
         self.osm_roads = self.data_dir / "vias_osm.gpkg"
         self.osm_obstacles = self.data_dir / "obstaculos_osm.json"
         self.buildings = self.data_dir / "edificacoes_overture.parquet"
-        self.canopy = self.data_dir / "cobertura_copa_gfw_10m.tif"
+        self.canopy_rasters = {source: self.data_dir / cfg["file"] for source, cfg in CANOPY_SOURCES.items()}
 
         abbr, code = municipality.state_abbr, municipality.ibge_code
         self.ibge_tracts = DATA_DIR / "ibge" / "setores_censitarios_2022" / f"{abbr}_setores_CD2022.gpkg"

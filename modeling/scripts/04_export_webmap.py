@@ -7,7 +7,8 @@ Each variant (method x spacing) becomes webmap/data/<municipality>/<variant>.jso
 "points" is a flat numeric array ("stride" numbers per slot) whose categorical
 attributes are indices into "legend" — no per-feature GeoJSON boilerplate.
 The 8th number, present only when 03b_add_canopy_cover.py ran for the
-municipality, is the slot's canopy cover % (-1 where there is no data).
+municipality, is the slot's canopy cover % (-1 where there is no data); "copa_fonte"
+names the raster it came from.
 "face" indexes legend.face, a [cd_setor, cd_quadra, cd_face] triple (-1, and
 posicao_face_m -1, for slots with no IBGE match close enough). "rejeitados" is
 every candidate the allocator dropped (4 numbers per point: lon, lat, porte,
@@ -86,7 +87,10 @@ def compact(geojson: dict) -> dict:
             canopy = props.get("cobertura_copa_pct")
             flat.append(canopy if canopy is not None else -1)
     legend = {**LEGEND, "logradouro": logradouro_values, "face": face_values}
-    return {"legend": legend, "stride": POINT_STRIDE + has_canopy, "points": flat}
+    payload = {"legend": legend, "stride": POINT_STRIDE + has_canopy, "points": flat}
+    if has_canopy:
+        payload["copa_fonte"] = geojson["features"][0]["properties"].get("cobertura_copa_fonte")
+    return payload
 
 
 def compact_rejected(geojson: dict) -> list[float | int]:

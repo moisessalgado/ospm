@@ -119,20 +119,30 @@ python scripts/04_export_webmap.py --municipio suzano       # dados do webmap
 
 ```bash
 export GFW_API_KEY=...                                        # chave dos links do shapefile Tropical_Tree_Cover
-python scripts/02b_download_canopy.py --municipio suzano      # raster de 10 m recortado (data/<municipio>/cobertura_copa_gfw_10m.tif)
+python scripts/02b_download_canopy.py --municipio suzano      # raster recortado (data/<municipio>/cobertura_copa_gfw_10m.tif)
 python scripts/03b_add_canopy_cover.py --municipio suzano     # roda após o 03 e antes do 04
+
+# Santa Catarina: o GFW não tem dado de copa; usar o GLAD (sem chave)
+python scripts/02b_download_canopy.py --municipio florianopolis --fonte glad_30m
+python scripts/03b_add_canopy_cover.py --municipio florianopolis --fonte glad_30m
 ```
+
+Fontes (`--fonte`, padrão `gfw_10m`): **GFW Tropical Tree Cover** — 10 m, 2020,
+classes de 10 % (0, 20, 30, …, 100); e **GLAD Global Tree Cover** — 30 m, 2010,
+percentual contínuo (Landsat, máximo do pico da estação de crescimento). Os
+valores **não são comparáveis entre as fontes** (resolução, ano e definição
+diferentes), então a fonte fica registrada em `cobertura_copa_fonte` e aparece
+no popup do webmap. Com pixel de 30 m e buffer de 3–5,5 m, vagas vizinhas
+costumam herdar o mesmo valor.
 
 Cada vaga ganha `cobertura_copa_pct` — o **máximo** da cobertura de copa entre
 os pixels de 10 m que tocam um buffer de **metade do espaçamento** da vaga (5 m
 no espaçamento de 10 m; 3, 4 e 5,5 m para pequeno/médio/grande no espaçamento
 por porte) — e `raio_copa_m`, o raio usado. Nenhuma vaga é removida: é só um
-atributo, que o webmap usa para filtrar. O raster vem em classes de 10 % (0, 20,
-30, …, 100; 255 = sem dado, que vira nulo). A etapa 03b reescreve os
+atributo, que o webmap usa para filtrar. Pixel 255 = sem dado, que vira nulo. A etapa 03b reescreve os
 `.gpkg`/`.geojson` das variantes; rodar o 03 de novo apaga as colunas, então
-rode o 03b depois. Só tiles de 10° únicos são suportados no download (Suzano e
-Sorocaba caem no 20S_050W); fora do Brasil tropical/sem cobertura do GFW (extremo
-sul do RS) é preciso outra base.
+rode o 03b depois. Só municípios dentro de um único tile de 10° são suportados no download
+(Suzano, Sorocaba, Tremembé e Florianópolis caem no 20S_050W).
 
 Municípios processados: Sorocaba e Suzano (SP), Tremembé (SP), Florianópolis
 (SC) — ver `planting_slots/municipalities.py`.

@@ -1,7 +1,7 @@
-"""Tree-canopy cover (GFW Tropical Tree Cover, 10 m) around each slot.
+"""Tree-canopy cover around each slot, from one of two rasters (CANOPY_SOURCES).
 
-The raster holds the canopy percentage per pixel (classes of 10 %, 255 =
-no data). A slot's value is the maximum over every pixel the circle of
+The raster holds the canopy percentage per pixel (255 = no data; GFW 10 m
+comes in classes of 10 %, GLAD 30 m is continuous). A slot's value is the maximum over every pixel the circle of
 CANOPY_RADIUS_FRACTION x its spacing touches — a half-spacing radius, so
 neighbouring slots' circles tile the street without overlapping.
 """
@@ -70,8 +70,13 @@ def max_canopy_within(points: gpd.GeoDataFrame, radius_m: np.ndarray, raster_pat
     return np.where(best >= 0, best, np.nan)
 
 
-GFW_TILE_API = ("https://data-api.globalforestwatch.org/dataset/wri_tropical_tree_cover_extent/v20220922/"
-                "download/geotiff?grid=10/100000&tile_id={tile}&pixel_meaning=decile")
+CANOPY_SOURCES = {
+    "gfw_10m": {"label": "GFW Tropical Tree Cover (10 m, 2020)", "file": "cobertura_copa_gfw_10m.tif",
+                "tile_url": "https://data-api.globalforestwatch.org/dataset/wri_tropical_tree_cover_extent/v20220922/"
+                            "download/geotiff?grid=10/100000&tile_id={tile}&pixel_meaning=decile"},
+    "glad_30m": {"label": "GLAD Global Tree Cover (30 m, 2010)", "file": "cobertura_copa_glad_30m.tif",
+                 "tile_url": "https://gladxfer.umd.edu/Potapov/TCC_2010/treecover2010_{tile}.tif"},
+}
 BBOX_MARGIN_DEG = 0.005  # ~550 m: keeps the radius around slots at the municipal edge inside the clip
 
 
@@ -81,9 +86,10 @@ def gfw_tile_id(lon: float, lat: float) -> str:
     return f"{abs(top):02d}{'N' if top >= 0 else 'S'}_{abs(left):03d}{'E' if left >= 0 else 'W'}"
 
 
-def download_canopy(bbox: dict, path, api_key: str) -> None:
-    """Clip the GFW 10 m canopy tile to the bbox (plus margin) by reading only
-    that window over HTTP range requests — the whole tile is ~600 MB."""
+def download_canopy(bbox: dict, path, source: str, api_key: str | None = None) -> None:
+    """Clip the source's canopy tile to the bbox (plus margin) by reading only
+    that window over HTTP range requests — a whole tile is 250-600 MB. The
+    GFW source needs its API key (it answers with a redirect to a signed URL)."""
     import httpx
     from rasterio.windows import from_bounds
 
@@ -91,18 +97,21 @@ def download_canopy(bbox: dict, path, api_key: str) -> None:
     east, north = bbox["east"] + BBOX_MARGIN_DEG, bbox["north"] + BBOX_MARGIN_DEG
     tiles = {gfw_tile_id(lon, lat) for lon in (west, east) for lat in (south, north)}
     if len(tiles) > 1:
-        raise SystemExit(f"O município cruza mais de um tile GFW ({sorted(tiles)}); mosaico ainda não implementado.")
+        raise SystemExit(f"O município cruza mais de um tile de 10° ({sorted(tiles)}); mosaico ainda não implementado.")
     tile = tiles.pop()
 
-    response = httpx.get(GFW_TILE_API.format(tile=tile), headers={"x-api-key": api_key}, follow_redirects=False)
-    if response.status_code != 307:
-        raise SystemExit(f"API do GFW respondeu {response.status_code} (chave inválida ou tile inexistente: {tile}).")
-    with rasterio.open(f"/vsicurl/{response.headers['location']}") as src:
+    url = CANOPY_SOURCES[source]["tile_url"].format(tile=tile)
+    if source == "gfw_10m":
+        response = httpx.get(url, headers={"x-api-key": api_key}, follow_redirects=False)
+        if response.status_code != 307:
+            raise SystemExit(f"API do GFW respondeu {response.status_code} (chave inválida ou tile inexistente: {tile}).")
+        url = response.headers["location"]
+    with rasterio.open(f"/vsicurl/{url}") as src:
         window = from_bounds(west, south, east, north, src.transform).round_offsets().round_lengths()
         data = src.read(1, window=window)
         if (data == CANOPY_NODATA).all():
-            raise SystemExit(f"O tile GFW {tile} não tem dado de copa nesta região (todo o recorte é nodata); "
-                             "use outra base (ex.: GLAD 30 m).")
+            raise SystemExit(f"O tile {tile} de {source} não tem dado de copa nesta região (todo o recorte é nodata); "
+                             "tente a outra fonte (--fonte).")
         profile = src.profile | {"height": data.shape[0], "width": data.shape[1], "dtype": "uint8",
                                  "transform": src.window_transform(window), "nodata": CANOPY_NODATA,
                                  "tiled": True, "blockxsize": 256, "blockysize": 256, "compress": "deflate"}

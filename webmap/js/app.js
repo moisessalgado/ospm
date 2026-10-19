@@ -256,7 +256,7 @@ function showSlotPopup(feature) {
       : "",
     p.posicao_face_m != null ? `<div><strong>Posição ao longo da via/face:</strong> ${p.posicao_face_m} m</div>` : "",
     p.cobertura_copa_pct != null
-      ? `<div><strong>Cobertura de copa:</strong> ${p.cobertura_copa_pct}% <span class="popup-note">(máx. a ${p.raio_copa_m} m)</span></div>`
+      ? `<div><strong>Cobertura de copa:</strong> ${p.cobertura_copa_pct}% <span class="popup-note">(máx. a ${p.raio_copa_m} m${currentCanopySource ? ` · ${escapeHtml(currentCanopySource)}` : ""})</span></div>`
       : "",
   ].join("");
   new maplibregl.Popup({ closeButton: true, maxWidth: "260px" })
@@ -387,6 +387,7 @@ async function loadVariant(municipality, variant) {
   const resp = await fetch(`data/${municipality.slug}/${variant.id}.json?t=${CACHE_BUST}`);
   const payload = await resp.json();
   payload.spacing = variant.spacing;
+  currentCanopySource = payload.copa_fonte ?? null;
   currentSlots = decodeCompactPoints(payload);
   const hasCanopy = (payload.stride ?? 7) > 7;
   canopyFilterEl.hidden = !hasCanopy;
@@ -403,6 +404,7 @@ async function loadVariant(municipality, variant) {
 let currentSlots = null;
 let currentVariant = null;
 let currentCanopyMax = 100;
+let currentCanopySource = null; // raster the canopy % came from (differs by municipality)
 
 function applySlots() {
   const features = currentCanopyMax >= 100

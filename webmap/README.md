@@ -72,7 +72,7 @@ de cada uma.
   antes de passar para o MapLibre. `data/manifest.json` lista, por município,
   cada variante com seu `method`/`method_label` e `spacing`/`spacing_label`,
   que os dois seletores usam para se popular.
-- Cobertura de copa: nos municípios com o atributo (hoje Suzano), o popup da
+- Cobertura de copa: nos municípios com o atributo (todos os quatro; Florianópolis com o GLAD de 30 m), o popup da
   vaga mostra `cobertura_copa_pct` e o painel ganha o filtro "Cobertura de copa
   máxima", que oculta as vagas acima do valor (vagas sem dado ficam). É só
   filtro de exibição — o conjunto de vagas não muda.

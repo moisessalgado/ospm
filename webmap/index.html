@@ -87,9 +87,9 @@
 
       <div id="canopy-filter" hidden>
         <label for="canopy-range"><strong>Cobertura de copa máxima:</strong> <span id="canopy-value">100</span>%
-          <span class="legend-hint" title="Mostra só as vagas cuja cobertura de copa (máximo dos pixels de 10 m, GFW, num raio de metade do espaçamento) não passa do valor. 100 = todas.">i</span>
+          <span class="legend-hint" title="Mostra só as vagas cuja cobertura de copa (máximo dos pixels do raster, num raio de metade do espaçamento; a fonte varia por município e aparece no popup da vaga) não passa do valor. 100 = todas.">i</span>
         </label>
-        <input type="range" id="canopy-range" min="0" max="100" step="10" value="100" />
+        <input type="range" id="canopy-range" min="0" max="100" step="5" value="100" />
       </div>
 
       <div class="panel-note">
@@ -116,6 +116,6 @@
   </div>
 
   <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-  <script src="js/app.js?v=15"></script>
+  <script src="js/app.js?v=16"></script>
 </body>
 </html>
