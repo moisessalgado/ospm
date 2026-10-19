@@ -80,6 +80,10 @@
           face de quadra, com setor, quadra e logradouro associados a cada vaga.</p>
       </article>
     </div>
+    <p class="lead reveal" style="margin-top:24px">
+      Uma quarta fonte, opcional, entra só como atributo: rasters de <a href="#copa">cobertura de copa</a>
+      (GFW e GLAD), que dizem quanta copa já existe em volta de cada vaga.
+    </p>
   </section>
 
   <!-- O desafio da precisão -->
@@ -846,8 +850,147 @@
     </p>
   </section>
 
+  <!-- Cobertura de copa -->
+  <section class="story-section alt" id="copa">
+    <p class="eyebrow reveal">Cobertura de copa</p>
+    <h2 class="reveal">Quanta copa já existe em volta de cada vaga</h2>
+    <p class="lead reveal">
+      Além da posição, cada vaga leva um atributo a mais: o <strong>percentual de cobertura de copa</strong>
+      que um raster de satélite registra ao redor dela. É um <strong>atributo, não um critério de
+      exclusão</strong> — nenhuma vaga sai do conjunto por causa dele. Serve para filtrar e priorizar no
+      mapa, por exemplo escondendo as vagas que já têm muita copa por perto.
+    </p>
+
+    <div class="card-grid">
+      <article class="source-card reveal">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="4" height="4"/><rect x="10" y="4" width="4" height="4"/><rect x="16" y="4" width="4" height="4"/><rect x="4" y="10" width="4" height="4"/><rect x="10" y="10" width="4" height="4"/><rect x="16" y="10" width="4" height="4"/><rect x="4" y="16" width="4" height="4"/><rect x="10" y="16" width="4" height="4"/><rect x="16" y="16" width="4" height="4"/></svg>
+        </div>
+        <h3>GFW — Tropical Tree Cover</h3>
+        <p>Pixels de 10 m, ano de 2020, em classes de 10 % (0, 20, 30 … 100). É a fonte padrão,
+          usada em Suzano, Sorocaba e Tremembé. Não tem dado em Santa Catarina nem no extremo
+          sul do Rio Grande do Sul.</p>
+      </article>
+      <article class="source-card reveal">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="8" height="8"/><rect x="12" y="4" width="8" height="8"/><rect x="4" y="12" width="8" height="8"/><rect x="12" y="12" width="8" height="8"/></svg>
+        </div>
+        <h3>GLAD — Global Tree Cover</h3>
+        <p>Pixels de cerca de 28 m (1 arco-segundo), ano de 2010, percentual contínuo de 0 a 100 estimado com
+          imagens Landsat. É a alternativa para onde o GFW não cobre — hoje, Florianópolis. Mais antiga e
+          mais grossa que a primeira.</p>
+      </article>
+    </div>
+    <p class="lead reveal" style="margin-top:24px">
+      Cada vaga registra a fonte de que veio o valor, e o mapa a mostra no popup. Como resolução, ano e
+      definição diferem, <strong>os percentuais não são comparáveis entre fontes</strong> — dá para comparar
+      vagas de um mesmo município, não Suzano com Florianópolis.
+    </p>
+
+    <h3 class="sub-title reveal">Como o percentual de cada vaga é calculado</h3>
+    <p class="lead reveal">
+      Em volta de cada vaga desenhamos um círculo com <strong>raio de metade do espaçamento</strong> da vaga:
+      assim, os círculos de duas vagas vizinhas se encontram sem se sobrepor. O valor da vaga é o
+      <strong>maior percentual entre todos os pixels que esse círculo toca</strong>, mesmo que só encoste
+      na borda do pixel.
+    </p>
+
+    <div class="variant-grid">
+      <div class="variant-card reveal">
+        <span class="tag">espacamento_10m</span>
+        <h3>Buffer de 5 m</h3>
+        <ul>
+          <li>Espaçamento de 10 m para qualquer porte: metade, 5 m.</li>
+        </ul>
+      </div>
+      <div class="variant-card reveal">
+        <span class="tag">espacamento_porte</span>
+        <h3>Buffer de 3 / 4 / 5,5 m</h3>
+        <ul>
+          <li>Metade dos 6 m, 8 m e 11 m de cada porte: 3 m (pequeno), 4 m (médio) e 5,5 m (grande).</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="diagram reveal">
+      <svg viewBox="0 0 650 300" role="img" aria-label="Vaga com buffer de 5 m sobre pixels de 10 m: o buffer toca quatro pixels, com 0, 30, 60 e 80 por cento de copa, e a vaga recebe o máximo, 80 por cento">
+        <g stroke="#fff" stroke-width="1.5">
+          <rect x="30" y="30" width="80" height="80" fill="#00441b" opacity="0.3" />
+          <rect x="110" y="30" width="80" height="80" fill="#f4f4f4" />
+          <rect x="190" y="30" width="80" height="80" fill="#279249" />
+          <rect x="270" y="30" width="80" height="80" fill="#005422" opacity="0.3" />
+          <rect x="30" y="110" width="80" height="80" fill="#67bd76" opacity="0.3" />
+          <rect x="110" y="110" width="80" height="80" fill="#8ed08f" />
+          <rect x="190" y="110" width="80" height="80" fill="#006529" />
+          <rect x="270" y="110" width="80" height="80" fill="#afdfa6" opacity="0.3" />
+          <rect x="30" y="190" width="80" height="80" fill="#f4f4f4" opacity="0.3" />
+          <rect x="110" y="190" width="80" height="80" fill="#00441b" opacity="0.3" />
+          <rect x="190" y="190" width="80" height="80" fill="#0d7936" opacity="0.3" />
+          <rect x="270" y="190" width="80" height="80" fill="#f4f4f4" opacity="0.3" />
+        </g>
+        <g font-size="14" font-weight="700" text-anchor="middle">
+          <text x="70" y="75" fill="#00441b" opacity="0.4">100</text>
+          <text x="150" y="75" fill="#555">0</text>
+          <text x="230" y="75" fill="#fff">60</text>
+          <text x="310" y="75" fill="#005422" opacity="0.4">90</text>
+          <text x="70" y="155" fill="#1b5e2f" opacity="0.4">40</text>
+          <text x="127" y="177" fill="#1b4d1c">30</text>
+          <text x="230" y="155" fill="#fff">80</text>
+          <text x="310" y="155" fill="#3a6f35" opacity="0.4">20</text>
+          <text x="70" y="235" fill="#555" opacity="0.4">0</text>
+          <text x="150" y="235" fill="#00441b" opacity="0.4">100</text>
+          <text x="230" y="235" fill="#0d7936" opacity="0.4">70</text>
+          <text x="310" y="235" fill="#555" opacity="0.4">0</text>
+        </g>
+        <circle cx="180" cy="140" r="40" fill="#1565c0" fill-opacity="0.12" stroke="#1565c0" stroke-width="2" stroke-dasharray="6 4" />
+        <circle cx="180" cy="140" r="6.5" fill="#1565c0" stroke="#fff" stroke-width="2" />
+        <text x="190" y="292" text-anchor="middle" font-size="12" fill="var(--muted)">cada quadrado = 1 pixel de 10 m · % de copa em cada um</text>
+        <text x="390" y="52" font-size="13" fill="var(--fg)" font-weight="700">Vaga com espaçamento de 10 m</text>
+        <text x="390" y="74" font-size="12.5" fill="var(--muted)">buffer de 5 m, metade do espaçamento</text>
+        <text x="390" y="130" font-size="12.5" fill="var(--muted)">Pixels que o buffer toca (quatro):</text>
+        <text x="390" y="154" font-size="15" fill="var(--fg)" font-weight="700">0 %  ·  30 %  ·  60 %  ·  80 %</text>
+        <text x="390" y="204" font-size="12.5" fill="var(--muted)">Cobertura de copa da vaga = o máximo</text>
+        <text x="390" y="250" font-size="38" fill="var(--primary-dark)" font-weight="700">80 %</text>
+      </svg>
+      <p class="caption">O pixel onde a vaga cai tem 30 % de copa, mas o buffer encosta em outros três; vale o maior deles, 80 %. Os pixels que o buffer não toca (esmaecidos) não contam.</p>
+    </div>
+
+    <p class="lead reveal">
+      Usar o máximo, e não a média, é uma escolha deliberada: basta haver copa consolidada dentro do raio
+      para a vaga ser marcada, o que é o lado seguro para quem quer evitar plantar onde já há árvore.
+      Pixels sem dado ficam de fora do cálculo; se todos os que o buffer toca forem sem dado, a vaga fica
+      com o valor vazio — e o filtro do mapa nunca a esconde.
+    </p>
+
+    <h3 class="sub-title reveal">No mapa</h3>
+    <p class="lead reveal">
+      Em Suzano, Sorocaba, Tremembé e Florianópolis, o popup de cada vaga mostra o percentual, o raio usado
+      e a fonte, e o painel tem o filtro <strong>Cobertura de copa máxima</strong>, que esconde as vagas
+      acima do valor escolhido. A camada <strong>Cobertura de copa (raster)</strong>, desligada por padrão,
+      desenha o próprio raster sob as vagas — transparente onde não há copa ou onde é água.
+    </p>
+
+    <h3 class="sub-title reveal">O que ler com cuidado</h3>
+    <ul class="steps reveal" style="max-width:680px">
+      <li><strong>Resolução maior que o buffer.</strong> Com pixel de 10 m e buffer de 3 a 5,5 m, o círculo toca de
+        um a quatro pixels; no GLAD, de ~28 m, vagas vizinhas costumam herdar o mesmo valor.</li>
+      <li><strong>É toda a vegetação arbórea, não só a copa da rua.</strong> Quintais, praças e matas ao redor entram
+        no valor, e árvores já plantadas também — o raster não distingue o que é vaga livre.</li>
+      <li><strong>Datas diferentes.</strong> O GLAD é de 2010 e o GFW de 2020, enquanto o OSM é atual; a copa pode ter
+        mudado desde então.</li>
+      <li><strong>Zero é "sem copa" ou água.</strong> Os dois rasters usam 0 para os dois casos.</li>
+      <li><strong>Classes de 10 %.</strong> No GFW os valores saltam de 0 para 20 e crescem de 10 em 10, então o corte do
+        filtro só faz diferença nesses degraus.</li>
+    </ul>
+    <p class="lead reveal" style="margin-top:20px">
+      O raster não é lido direto dos provedores pelo navegador: eles não liberam esse acesso, e o GFW
+      ainda exige chave e usa links que expiram. O pipeline baixa só o recorte de cada município e o
+      publica como imagem estática (de 0,2 a 1,1 MB). Os créditos são do GFW/WRI e do GLAD/Universidade de Maryland.
+    </p>
+  </section>
+
   <!-- Pipeline -->
-  <section class="story-section alt" id="pipeline">
+  <section class="story-section" id="pipeline">
     <p class="eyebrow reveal">Pipeline</p>
     <h2 class="reveal">Quatro etapas, por município</h2>
     <p class="lead reveal">Reproduzível do zero para qualquer município brasileiro com um código IBGE cadastrado.</p>
@@ -878,10 +1021,15 @@
         <code>04_export_webmap.py</code>
       </div>
     </div>
+    <p class="lead reveal" style="margin-top:24px">
+      Duas etapas opcionais acrescentam a <a href="#copa">cobertura de copa</a>:
+      <code>02b_download_canopy.py</code> baixa o recorte do raster do município (com <code>--fonte glad_30m</code>
+      para o GLAD) e <code>03b_add_canopy_cover.py</code> grava o percentual em cada vaga, depois do 03 e antes do 04.
+    </p>
   </section>
 
   <!-- Resultado -->
-  <section class="story-section" id="resultado">
+  <section class="story-section alt" id="resultado">
     <p class="eyebrow reveal">Resultado</p>
     <h2 class="reveal">Números atuais, direto dos dados publicados</h2>
     <p class="lead reveal">Estes números vêm do mesmo manifesto que alimenta o mapa — do método de produção (face de quadra, IBGE) — e atualizam sozinhos a cada novo município ou reprocessamento.</p>
@@ -895,7 +1043,7 @@
     <h2>Explore as vagas no mapa</h2>
     <p>Veja os pontos calculados para cada município, alterne entre os métodos de alocação, meça distâncias e compare os mapas base.</p>
     <a class="btn btn-primary" href="index.html">Abrir o mapa →</a>
-    <p class="fine">Fontes: IBGE (Censo 2022), OpenStreetMap, Overture Maps · Coletâneas Brasileiras de Arborização Urbana, MMA.</p>
+    <p class="fine">Fontes: IBGE (Censo 2022), OpenStreetMap, Overture Maps, GFW/WRI e GLAD/UMD (cobertura de copa) · Coletâneas Brasileiras de Arborização Urbana, MMA.</p>
   </footer>
 
   <script src="js/metodologia.js?v=4"></script>
