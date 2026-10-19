@@ -72,9 +72,11 @@ def max_canopy_within(points: gpd.GeoDataFrame, radius_m: np.ndarray, raster_pat
 
 CANOPY_SOURCES = {
     "gfw_10m": {"label": "GFW Tropical Tree Cover (10 m, 2020)", "file": "cobertura_copa_gfw_10m.tif",
+                "credit": "Tropical Tree Cover — Global Forest Watch / WRI",
                 "tile_url": "https://data-api.globalforestwatch.org/dataset/wri_tropical_tree_cover_extent/v20220922/"
                             "download/geotiff?grid=10/100000&tile_id={tile}&pixel_meaning=decile"},
     "glad_30m": {"label": "GLAD Global Tree Cover (30 m, 2010)", "file": "cobertura_copa_glad_30m.tif",
+                 "credit": "Global 2010 Tree Cover — GLAD, Univ. of Maryland (Hansen et al., 2013)",
                  "tile_url": "https://gladxfer.umd.edu/Potapov/TCC_2010/treecover2010_{tile}.tif"},
 }
 BBOX_MARGIN_DEG = 0.005  # ~550 m: keeps the radius around slots at the municipal edge inside the clip
@@ -118,3 +120,52 @@ def download_canopy(bbox: dict, path, source: str, api_key: str | None = None) -
     path.parent.mkdir(parents=True, exist_ok=True)
     with rasterio.open(path, "w", **profile) as dst:
         dst.write(data.astype("uint8"), 1)
+
+
+# --- Image for the webmap ------------------------------------------------------
+# Sequential light-to-dark green, evenly spaced from 0 % to 100 % canopy. The
+# same stops go to the webmap manifest so the legend gradient matches the image.
+CANOPY_RAMP = ["#e5f5d0", "#a1d99b", "#41ab5d", "#006d2c", "#00441b"]
+WEB_MERCATOR_M_PER_DEG = 111319.49079327357  # R * pi / 180, exact for x in EPSG:3857
+
+
+def _ramp_colormap() -> dict[int, tuple[int, int, int, int]]:
+    """Palette for the PNG (index = raster value): the ramp for 1-100 %,
+    transparent for 0 % (no canopy, or water), for no data and for the rest."""
+    stops = np.array([[int(c[i:i + 2], 16) for i in (1, 3, 5)] for c in CANOPY_RAMP], dtype=float)
+    at = np.linspace(0, 100, len(stops))
+    colormap = {v: (0, 0, 0, 0) for v in range(256)}
+    for v in range(1, 101):
+        colormap[v] = (*(int(round(np.interp(v, at, stops[:, ch]))) for ch in range(3)), 255)
+    return colormap
+
+
+def export_canopy_image(raster_path, png_path) -> list[list[float]]:
+    """Write the raster as a colored PNG in Web Mercator — the webmap stretches
+    an image linearly in that projection, so this keeps it aligned — with
+    nearest-neighbour resampling, so the pixels stay the source's classes.
+    Returns the corners [lon, lat] (upper-left, upper-right, lower-right,
+    lower-left) MapLibre's image source needs."""
+    from rasterio.warp import Resampling, calculate_default_transform, reproject
+
+    with rasterio.open(raster_path) as src:
+        resolution = src.res[0] * WEB_MERCATOR_M_PER_DEG
+        transform, width, height = calculate_default_transform(
+            src.crs, "EPSG:3857", src.width, src.height, *src.bounds, resolution=resolution)
+        warped = np.full((height, width), CANOPY_NODATA, dtype=np.uint8)
+        reproject(rasterio.band(src, 1), warped, src_nodata=CANOPY_NODATA, dst_transform=transform,
+                  dst_crs="EPSG:3857", dst_nodata=CANOPY_NODATA, resampling=Resampling.nearest)
+    png_path.parent.mkdir(parents=True, exist_ok=True)
+    with rasterio.Env(GDAL_PAM_ENABLED="NO"):
+        with rasterio.open(png_path, "w", driver="PNG", width=width, height=height, count=1, dtype="uint8",
+                           ZLEVEL=9) as dst:
+            dst.write(warped, 1)
+            dst.write_colormap(1, _ramp_colormap())
+
+    west, north = transform * (0, 0)
+    east, south = transform * (width, height)
+
+    def lon_lat(x, y):
+        return [round(x / WEB_MERCATOR_M_PER_DEG, 6),
+                round(float(np.degrees(2 * np.arctan(np.exp(y / (WEB_MERCATOR_M_PER_DEG * 180 / np.pi))) - np.pi / 2)), 6)]
+    return [lon_lat(west, north), lon_lat(east, north), lon_lat(east, south), lon_lat(west, south)]

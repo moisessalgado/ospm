@@ -99,7 +99,37 @@
           "count": 256878,
           "rejected_count": 114362
         }
-      ]
+      ],
+      "canopy": {
+        "image": "florianopolis/copa.png",
+        "coordinates": [
+          [
+            -48.6185,
+            -27.37325
+          ],
+          [
+            -48.35375,
+            -27.37325
+          ],
+          [
+            -48.35375,
+            -27.849091
+          ],
+          [
+            -48.6185,
+            -27.849091
+          ]
+        ],
+        "source": "GLAD Global Tree Cover (30 m, 2010)",
+        "credit": "Global 2010 Tree Cover — GLAD, Univ. of Maryland (Hansen et al., 2013)",
+        "ramp": [
+          "#e5f5d0",
+          "#a1d99b",
+          "#41ab5d",
+          "#006d2c",
+          "#00441b"
+        ]
+      }
     },
     {
       "slug": "sorocaba",
@@ -200,7 +230,37 @@
           "count": 475611,
           "rejected_count": 193661
         }
-      ]
+      ],
+      "canopy": {
+        "image": "sorocaba/copa.png",
+        "coordinates": [
+          [
+            -47.5757,
+            -23.3445
+          ],
+          [
+            -47.2973,
+            -23.3445
+          ],
+          [
+            -47.2973,
+            -23.594365
+          ],
+          [
+            -47.5757,
+            -23.594365
+          ]
+        ],
+        "source": "GFW Tropical Tree Cover (10 m, 2020)",
+        "credit": "Tropical Tree Cover — Global Forest Watch / WRI",
+        "ramp": [
+          "#e5f5d0",
+          "#a1d99b",
+          "#41ab5d",
+          "#006d2c",
+          "#00441b"
+        ]
+      }
     },
     {
       "slug": "suzano",
@@ -301,7 +361,37 @@
           "count": 185590,
           "rejected_count": 69028
         }
-      ]
+      ],
+      "canopy": {
+        "image": "suzano/copa.png",
+        "coordinates": [
+          [
+            -46.3891,
+            -23.481
+          ],
+          [
+            -46.2493,
+            -23.481
+          ],
+          [
+            -46.2493,
+            -23.750012
+          ],
+          [
+            -46.3891,
+            -23.750012
+          ]
+        ],
+        "source": "GFW Tropical Tree Cover (10 m, 2020)",
+        "credit": "Tropical Tree Cover — Global Forest Watch / WRI",
+        "ramp": [
+          "#e5f5d0",
+          "#a1d99b",
+          "#41ab5d",
+          "#006d2c",
+          "#00441b"
+        ]
+      }
     },
     {
       "slug": "tremembe",
@@ -402,7 +492,37 @@
           "count": 78814,
           "rejected_count": 18764
         }
-      ]
+      ],
+      "canopy": {
+        "image": "tremembe/copa.png",
+        "coordinates": [
+          [
+            -45.709,
+            -22.87
+          ],
+          [
+            -45.4981,
+            -22.87
+          ],
+          [
+            -45.4981,
+            -23.006021
+          ],
+          [
+            -45.709,
+            -23.006021
+          ]
+        ],
+        "source": "GFW Tropical Tree Cover (10 m, 2020)",
+        "credit": "Tropical Tree Cover — Global Forest Watch / WRI",
+        "ramp": [
+          "#e5f5d0",
+          "#a1d99b",
+          "#41ab5d",
+          "#006d2c",
+          "#00441b"
+        ]
+      }
     }
   ]
 }

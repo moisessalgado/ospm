@@ -65,6 +65,9 @@ const spacingSelect = document.getElementById("spacing-select");
 const basemapSelect = document.getElementById("basemap-select");
 const slotsToggle = document.getElementById("layer-slots-toggle");
 const rejectedToggle = document.getElementById("layer-rejected-toggle");
+const canopyLayerControl = document.getElementById("canopy-layer-control");
+const canopyToggle = document.getElementById("layer-canopy-toggle");
+const canopyLegend = document.getElementById("canopy-legend");
 const canopyFilterEl = document.getElementById("canopy-filter");
 const canopyRange = document.getElementById("canopy-range");
 const canopyValueEl = document.getElementById("canopy-value");
@@ -372,6 +375,7 @@ async function selectMunicipality(slug, animate = true) {
   const initialMethod = methods.find((v) => v.method === DEFAULT_METHOD) ?? methods[0];
   methodSelect.value = initialMethod.method;
   await selectMethod(municipality, initialMethod.method);
+  syncCanopyLayer();
   if (animate) map.flyTo({ center: municipality.center, zoom: 12 });
   else map.jumpTo({ center: municipality.center, zoom: 12 });
 }
@@ -444,6 +448,29 @@ slotsToggle.addEventListener("change", (e) => {
   const visibility = e.target.checked ? "visible" : "none";
   for (const id of ["slot-clusters", "slot-cluster-count", "slot-points"]) map.setLayoutProperty(id, "visibility", visibility);
 });
+
+// Canopy-cover raster (webmap/data/<municipality>/copa.png, drawn under the
+// slots). The image is only requested once the checkbox is on, and re-added
+// whenever the municipality changes — each has its own image and corners.
+function syncCanopyLayer() {
+  const municipality = manifest.municipalities.find((m) => m.slug === municipalitySelect.value);
+  const canopy = municipality?.canopy;
+  canopyLayerControl.hidden = !canopy;
+  if (map.getLayer("canopy-raster")) map.removeLayer("canopy-raster");
+  if (map.getSource("canopy")) map.removeSource("canopy");
+  canopyLegend.hidden = !canopy || !canopyToggle.checked;
+  if (!canopy) return;
+  document.getElementById("canopy-ramp").style.background = `linear-gradient(to right, ${canopy.ramp.join(", ")})`;
+  document.getElementById("canopy-credit").textContent = `Fonte: ${canopy.credit} — ${canopy.source}`;
+  if (!canopyToggle.checked) return;
+  map.addSource("canopy", { type: "image", url: `data/${canopy.image}?t=${CACHE_BUST}`, coordinates: canopy.coordinates });
+  map.addLayer(
+    { id: "canopy-raster", type: "raster", source: "canopy", paint: { "raster-opacity": 0.75, "raster-resampling": "nearest" } },
+    "slot-clusters"
+  );
+}
+
+canopyToggle.addEventListener("change", syncCanopyLayer);
 
 rejectedToggle.addEventListener("change", (e) => {
   map.setLayoutProperty("rejected-points", "visibility", e.target.checked ? "visible" : "none");

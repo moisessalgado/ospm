@@ -85,6 +85,19 @@
       <div><span class="dot" style="background:#1565c0"></span> Médio</div>
       <div><span class="dot" style="background:#6a1b9a"></span> Grande</div>
 
+      <div id="canopy-layer-control" hidden>
+        <label class="legend-title">
+          <input type="checkbox" id="layer-canopy-toggle" />
+          <strong>Cobertura de copa (raster)</strong>
+          <span class="legend-hint" title="Percentual de cobertura de copa por pixel, na fonte indicada abaixo. Transparente = sem copa (ou água).">i</span>
+        </label>
+        <div id="canopy-legend" hidden>
+          <div id="canopy-ramp"></div>
+          <div class="canopy-ramp-labels"><span>0%</span><span>50%</span><span>100%</span></div>
+          <div id="canopy-credit"></div>
+        </div>
+      </div>
+
       <div id="canopy-filter" hidden>
         <label for="canopy-range"><strong>Cobertura de copa máxima:</strong> <span id="canopy-value">100</span>%
           <span class="legend-hint" title="Mostra só as vagas cuja cobertura de copa (máximo dos pixels do raster, num raio de metade do espaçamento; a fonte varia por município e aparece no popup da vaga) não passa do valor. 100 = todas.">i</span>
@@ -116,6 +129,6 @@
   </div>
 
   <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-  <script src="js/app.js?v=16"></script>
+  <script src="js/app.js?v=18"></script>
 </body>
 </html>

@@ -76,6 +76,14 @@ de cada uma.
   vaga mostra `cobertura_copa_pct` e o painel ganha o filtro "Cobertura de copa
   máxima", que oculta as vagas acima do valor (vagas sem dado ficam). É só
   filtro de exibição — o conjunto de vagas não muda.
+- Raster de cobertura de copa: a camada "Cobertura de copa (raster)" desenha
+  `data/<municipio>/copa.png` (PNG com paleta, em Web Mercator, ~0,2–1,1 MB por
+  município) sob as vagas, com rampa verde e legenda. O PNG só é baixado ao
+  ligar a camada (desligada por padrão); 0 % e sem dado ficam transparentes. Os
+  cantos, a fonte, o crédito e a rampa vêm de `canopy` no `manifest.json`. O
+  raster não é lido direto dos provedores (GLAD e GFW não liberam CORS, e o GFW
+  exige chave e usa URL assinada que expira): o recorte baixado pelo pipeline é
+  que vira imagem estática.
 - A posição lateral das vagas é indicativa (linha da face de quadra do IBGE);
   ver `modeling/README.md`.
 - Em telas estreitas (≤560px) o painel de controles inicia recolhido; o botão

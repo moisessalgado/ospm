@@ -17,6 +17,11 @@ slot: corner setback, an obstacle, or no safe room before the nearest
 facade), indexing legend.porte and legend.motivo the same way. The webmap
 rebuilds the GeoJSON client-side. The manifest lists each variant's method
 and spacing separately so the webmap can offer them as two selectors.
+
+A municipality with canopy cover (03b) also gets <municipality>/copa.png, the
+raster that cover came from as a colored image, and a "canopy" entry in the
+manifest: the image's corners, the source's label and credit, and the color
+ramp (the legend's gradient) — drawn by the webmap as an optional layer.
 """
 
 from __future__ import annotations
@@ -25,6 +30,7 @@ import json
 
 from shapely.geometry import shape
 
+from planting_slots.canopy import CANOPY_RAMP, CANOPY_SOURCES, export_canopy_image
 from planting_slots.municipalities import get_municipality, municipality_arg_parser
 from planting_slots.paths import WEBMAP_DATA_DIR, MunicipalityFiles
 
@@ -112,6 +118,7 @@ def main() -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     variants = []
+    canopy_label = None
     for method_id, method_label in METHODS.items():
         for spacing_id, spacing_label in SPACINGS.items():
             variant_id = f"{method_id}_{spacing_id}"
@@ -122,6 +129,7 @@ def main() -> None:
             rejected_src = files.slots(f"{variant_id}_sem_alocacao", "geojson")
             rejected = compact_rejected(json.loads(rejected_src.read_text())) if rejected_src.exists() else []
             payload["rejeitados"] = rejected
+            canopy_label = payload.get("copa_fonte") or canopy_label
             out = out_dir / f"{variant_id}.json"
             out.write_text(json.dumps(payload, separators=(",", ":")))
             count = len(payload["points"]) // payload["stride"]
@@ -140,6 +148,14 @@ def main() -> None:
     west, south, east, north = boundary.bounds
     entry = {"slug": municipality.slug, "name": municipality.name, "state": municipality.state,
              "center": [(west + east) / 2, (south + north) / 2], "variants": variants}
+    canopy_source = next((s for s, cfg in CANOPY_SOURCES.items() if cfg["label"] == canopy_label), None)
+    if canopy_source and files.canopy_rasters[canopy_source].exists():
+        image = out_dir / "copa.png"
+        corners = export_canopy_image(files.canopy_rasters[canopy_source], image)
+        entry["canopy"] = {"image": f"{municipality.slug}/copa.png", "coordinates": corners,
+                           "source": canopy_label, "credit": CANOPY_SOURCES[canopy_source]["credit"],
+                           "ramp": CANOPY_RAMP}
+        print(f"[webmap] raster de copa ({canopy_label}) -> {image} ({image.stat().st_size / 1e3:.0f} kB)")
 
     manifest_path = WEBMAP_DATA_DIR / "manifest.json"
     manifest = json.loads(manifest_path.read_text()) if manifest_path.exists() else {}

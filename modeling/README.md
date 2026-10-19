@@ -139,7 +139,8 @@ Cada vaga ganha `cobertura_copa_pct` — o **máximo** da cobertura de copa entr
 os pixels de 10 m que tocam um buffer de **metade do espaçamento** da vaga (5 m
 no espaçamento de 10 m; 3, 4 e 5,5 m para pequeno/médio/grande no espaçamento
 por porte) — e `raio_copa_m`, o raio usado. Nenhuma vaga é removida: é só um
-atributo, que o webmap usa para filtrar. Pixel 255 = sem dado, que vira nulo. A etapa 03b reescreve os
+atributo, que o webmap usa para filtrar. Pixel 255 = sem dado, que vira nulo. O 04 também grava o raster como imagem
+colorida (`webmap/data/<municipio>/copa.png`) para a camada de copa do webmap. A etapa 03b reescreve os
 `.gpkg`/`.geojson` das variantes; rodar o 03 de novo apaga as colunas, então
 rode o 03b depois. Só municípios dentro de um único tile de 10° são suportados no download
 (Suzano, Sorocaba, Tremembé e Florianópolis caem no 20S_050W).
