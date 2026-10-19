@@ -65,6 +65,9 @@ const spacingSelect = document.getElementById("spacing-select");
 const basemapSelect = document.getElementById("basemap-select");
 const slotsToggle = document.getElementById("layer-slots-toggle");
 const rejectedToggle = document.getElementById("layer-rejected-toggle");
+const canopyFilterEl = document.getElementById("canopy-filter");
+const canopyRange = document.getElementById("canopy-range");
+const canopyValueEl = document.getElementById("canopy-value");
 const measureToggleBtn = document.getElementById("measure-toggle");
 const measureClearBtn = document.getElementById("measure-clear");
 const snapToggle = document.getElementById("snap-toggle");
@@ -252,6 +255,9 @@ function showSlotPopup(feature) {
       ? `<div><strong>Setor/quadra/face:</strong> ${escapeHtml(p.cd_setor)} / ${escapeHtml(p.cd_quadra)} / ${escapeHtml(p.cd_face)}</div>`
       : "",
     p.posicao_face_m != null ? `<div><strong>Posição ao longo da via/face:</strong> ${p.posicao_face_m} m</div>` : "",
+    p.cobertura_copa_pct != null
+      ? `<div><strong>Cobertura de copa:</strong> ${p.cobertura_copa_pct}% <span class="popup-note">(máx. a ${p.raio_copa_m} m)</span></div>`
+      : "",
   ].join("");
   new maplibregl.Popup({ closeButton: true, maxWidth: "260px" })
     .setLngLat(feature.geometry.coordinates)
@@ -260,16 +266,17 @@ function showSlotPopup(feature) {
 }
 
 // Compact format written by modeling/scripts/04_export_webmap.py:
-// points = [lon, lat, porte, tipo_vaga, logradouro, face, posicao_face_m, ...],
-// 7 numbers per slot, where porte/tipo_vaga/logradouro/face are indices into
+// points = [lon, lat, porte, tipo_vaga, logradouro, face, posicao_face_m, (cobertura_copa_pct), ...],
+// payload.stride numbers per slot (7, or 8 with the canopy-cover % — -1 where
+// there is no data), where porte/tipo_vaga/logradouro/face are indices into
 // legend ("face" indexes legend.face, a [cd_setor, cd_quadra, cd_face] triple;
 // -1 for median slots, which have none). Rebuilt here as GeoJSON for MapLibre.
-const POINT_STRIDE = 7;
-
 function decodeCompactPoints(payload) {
   const { legend, points } = payload;
-  const features = new Array(points.length / POINT_STRIDE);
-  for (let i = 0, j = 0; i < points.length; i += POINT_STRIDE, j++) {
+  const stride = payload.stride ?? 7;
+  const hasCanopy = stride > 7;
+  const features = new Array(points.length / stride);
+  for (let i = 0, j = 0; i < points.length; i += stride, j++) {
     const face = points[i + 5] >= 0 ? legend.face[points[i + 5]] : null;
     const pos = points[i + 6];
     features[j] = {
@@ -284,10 +291,19 @@ function decodeCompactPoints(payload) {
         cd_quadra: face ? face[1] : null,
         cd_face: face ? face[2] : null,
         posicao_face_m: pos >= 0 ? pos : null,
+        cobertura_copa_pct: hasCanopy && points[i + 7] >= 0 ? points[i + 7] : null,
+        // the canopy buffer is half the slot's spacing, which depends on the variant (see 03b_add_canopy_cover.py)
+        raio_copa_m: hasCanopy ? canopyRadiusM(payload.spacing, legend.porte[points[i + 2]]) : null,
       },
     };
   }
   return { type: "FeatureCollection", features };
+}
+
+const SPACING_BY_PORTE_M = { pequeno: 6, medio: 8, grande: 11 };
+
+function canopyRadiusM(spacingId, porte) {
+  return (spacingId === "10m" ? 10 : SPACING_BY_PORTE_M[porte]) / 2;
 }
 
 // "rejeitados": [lon, lat, porte, motivo, ...] (4 numbers per point — see
@@ -370,11 +386,40 @@ async function loadVariant(municipality, variant) {
   setStatus(`Carregando ${municipality.name}…`);
   const resp = await fetch(`data/${municipality.slug}/${variant.id}.json?t=${CACHE_BUST}`);
   const payload = await resp.json();
-  map.getSource("slots").setData(decodeCompactPoints(payload));
+  payload.spacing = variant.spacing;
+  currentSlots = decodeCompactPoints(payload);
+  const hasCanopy = (payload.stride ?? 7) > 7;
+  canopyFilterEl.hidden = !hasCanopy;
+  canopyRange.value = 100;
+  currentCanopyMax = 100;
+  canopyValueEl.textContent = "100";
+  currentVariant = variant;
+  applySlots();
   map.getSource("rejected").setData(decodeRejectedPoints(payload.rejeitados ?? [], payload.legend));
-  const rejectedNote = variant.rejected_count ? ` · ${variant.rejected_count.toLocaleString("pt-BR")} inviáveis` : "";
-  setStatus(`${variant.count.toLocaleString("pt-BR")} vagas de plantio${rejectedNote}`);
 }
+
+// Slots with no canopy data always stay; canopy filter keeps the ones whose
+// cover is at most the slider's value (no filtering at 100).
+let currentSlots = null;
+let currentVariant = null;
+let currentCanopyMax = 100;
+
+function applySlots() {
+  const features = currentCanopyMax >= 100
+    ? currentSlots.features
+    : currentSlots.features.filter((f) => f.properties.cobertura_copa_pct == null || f.properties.cobertura_copa_pct <= currentCanopyMax);
+  map.getSource("slots").setData({ type: "FeatureCollection", features });
+  const rejectedNote = currentVariant.rejected_count ? ` · ${currentVariant.rejected_count.toLocaleString("pt-BR")} inviáveis` : "";
+  const filterNote = features.length < currentSlots.features.length
+    ? ` (de ${currentSlots.features.length.toLocaleString("pt-BR")}, copa ≤ ${currentCanopyMax}%)` : "";
+  setStatus(`${features.length.toLocaleString("pt-BR")} vagas de plantio${filterNote}${rejectedNote}`);
+}
+
+canopyRange.addEventListener("input", (e) => {
+  currentCanopyMax = Number(e.target.value);
+  canopyValueEl.textContent = currentCanopyMax;
+  applySlots();
+});
 
 municipalitySelect.addEventListener("change", (e) => selectMunicipality(e.target.value));
 methodSelect.addEventListener("change", (e) => {

@@ -80,6 +80,16 @@ python scripts/03_allocate_slots.py     --municipio suzano   # 5 métodos x 2 es
 python scripts/04_export_webmap.py      --municipio suzano   # webmap/data/suzano/ + manifest.json
 ```
 
+Etapa opcional (hoje só testada em Suzano), entre o 02 e o 04: cobertura de
+copa por vaga, a partir do raster de 10 m do Global Forest Watch
+(Tropical Tree Cover). Precisa da chave de API dos links do shapefile
+`Tropical_Tree_Cover` na variável `GFW_API_KEY`.
+
+```bash
+python scripts/02b_download_canopy.py   --municipio suzano   # recorte do raster (~1 MB)
+python scripts/03b_add_canopy_cover.py  --municipio suzano   # após o 03: cobertura_copa_pct em cada vaga
+```
+
 Os downloads ficam em cache em `modeling/data/<municipio>/`; apague um arquivo
 para baixá-lo de novo. O passo 03 também precisa das faces de logradouro do
 IBGE do estado (ver abaixo). Ele grava `modeling/output/<municipio>/`:

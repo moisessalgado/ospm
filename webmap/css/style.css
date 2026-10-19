@@ -350,3 +350,24 @@ html, body {
     display: none;
   }
 }
+
+#canopy-filter {
+  margin-top: 10px;
+}
+
+#canopy-filter label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+}
+
+#canopy-filter input[type="range"] {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.popup-note {
+  color: var(--muted);
+  font-size: 11px;
+}

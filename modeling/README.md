@@ -115,6 +115,25 @@ python scripts/03_allocate_slots.py --municipio suzano      # alocação das vag
 python scripts/04_export_webmap.py --municipio suzano       # dados do webmap
 ```
 
+### Cobertura de copa (opcional)
+
+```bash
+export GFW_API_KEY=...                                        # chave dos links do shapefile Tropical_Tree_Cover
+python scripts/02b_download_canopy.py --municipio suzano      # raster de 10 m recortado (data/<municipio>/cobertura_copa_gfw_10m.tif)
+python scripts/03b_add_canopy_cover.py --municipio suzano     # roda após o 03 e antes do 04
+```
+
+Cada vaga ganha `cobertura_copa_pct` — o **máximo** da cobertura de copa entre
+os pixels de 10 m que tocam um buffer de **metade do espaçamento** da vaga (5 m
+no espaçamento de 10 m; 3, 4 e 5,5 m para pequeno/médio/grande no espaçamento
+por porte) — e `raio_copa_m`, o raio usado. Nenhuma vaga é removida: é só um
+atributo, que o webmap usa para filtrar. O raster vem em classes de 10 % (0, 20,
+30, …, 100; 255 = sem dado, que vira nulo). A etapa 03b reescreve os
+`.gpkg`/`.geojson` das variantes; rodar o 03 de novo apaga as colunas, então
+rode o 03b depois. Só tiles de 10° únicos são suportados no download (Suzano e
+Sorocaba caem no 20S_050W); fora do Brasil tropical/sem cobertura do GFW (extremo
+sul do RS) é preciso outra base.
+
 Municípios processados: Sorocaba e Suzano (SP), Tremembé (SP), Florianópolis
 (SC) — ver `planting_slots/municipalities.py`.
 

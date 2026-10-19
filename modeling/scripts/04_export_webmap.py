@@ -1,10 +1,13 @@
 """Export allocated slots to the webmap in a compact format and update its manifest.
 
 Each variant (method x spacing) becomes webmap/data/<municipality>/<variant>.json:
-  {"legend": {...}, "points": [lon, lat, porte, tipo_vaga, logradouro, face, posicao_face_m, ...],
+  {"legend": {...}, "stride": 7 | 8,
+   "points": [lon, lat, porte, tipo_vaga, logradouro, face, posicao_face_m, (cobertura_copa_pct), ...],
    "rejeitados": [lon, lat, porte, motivo, ...]}
-"points" is a flat numeric array (7 numbers per slot) whose categorical
+"points" is a flat numeric array ("stride" numbers per slot) whose categorical
 attributes are indices into "legend" — no per-feature GeoJSON boilerplate.
+The 8th number, present only when 03b_add_canopy_cover.py ran for the
+municipality, is the slot's canopy cover % (-1 where there is no data).
 "face" indexes legend.face, a [cd_setor, cd_quadra, cd_face] triple (-1, and
 posicao_face_m -1, for slots with no IBGE match close enough). "rejeitados" is
 every candidate the allocator dropped (4 numbers per point: lon, lat, porte,
@@ -25,7 +28,7 @@ from planting_slots.municipalities import get_municipality, municipality_arg_par
 from planting_slots.paths import WEBMAP_DATA_DIR, MunicipalityFiles
 
 COORD_DECIMALS = 5  # ~1.1 m — enough for display
-POINT_STRIDE = 7
+POINT_STRIDE = 7  # 8 with the canopy-cover column
 REJECTED_STRIDE = 4
 LEGEND = {
     "porte": ["pequeno", "medio", "grande"],
@@ -66,6 +69,7 @@ def compact(geojson: dict) -> dict:
     logradouro_values, get_logradouro = vocabulary()
     face_values, get_face = vocabulary()
 
+    has_canopy = any("cobertura_copa_pct" in feat["properties"] for feat in geojson["features"][:1])
     flat: list[float | int] = []
     for feat in geojson["features"]:
         lon, lat = feat["geometry"]["coordinates"]
@@ -78,8 +82,11 @@ def compact(geojson: dict) -> dict:
             porte_index.get(props.get("porte"), -1), tipo_index.get(props.get("tipo_vaga"), -1),
             get_logradouro(props.get("logradouro") or ""), face_i, pos if pos is not None else -1,
         ]
+        if has_canopy:
+            canopy = props.get("cobertura_copa_pct")
+            flat.append(canopy if canopy is not None else -1)
     legend = {**LEGEND, "logradouro": logradouro_values, "face": face_values}
-    return {"legend": legend, "points": flat}
+    return {"legend": legend, "stride": POINT_STRIDE + has_canopy, "points": flat}
 
 
 def compact_rejected(geojson: dict) -> list[float | int]:
@@ -113,7 +120,7 @@ def main() -> None:
             payload["rejeitados"] = rejected
             out = out_dir / f"{variant_id}.json"
             out.write_text(json.dumps(payload, separators=(",", ":")))
-            count = len(payload["points"]) // POINT_STRIDE
+            count = len(payload["points"]) // payload["stride"]
             rejected_count = len(rejected) // REJECTED_STRIDE
             variants.append({
                 "id": variant_id, "method": method_id, "method_label": method_label,

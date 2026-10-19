@@ -61,7 +61,9 @@ de cada uma.
   por `modeling/scripts/04_export_webmap.py`, onde `<variante>` é
   `<metodo>_<espacamento>` (ex.: `face_ibge_10m`). Não é GeoJSON — é um array
   plano `[lon, lat, porte, tipo_vaga, logradouro, face, posicao_face_m, ...]`
-  (7 números por vaga) em que os atributos categóricos são índices da tabela
+  (7 números por vaga, ou 8 quando o município tem cobertura de copa: o 8º é
+  `cobertura_copa_pct`, -1 = sem dado; o JSON traz `stride` com o valor) em que
+  os atributos categóricos são índices da tabela
   `legend` (`face` indexa `legend.face`, uma tripla `[cd_setor, cd_quadra,
   cd_face]`), o que reduz bastante o tamanho do arquivo sem perder nenhuma
   vaga nem atributo. O mesmo arquivo traz `rejeitados`: `[lon, lat, porte,
@@ -70,6 +72,10 @@ de cada uma.
   antes de passar para o MapLibre. `data/manifest.json` lista, por município,
   cada variante com seu `method`/`method_label` e `spacing`/`spacing_label`,
   que os dois seletores usam para se popular.
+- Cobertura de copa: nos municípios com o atributo (hoje Suzano), o popup da
+  vaga mostra `cobertura_copa_pct` e o painel ganha o filtro "Cobertura de copa
+  máxima", que oculta as vagas acima do valor (vagas sem dado ficam). É só
+  filtro de exibição — o conjunto de vagas não muda.
 - A posição lateral das vagas é indicativa (linha da face de quadra do IBGE);
   ver `modeling/README.md`.
 - Em telas estreitas (≤560px) o painel de controles inicia recolhido; o botão

@@ -30,6 +30,7 @@ class MunicipalityFiles:
         self.osm_roads = self.data_dir / "vias_osm.gpkg"
         self.osm_obstacles = self.data_dir / "obstaculos_osm.json"
         self.buildings = self.data_dir / "edificacoes_overture.parquet"
+        self.canopy = self.data_dir / "cobertura_copa_gfw_10m.tif"
 
         abbr, code = municipality.state_abbr, municipality.ibge_code
         self.ibge_tracts = DATA_DIR / "ibge" / "setores_censitarios_2022" / f"{abbr}_setores_CD2022.gpkg"

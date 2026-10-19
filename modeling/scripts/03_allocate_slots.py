@@ -53,7 +53,7 @@ import pandas as pd
 import shapely
 from shapely.geometry import Point
 
-from planting_slots.allocation import enforce_min_separation, greedy_walk
+from planting_slots.allocation import enforce_min_separation, greedy_walk, slot_spacing_m
 from planting_slots.buildings import facade_probes, load_overture_buildings, local_facade
 from planting_slots.ibge import load_street_faces, load_urban_area
 from planting_slots.municipalities import get_municipality, municipality_arg_parser
@@ -102,9 +102,8 @@ MIN_MEDIAN_WIDTH_M = 1.0
 
 # --- Spacing variants (pending MMA criteria) -----------------------------------
 SPACINGS = {
-    "10m": {"label": "Espaçamento genérico de 10 m", "spacing": lambda porte: 10.0},
-    "porte": {"label": "Espaçamento por porte (6/8/11 m)",
-             "spacing": lambda porte: {"pequeno": 6.0, "medio": 8.0, "grande": 11.0}[porte]},
+    "10m": {"label": "Espaçamento genérico de 10 m", "spacing": lambda porte: slot_spacing_m("10m", porte)},
+    "porte": {"label": "Espaçamento por porte (6/8/11 m)", "spacing": lambda porte: slot_spacing_m("porte", porte)},
 }
 
 # --- Methods ------------------------------------------------------------------
