@@ -7,7 +7,7 @@ um webmap para explorar o resultado por município.
 - **Mapa:** <http://moisessalgado.com.br/ospm/>
 - **Metodologia:** <http://moisessalgado.com.br/ospm/metodologia.html>
 
-Municípios processados: Suzano, Sorocaba e Tremembé (SP) e Florianópolis (SC).
+Municípios processados: Distrito Federal (abre no Plano Piloto), Suzano, Sorocaba e Tremembé (SP) e Florianópolis (SC).
 
 ## Como funciona, em uma página
 
@@ -25,19 +25,24 @@ Para cada município, o pipeline:
    ("vagas inviáveis");
 5. exporta tudo num formato compacto para o webmap.
 
-São **5 métodos de alocação × 2 espaçamentos = 10 variantes** por município,
+São **3 métodos de alocação × 2 espaçamentos = 6 variantes** por município, todos com os critérios oficiais por porte,
 para comparar o que cada fonte de dados consegue garantir:
 
 | # | id | Método | Usa |
 |---|---|---|---|
 | 1 | `osm_eixo` | Eixo da via (padrão do webmap) | OSM |
-| 2 | `osm_calcada_lado` | Calçada em um dos lados da via (o lado com menos endereços no IBGE) | OSM + IBGE |
-| 3 | `osm_calcada` | Calçada nos dois lados da via | OSM |
-| 4 | `face_ibge` | Face de quadra do IBGE, ajustada à via e às fachadas | IBGE + OSM + Overture |
-| 5 | `osm_overture` | Calçada ajustada com prédios | OSM + Overture |
+| 2 | `osm_calcada` | Calçada nos dois lados da via | OSM |
+| 3 | `face_ibge` | Face de quadra do IBGE, ajustada à via e às fachadas | IBGE + OSM + Overture |
 
-Espaçamentos: `10m` (genérico) e `porte` (6/8/11 m pelo porte da árvore, que
-vem da classe da via). Detalhes, parâmetros e limitações em
+`osm_calcada_lado` (calçada em um lado só) e `osm_overture` (calçada ajustada
+com prédios) continuam no código e saem com `--metodos`, mas não vão para o webmap.
+
+Critérios oficiais (`modeling/planting_slots/criteria.py`, do documento
+"Informações sobre distanciamento"): o espaçamento padrão é `10m` (o do maior
+porte, para todas as árvores); `porte` usa 10 / 6 / 4 m (grande / médio /
+pequeno — o porte vem da classe da via). Valem nas duas: larguras mínimas
+de calçada e de canteiro por porte e distâncias mínimas à infraestrutura
+(esquina, semáforo, faixa, poste, transformador…) também por porte. Detalhes, parâmetros e limitações em
 [modeling/README.md](modeling/README.md) e na página de metodologia; a
 matemática de cada passo, com exemplos numéricos, em
 [modeling/ALGORITMOS.md](modeling/ALGORITMOS.md).
@@ -76,7 +81,7 @@ playwright install chromium   # opcional — só para testes visuais do webmap
 cd modeling
 python scripts/01_download_osm.py       --municipio suzano   # limite, vias e obstáculos (OSM)
 python scripts/02_download_buildings.py --municipio suzano   # edificações (Overture)
-python scripts/03_allocate_slots.py     --municipio suzano   # 5 métodos x 2 espaçamentos
+python scripts/03_allocate_slots.py     --municipio suzano   # 3 métodos x 2 espaçamentos
 python scripts/04_export_webmap.py      --municipio suzano   # webmap/data/suzano/ + manifest.json
 ```
 
@@ -160,11 +165,11 @@ As regras ficam como constantes no topo de
 
 | Constante | O que controla |
 |---|---|
-| `CORNER_SETBACK_M` | afastamento livre em cada esquina (6 m) |
-| `OBSTACLES` | tags OSM de cada obstáculo e seu raio de exclusão |
+| `CORNER_SETBACK_M` | afastamento livre em cada esquina (5 m, em `criteria.py`) |
+| `OBSTACLES` | tags OSM de cada obstáculo e seu raio de exclusão por porte |
 | `GENERATION_CLASSES` | classes de via OSM que recebem vagas |
 | `PORTE_BY_CLASS` | porte da árvore por classe de via |
-| `SPACINGS` | variantes de espaçamento (função porte → metros) |
+| `SPACINGS` | espaçamento por porte (função porte → metros; `criteria.py`) |
 | `CURB_SETBACK_M` | recuo a partir do meio-fio estimado |
 | `FACE_STREET_MATCH_M` / `FACE_STREET_MAX_ANGLE_DEG` | pareamento face IBGE ↔ via OSM |
 

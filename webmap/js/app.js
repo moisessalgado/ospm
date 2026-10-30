@@ -46,14 +46,14 @@ const style = {
   })),
 };
 
-// Suzano's center (see data/manifest.json) — the default municipality, set
-// directly so the map doesn't paint over some other city before the first
-// flyTo kicks in (see loadManifest/selectMunicipality).
+// The Plano Piloto (Brasília) — the default view, set directly so the map
+// doesn't paint over some other city before the first jumpTo kicks in (see
+// loadManifest/selectMunicipality and "focus" in data/manifest.json).
 const map = new maplibregl.Map({
   container: "map",
   style,
-  center: [-46.3192, -23.6155],
-  zoom: 12,
+  center: [-47.8825, -15.7942],
+  zoom: 13,
 });
 map.addControl(new maplibregl.NavigationControl(), "top-right");
 map.addControl(new maplibregl.ScaleControl({ unit: "metric" }), "bottom-right");
@@ -170,6 +170,11 @@ function addSlotLayers() {
         "acesso_garagem", "#8d6e63",
         "ponto_onibus", "#29b6f6",
         "arvore_existente", "#2e7d32",
+        "calcada_estreita", "#212121",
+        "semaforo", "#00897b",
+        "poste", "#3949ab",
+        "transformador", "#ab47bc",
+        "boca_de_lobo", "#c0ca33",
         "#d64545",
       ],
     },
@@ -230,6 +235,11 @@ const MOTIVO_LABEL = {
   acesso_garagem: "Acesso de garagem",
   ponto_onibus: "Ponto de ônibus",
   arvore_existente: "Árvore existente",
+  calcada_estreita: "Calçada mais estreita que o mínimo do porte",
+  semaforo: "Cruzamento semaforizado",
+  poste: "Poste ou iluminação pública",
+  transformador: "Transformador",
+  boca_de_lobo: "Boca de lobo / caixa de inspeção",
 };
 
 // Shared by slot-points (real slots) and rejected-points (inviable
@@ -303,10 +313,11 @@ function decodeCompactPoints(payload) {
   return { type: "FeatureCollection", features };
 }
 
-const SPACING_BY_PORTE_M = { pequeno: 6, medio: 8, grande: 11 };
+// Minimum distance between trees by porte — modeling/planting_slots/criteria.py
+const SPACING_BY_PORTE_M = { pequeno: 4, medio: 6, grande: 10 };
 
 function canopyRadiusM(spacingId, porte) {
-  return (spacingId === "10m" ? 10 : SPACING_BY_PORTE_M[porte]) / 2;
+  return (spacingId === "10m" ? SPACING_BY_PORTE_M.grande : SPACING_BY_PORTE_M[porte]) / 2;
 }
 
 // "rejeitados": [lon, lat, porte, motivo, ...] (4 numbers per point — see
@@ -334,7 +345,7 @@ function decodeRejectedPoints(flat, legend) {
 // rerun, and a stale manifest/variant here means wrong slot counts and
 // positions silently shown to the user (not just a stale style).
 const CACHE_BUST = Date.now();
-const DEFAULT_MUNICIPALITY = "suzano";
+const DEFAULT_MUNICIPALITY = "distrito_federal_plano_piloto";
 const DEFAULT_METHOD = "osm_eixo"; // first in the selector; see METHODS in 04_export_webmap.py
 
 // A municipality's variants each carry a method and a spacing (see
@@ -376,8 +387,12 @@ async function selectMunicipality(slug, animate = true) {
   methodSelect.value = initialMethod.method;
   await selectMethod(municipality, initialMethod.method);
   syncCanopyLayer();
-  if (animate) map.flyTo({ center: municipality.center, zoom: 12 });
-  else map.jumpTo({ center: municipality.center, zoom: 12 });
+  // A municipality may define a focus (e.g. the Plano Piloto for the Distrito Federal) instead of its bbox center.
+  const view = municipality.focus
+    ? { center: [municipality.focus[0], municipality.focus[1]], zoom: municipality.focus[2] }
+    : { center: municipality.center, zoom: 12 };
+  if (animate) map.flyTo(view);
+  else map.jumpTo(view);
 }
 
 async function selectMethod(municipality, method) {

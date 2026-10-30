@@ -29,6 +29,13 @@ HEADERS = {"User-Agent": "ospm-vagas-plantio/0.1 (contato: moises.pgser@gmail.co
 ROAD_TAGS = ["highway", "name", "oneway", "lanes", "sidewalk", "width", "surface", "junction"]
 OBSTACLE_QUERY = """
   node["highway"="bus_stop"]({bb});
+  node["highway"="traffic_signals"]({bb});
+  node["highway"="street_lamp"]({bb});
+  node["power"="pole"]({bb});
+  node["power"="transformer"]({bb});
+  node["transformer"]({bb});
+  node["man_made"="manhole"]({bb});
+  node["manhole"]({bb});
   node["public_transport"="platform"]({bb});
   way["public_transport"="platform"]({bb});
   node["natural"="tree"]({bb});
@@ -58,7 +65,8 @@ def fetch_boundary(files: MunicipalityFiles) -> dict:
     if files.boundary.exists():
         return json.loads(files.boundary.read_text())
     m = files.municipality
-    params = {"city": m.name, "state": m.state, "country": "Brazil", "format": "json", "polygon_geojson": 1, "limit": 1}
+    search = m.nominatim_query or {"city": m.name, "state": m.state, "country": "Brazil"}
+    params = {**search, "format": "json", "polygon_geojson": 1, "limit": 1}
     resp = httpx.get(NOMINATIM_URL, params=params, headers=HEADERS, timeout=60)
     resp.raise_for_status()
     results = resp.json()

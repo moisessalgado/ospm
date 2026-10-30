@@ -7,7 +7,7 @@
   <meta name="description" content="Como calculamos as vagas de plantio de árvores em vias públicas: fontes de dados, limites de precisão e regras de alocação." />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ctext y='20' font-size='22'%3E%F0%9F%8C%B3%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" href="css/base.css?v=3" />
-  <link rel="stylesheet" href="css/metodologia.css?v=4" />
+  <link rel="stylesheet" href="css/metodologia.css?v=5" />
 </head>
 <body>
   <div class="progress-bar" id="progress-bar"></div>
@@ -32,7 +32,7 @@
     <h1>Onde cabe uma árvore <em>sem</em> tirar uma vaga da rua</h1>
     <p class="lede">
       Como calculamos, município por município, pontos de plantio em vias públicas a partir de
-      dados abertos — com cinco métodos diferentes, cada um com suas vantagens e limites, que
+      dados abertos — com três métodos diferentes, cada um com suas vantagens e limites, que
       explicamos em detalhe nesta página.
     </p>
     <div class="cta-row">
@@ -146,19 +146,19 @@
       </div>
       <figcaption class="caption">
         Suzano, margem fixa a partir do eixo do OSM. <span class="key"><i style="background:#ff1a1a"></i>
-        ponto com menos de 2,2 m de calçada até a fachada (Overture)</span> ·
+        ponto com menos de 2,2 m de calçada até a fachada (Overture; limiar do experimento — a regra atual usa o mínimo de cada porte)</span> ·
         <span class="key"><i style="background:#20d020"></i> ponto mantido</span> ·
         contorno ciano: prédios da Overture · tracejado: eixo OSM. Imagem de satélite: Google.
       </figcaption>
     </figure>
   </section>
 
-  <!-- Regras comuns aos cinco métodos -->
+  <!-- Regras comuns aos três métodos -->
   <section class="story-section alt" id="pedra-fundamental">
     <p class="eyebrow reveal">Regras comuns</p>
     <h2 class="reveal">Mesma malha elegível, mesmo porte, mesmas exclusões — o que muda é a distância até o meio-fio</h2>
     <p class="lead reveal">
-      Os cinco métodos de alocação (ver "Cinco métodos, lado a lado" logo abaixo) partem da mesma
+      Os três métodos de alocação (ver "Três métodos, lado a lado" logo abaixo) partem da mesma
       base: só vias de classe elegível (residencial a primária) entram no cálculo, o porte da árvore
       vem da classe da via, e as mesmas zonas de exclusão valem para todos. O que muda de um método
       para outro é só a distância da vaga até o leito carroçável — da calçada estimada até,
@@ -166,7 +166,7 @@
     </p>
 
     <div class="diagram reveal">
-      <svg viewBox="0 0 600 220" role="img" aria-label="Comparação entre uma vaga no eixo da via, usada como referência de comparação, e uma vaga fora do leito carroçável, usada pelos outros quatro métodos">
+      <svg viewBox="0 0 600 220" role="img" aria-label="Comparação entre uma vaga no eixo da via, usada como referência de comparação, e uma vaga fora do leito carroçável, usada pelos outros dois métodos">
         <rect x="0" y="16" width="168" height="188" rx="6" fill="var(--primary-light)" stroke="var(--border)" />
         <rect x="432" y="16" width="168" height="188" rx="6" fill="var(--primary-light)" stroke="var(--border)" />
         <rect x="168" y="16" width="30" height="188" fill="var(--surface-solid)" stroke="var(--border)" />
@@ -177,35 +177,40 @@
         <g class="pop">
           <circle cx="300" cy="110" r="9" fill="#9e9e9e" stroke="#ffffff" stroke-width="2" />
         </g>
-        <text class="pop fade" x="300" y="150" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--muted)">Eixo da via — 1 de 5 métodos</text>
+        <text class="pop fade" x="300" y="150" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--muted)">Eixo da via — 1 de 3 métodos</text>
 
         <g class="pop delay-2">
           <circle cx="183" cy="60" r="8" fill="var(--primary)" stroke="#ffffff" stroke-width="2" />
         </g>
-        <text class="pop delay-2 fade" x="183" y="40" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--primary-dark)">Fora do leito — 4 de 5 métodos</text>
+        <text class="pop delay-2 fade" x="183" y="40" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--primary-dark)">Fora do leito — 2 de 3 métodos</text>
       </svg>
       <p class="caption">Esquema ilustrativo de uma via: calçadas nas bordas, leito carroçável ao centro.</p>
     </div>
 
-    <p class="lead reveal" style="margin-top:28px">Trechos próximos a obstáculos mapeados no OSM ficam sem vaga, com uma distância que varia por tipo — a mesma regra vale nos cinco métodos:</p>
+    <p class="lead reveal" style="margin-top:28px">Trechos próximos a esquinas e a elementos de infraestrutura mapeados no OSM ficam sem vaga. A distância mínima, medida ao longo da via, <strong>varia com o tipo de elemento e com o porte da árvore</strong> (tabela completa em <a href="#criterios">Critérios oficiais</a>) — a mesma regra vale nos cinco métodos:</p>
     <div class="card-grid">
-      <article class="source-card reveal"><h3>Travessia</h3><p>3 m de cada lado.</p></article>
-      <article class="source-card reveal"><h3>Acesso de garagem</h3><p>2 m de cada lado.</p></article>
-      <article class="source-card reveal"><h3>Ponto de ônibus</h3><p>12 m de cada lado.</p></article>
-      <article class="source-card reveal"><h3>Árvore existente</h3><p>4 m de raio, dentro de um alcance de busca de 8 m.</p></article>
+      <article class="source-card reveal"><h3>Esquina / cruzamento</h3><p>5 m de cada lado.</p></article>
+      <article class="source-card reveal"><h3>Cruzamento semaforizado</h3><p>10 m de cada lado.</p></article>
+      <article class="source-card reveal"><h3>Faixa de pedestres / guia rebaixada</h3><p>1 a 2 m de cada lado.</p></article>
+      <article class="source-card reveal"><h3>Entrada de veículos</h3><p>2 m de cada lado.</p></article>
+      <article class="source-card reveal"><h3>Ponto de ônibus</h3><p>1,5 a 2 m de cada lado.</p></article>
+      <article class="source-card reveal"><h3>Poste ou iluminação pública</h3><p>3 a 5 m de cada lado.</p></article>
+      <article class="source-card reveal"><h3>Transformador</h3><p>5 a 12 m de cada lado.</p></article>
+      <article class="source-card reveal"><h3>Boca de lobo / caixa de inspeção</h3><p>2 a 3 m de cada lado.</p></article>
+      <article class="source-card reveal"><h3>Árvore existente</h3><p>O mesmo espaçamento do porte (4, 6 ou 10 m).</p></article>
     </div>
 
     <div class="diagram reveal" style="margin-top:28px">
-      <svg viewBox="0 0 700 190" role="img" aria-label="Vagas espaçadas ao longo de uma via, com recuo de seis metros nas esquinas e uma zona sem vaga em frente a um obstáculo">
+      <svg viewBox="0 0 700 190" role="img" aria-label="Vagas espaçadas ao longo de uma via, com recuo de cinco metros nas esquinas e uma zona sem vaga em frente a um obstáculo">
         <rect x="20" y="14" width="660" height="56" rx="6" fill="var(--surface-solid)" stroke="var(--border)" />
         <text x="40" y="47" font-size="12.5" fill="var(--muted)">quadra (edificações)</text>
 
         <line x1="40" y1="110" x2="660" y2="110" stroke="var(--border)" stroke-width="3" />
 
-        <rect class="fade" x="40" y="96" width="60" height="28" fill="var(--accent)" fill-opacity="0.22" />
-        <rect class="fade" x="600" y="96" width="60" height="28" fill="var(--accent)" fill-opacity="0.22" />
-        <text class="fade" x="70" y="140" text-anchor="middle" font-size="11.5" fill="var(--accent)">6 m esquina</text>
-        <text class="fade" x="630" y="140" text-anchor="middle" font-size="11.5" fill="var(--accent)">6 m esquina</text>
+        <rect class="fade" x="40" y="96" width="50" height="28" fill="var(--accent)" fill-opacity="0.22" />
+        <rect class="fade" x="610" y="96" width="50" height="28" fill="var(--accent)" fill-opacity="0.22" />
+        <text class="fade" x="65" y="140" text-anchor="middle" font-size="11.5" fill="var(--accent)">5 m esquina</text>
+        <text class="fade" x="635" y="140" text-anchor="middle" font-size="11.5" fill="var(--accent)">5 m esquina</text>
 
         <rect class="fade delay-1" x="290" y="96" width="50" height="28" fill="#d64545" fill-opacity="0.2" />
         <text class="fade delay-1" x="315" y="156" text-anchor="middle" font-size="11.5" fill="#d64545">travessia — sem vaga</text>
@@ -223,7 +228,7 @@
           <circle cx="570" cy="110" r="6" fill="var(--primary)" />
         </g>
       </svg>
-      <p class="caption">Vagas (verde) espaçadas ao longo da via ou face de quadra, respeitando esquinas e obstáculos — mesma lógica nos cinco métodos.</p>
+      <p class="caption">Vagas (verde) espaçadas ao longo da via ou face de quadra, respeitando esquinas e obstáculos — mesma lógica nos três métodos.</p>
     </div>
 
     <h3 class="sub-title reveal">Espaçamento medido em linha reta</h3>
@@ -272,14 +277,14 @@
         <text x="480" y="292" text-anchor="middle" font-size="12" fill="var(--muted)">passo no eixo: 13,6 m</text>
         <line x1="320" y1="40" x2="320" y2="280" stroke="var(--border)" />
       </svg>
-      <p class="caption">Curva de 20 m de raio, vagas na calçada interna (5 m do eixo). À esquerda, passos de 10 m no eixo deixam as vagas a 7,4 m entre si; à direita, o passo cresce para 13,6 m no eixo e as vagas ficam a 10,0 m.</p>
+      <p class="caption">Espaçamento de 10 m (padrão). Curva de 20 m de raio, vagas na calçada interna (5 m do eixo). À esquerda, passos de 10 m no eixo deixam as vagas a 7,4 m entre si; à direita, o passo cresce para 13,6 m no eixo e as vagas ficam a 10,0 m.</p>
     </div>
 
     <h3 class="sub-title reveal">Uma rua é uma via contínua — mesmo quando o OSM a divide</h3>
     <p class="lead reveal">
       O OpenStreetMap divide a mesma rua em vários trechos sempre que alguma característica muda
       (pavimento, ponte, limite de velocidade). Esses trechos são unidos de volta numa via contínua,
-      e o afastamento de 6 m só vale nas pontas que são cruzamento de verdade — onde três ou mais vias
+      e o afastamento de 5 m só vale nas pontas que são cruzamento de verdade — onde três ou mais vias
       se encontram, ou onde uma rua termina no meio de outra (um T).
     </p>
     <div class="diagram reveal">
@@ -325,9 +330,9 @@
         <circle class="pop" cx="496.6" cy="220" r="6" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
         <circle class="pop" cx="556.6" cy="220" r="6" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
         <circle class="pop" cx="616.6" cy="220" r="6" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
-        <text x="40" y="262" text-anchor="start" font-size="11.5" fill="var(--muted)">faixa laranja: 6 m de afastamento de esquina · círculo branco: ponto onde o OSM divide a via</text>
+        <text x="40" y="262" text-anchor="start" font-size="11.5" fill="var(--muted)">faixa laranja: 5 m de afastamento de esquina · círculo branco: ponto onde o OSM divide a via</text>
       </svg>
-      <p class="caption">Sem a união, cada emenda do OSM abria um vão de 12 m ou mais sem nenhum cruzamento — e reiniciava a contagem do espaçamento.</p>
+      <p class="caption">Sem a união, cada emenda do OSM abria um vão de 10 m ou mais sem nenhum cruzamento — e reiniciava a contagem do espaçamento.</p>
     </div>
 
     <h3 class="sub-title reveal">Um obstáculo custa só as vagas que cobre</h3>
@@ -337,45 +342,57 @@
       espaçamento inteiro.
     </p>
     <div class="diagram reveal">
-      <svg viewBox="0 0 690 215" role="img" aria-label="Rua de 100 m com esquinas nas pontas e uma travessia entre 33 e 39 m: as vagas caem em 6,1, 16,1 e 26,1 m, a candidata em 36,1 m é inviável e a caminhada retoma em 39,1 m">
+      <svg viewBox="0 0 690 215" role="img" aria-label="Rua de 100 m com esquinas nas pontas e uma travessia entre 34 e 38 m, espaçamento de 6 m: as vagas caem em 5,1, 11,1, 17,1, 23,1 e 29,1 m, a candidata em 35,1 m é inviável e a caminhada retoma em 38,1 m">
         <rect x="40" y="76" width="600" height="28" fill="#c9c9c9" />
-        <rect class="fade" x="40" y="76" width="36" height="28" fill="var(--accent)" fill-opacity="0.3" />
-        <rect class="fade" x="238" y="76" width="36" height="28" fill="#fb8c00" fill-opacity="0.3" />
-        <rect class="fade" x="604" y="76" width="36" height="28" fill="var(--accent)" fill-opacity="0.3" />
-        <text x="58" y="66" text-anchor="middle" font-size="11.5" fill="var(--accent)">esquina</text>
+        <rect class="fade" x="40" y="76" width="30" height="28" fill="var(--accent)" fill-opacity="0.3" />
+        <rect class="fade" x="244" y="76" width="24" height="28" fill="#fb8c00" fill-opacity="0.3" />
+        <rect class="fade" x="610" y="76" width="30" height="28" fill="var(--accent)" fill-opacity="0.3" />
+        <text x="55" y="66" text-anchor="middle" font-size="11.5" fill="var(--accent)">esquina</text>
         <text x="256" y="66" text-anchor="middle" font-size="11.5" fill="#fb8c00">travessia</text>
-        <text x="622" y="66" text-anchor="middle" font-size="11.5" fill="var(--accent)">esquina</text>
-        <circle class="pop" cx="76.6" cy="90" r="7" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
-        <text x="76.6" y="124" text-anchor="middle" font-size="11" fill="var(--muted)">6,1</text>
-        <circle class="pop" cx="136.6" cy="90" r="7" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
-        <text x="136.6" y="124" text-anchor="middle" font-size="11" fill="var(--muted)">16,1</text>
-        <circle class="pop" cx="196.6" cy="90" r="7" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
-        <text x="196.6" y="124" text-anchor="middle" font-size="11" fill="var(--muted)">26,1</text>
-        <circle class="pop" cx="274.6" cy="90" r="7" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
-        <text x="274.6" y="124" text-anchor="middle" font-size="11" fill="var(--muted)">39,1</text>
-        <circle class="pop" cx="334.6" cy="90" r="7" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
-        <text x="334.6" y="124" text-anchor="middle" font-size="11" fill="var(--muted)">49,1</text>
-        <circle class="pop" cx="394.6" cy="90" r="7" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
-        <text x="394.6" y="124" text-anchor="middle" font-size="11" fill="var(--muted)">59,1</text>
-        <circle class="pop" cx="454.6" cy="90" r="7" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
-        <text x="454.6" y="124" text-anchor="middle" font-size="11" fill="var(--muted)">69,1</text>
-        <circle class="pop" cx="514.6" cy="90" r="7" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
-        <text x="514.6" y="124" text-anchor="middle" font-size="11" fill="var(--muted)">79,1</text>
-        <circle class="pop" cx="574.6" cy="90" r="7" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
-        <text x="574.6" y="124" text-anchor="middle" font-size="11" fill="var(--muted)">89,1</text>
-        <circle cx="40" cy="90" r="7" fill="#1565c0" fill-opacity="0.85" stroke="#fdd835" stroke-width="3" />
-        <text x="40" y="140" text-anchor="middle" font-size="11" fill="#b8a000">0,0</text>
-        <circle cx="256.6" cy="90" r="7" fill="#1565c0" fill-opacity="0.85" stroke="#fb8c00" stroke-width="3" />
-        <text x="256.6" y="140" text-anchor="middle" font-size="11" fill="#fb8c00">36,1</text>
-        <circle cx="634.6" cy="90" r="7" fill="#1565c0" fill-opacity="0.85" stroke="#fdd835" stroke-width="3" />
-        <text x="634.6" y="140" text-anchor="middle" font-size="11" fill="#b8a000">99,1</text>
-        <line x1="196.6" y1="164" x2="274.6" y2="164" stroke="var(--fg)" stroke-width="1.5" />
-        <line x1="196.6" y1="159" x2="196.6" y2="169" stroke="var(--fg)" stroke-width="1.5" />
-        <line x1="274.6" y1="159" x2="274.6" y2="169" stroke="var(--fg)" stroke-width="1.5" />
-        <text x="235.6" y="182" text-anchor="middle" font-size="12" fill="var(--fg)" font-weight="700">13 m (e não 20)</text>
+        <text x="625" y="66" text-anchor="middle" font-size="11.5" fill="var(--accent)">esquina</text>
+        <circle class="pop" cx="70.6" cy="90" r="6" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
+        <text x="70.6" y="124" text-anchor="middle" font-size="10" fill="var(--muted)">5,1</text>
+        <circle class="pop" cx="106.6" cy="90" r="6" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
+        <text x="106.6" y="124" text-anchor="middle" font-size="10" fill="var(--muted)">11,1</text>
+        <circle class="pop" cx="142.6" cy="90" r="6" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
+        <text x="142.6" y="124" text-anchor="middle" font-size="10" fill="var(--muted)">17,1</text>
+        <circle class="pop" cx="178.6" cy="90" r="6" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
+        <text x="178.6" y="124" text-anchor="middle" font-size="10" fill="var(--muted)">23,1</text>
+        <circle class="pop" cx="214.6" cy="90" r="6" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
+        <text x="214.6" y="124" text-anchor="middle" font-size="10" fill="var(--muted)">29,1</text>
+        <circle class="pop" cx="268.6" cy="90" r="6" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
+        <text x="268.6" y="124" text-anchor="middle" font-size="10" fill="var(--muted)">38,1</text>
+        <circle class="pop" cx="304.6" cy="90" r="6" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
+        <text x="304.6" y="124" text-anchor="middle" font-size="10" fill="var(--muted)">44,1</text>
+        <circle class="pop" cx="340.6" cy="90" r="6" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
+        <text x="340.6" y="124" text-anchor="middle" font-size="10" fill="var(--muted)">50,1</text>
+        <circle class="pop" cx="376.6" cy="90" r="6" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
+        <text x="376.6" y="124" text-anchor="middle" font-size="10" fill="var(--muted)">56,1</text>
+        <circle class="pop" cx="412.6" cy="90" r="6" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
+        <text x="412.6" y="124" text-anchor="middle" font-size="10" fill="var(--muted)">62,1</text>
+        <circle class="pop" cx="448.6" cy="90" r="6" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
+        <text x="448.6" y="124" text-anchor="middle" font-size="10" fill="var(--muted)">68,1</text>
+        <circle class="pop" cx="484.6" cy="90" r="6" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
+        <text x="484.6" y="124" text-anchor="middle" font-size="10" fill="var(--muted)">74,1</text>
+        <circle class="pop" cx="520.6" cy="90" r="6" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
+        <text x="520.6" y="124" text-anchor="middle" font-size="10" fill="var(--muted)">80,1</text>
+        <circle class="pop" cx="556.6" cy="90" r="6" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
+        <text x="556.6" y="124" text-anchor="middle" font-size="10" fill="var(--muted)">86,1</text>
+        <circle class="pop" cx="592.6" cy="90" r="6" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
+        <text x="592.6" y="124" text-anchor="middle" font-size="10" fill="var(--muted)">92,1</text>
+        <circle cx="40.0" cy="90" r="6" fill="#1565c0" fill-opacity="0.85" stroke="#fdd835" stroke-width="3" />
+        <text x="40.0" y="140" text-anchor="middle" font-size="10" fill="#b8a000">0,0</text>
+        <circle cx="250.6" cy="90" r="6" fill="#1565c0" fill-opacity="0.85" stroke="#fb8c00" stroke-width="3" />
+        <text x="250.6" y="140" text-anchor="middle" font-size="10" fill="#fb8c00">35,1</text>
+        <circle cx="628.6" cy="90" r="6" fill="#1565c0" fill-opacity="0.85" stroke="#fdd835" stroke-width="3" />
+        <text x="628.6" y="140" text-anchor="middle" font-size="10" fill="#b8a000">98,1</text>
+        <line x1="214.6" y1="164" x2="268.6" y2="164" stroke="var(--fg)" stroke-width="1.5" />
+        <line x1="214.6" y1="159" x2="214.6" y2="169" stroke="var(--fg)" stroke-width="1.5" />
+        <line x1="268.6" y1="159" x2="268.6" y2="169" stroke="var(--fg)" stroke-width="1.5" />
+        <text x="241.6" y="182" text-anchor="middle" font-size="12" fill="var(--fg)" font-weight="700">9 m (e não 12)</text>
         <text x="40" y="205" text-anchor="start" font-size="11.5" fill="var(--muted)">posições em metros a partir do início da via · contorno = vaga inviável e motivo</text>
       </svg>
-      <p class="caption">Exemplo calculado pelo próprio algoritmo: rua reta de 100 m com uma travessia entre 33 e 39 m, espaçamento de 10 m.</p>
+      <p class="caption">Exemplo calculado pelo próprio algoritmo: rua reta de 100 m, porte médio (espaçamento de 6 m, esquinas de 5 m), com uma travessia de pedestres a 36 m (2 m para cada lado).</p>
     </div>
 
     <h3 class="sub-title reveal">Nenhuma lacuna silenciosa: as vagas inviáveis</h3>
@@ -394,22 +411,22 @@
         </figure>
         <figure>
           <img src="img/inviaveis-onibus.jpg" width="800" height="800" loading="lazy" alt="Rua em Suzano com pontos de ônibus: vagas inviáveis com contorno azul-claro em volta dos pontos e laranja junto às travessias" />
-          <figcaption>Em volta de pontos de ônibus (azul-claro, 12 m para cada lado) e de travessias de pedestres (laranja, 3 m) a calçada fica sem vaga.</figcaption>
+          <figcaption>Em volta de pontos de ônibus (azul-claro, 2 m para cada lado no porte médio) e de travessias de pedestres (laranja, 2 m) a calçada fica sem vaga.</figcaption>
         </figure>
       </div>
-      <figcaption class="caption">Capturas do webmap, Suzano, método 3 (calçada nos dois lados), espaçamento de 10 m. <span class="key">vaga: <i style="background:#66bb6a"></i>pequeno <i style="background:#1565c0"></i>médio <i style="background:#6a1b9a"></i>grande</span> · contorno: <span class="key"><i class="ring" style="--ring:#fdd835"></i>esquina</span> · <span class="key"><i class="ring" style="--ring:#e91e63"></i>via transversal</span> · <span class="key"><i class="ring" style="--ring:#757575"></i>espaçamento mínimo</span> · <span class="key"><i class="ring" style="--ring:#29b6f6"></i>ponto de ônibus</span> · <span class="key"><i class="ring" style="--ring:#fb8c00"></i>travessia</span></figcaption>
+      <figcaption class="caption">Capturas do webmap, Suzano, método 2 (calçada nos dois lados), espaçamento de 10 m. <span class="key">vaga: <i style="background:#66bb6a"></i>pequeno <i style="background:#1565c0"></i>médio <i style="background:#6a1b9a"></i>grande</span> · contorno: <span class="key"><i class="ring" style="--ring:#fdd835"></i>esquina</span> · <span class="key"><i class="ring" style="--ring:#e91e63"></i>via transversal</span> · <span class="key"><i class="ring" style="--ring:#757575"></i>espaçamento mínimo</span> · <span class="key"><i class="ring" style="--ring:#29b6f6"></i>ponto de ônibus</span> · <span class="key"><i class="ring" style="--ring:#fb8c00"></i>travessia</span> · <span class="key"><i class="ring" style="--ring:#212121"></i>calçada estreita demais</span></figcaption>
     </figure>
   </section>
 
-  <!-- Cinco métodos -->
+  <!-- Três métodos -->
   <section class="story-section" id="metodos">
-    <p class="eyebrow reveal">Cinco métodos, lado a lado</p>
+    <p class="eyebrow reveal">Três métodos, lado a lado</p>
     <h2 class="reveal">Nem toda fonte de dados dá a mesma margem de segurança</h2>
     <p class="lead reveal">
-      O webmap deixa alternar entre os cinco métodos abaixo para o mesmo município, um de cada vez —
+      O webmap deixa alternar entre os três métodos abaixo para o mesmo município, um de cada vez —
       útil para comparar visualmente o que cada fonte de dados consegue garantir e o que ela só
       consegue estimar. O método 1 abre por padrão e fica sobre o eixo da via, de propósito: é a
-      referência de quanto os outros quatro conseguem melhorar a posição lateral da vaga.
+      referência de quanto os outros dois conseguem melhorar a posição lateral da vaga.
     </p>
 
     <div class="variant-grid">
@@ -425,19 +442,7 @@
         </ul>
       </div>
       <div class="variant-card reveal">
-        <span class="tag">2 · osm_calcada_lado</span>
-        <h3>Calçada alocada em um dos lados da via (OSM)</h3>
-        <ul>
-          <li><strong>Vantagem:</strong> mesma posição do método 3, mas só num lado de cada rua — o
-            lado cujas faces de quadra do IBGE somam menos endereços (menos portões e acessos de
-            garagem); se só um lado tem face IBGE, como numa rua ao longo de uma praça, esse lado.</li>
-          <li><strong>Desvantagem:</strong> cerca de metade das vagas do método 3; em vias fora dos
-            setores urbanos do IBGE não há dado para escolher o lado, e fica o lado esquerdo do
-            traçado do OSM.</li>
-        </ul>
-      </div>
-      <div class="variant-card reveal">
-        <span class="tag">3 · osm_calcada</span>
+        <span class="tag">2 · osm_calcada</span>
         <h3>Calçada alocada nos dois lados da via (OSM)</h3>
         <ul>
           <li><strong>Vantagem:</strong> ainda depende só do OSM; desloca a vaga para a largura de
@@ -448,29 +453,19 @@
         </ul>
       </div>
       <div class="variant-card reveal">
-        <span class="tag">4 · face_ibge</span>
+        <span class="tag">3 · face_ibge</span>
         <h3>Face de quadra (IBGE)</h3>
         <ul>
           <li><strong>Vantagem:</strong> metadados oficiais completos (setor, quadra, face, logradouro)
-            e o único método com canteiros centrais; é o mais testado dos cinco — ver detalhe abaixo.</li>
+            e o único método com canteiros centrais; é o mais testado dos três — ver detalhe abaixo.</li>
           <li><strong>Desvantagem:</strong> mais lento de calcular; depende do download manual das
             faces de logradouro do IBGE por estado, que nem sempre está disponível.</li>
-        </ul>
-      </div>
-      <div class="variant-card reveal">
-        <span class="tag">5 · osm_overture</span>
-        <h3>Calçada ajustada com prédios (OSM + Overture)</h3>
-        <ul>
-          <li><strong>Vantagem:</strong> o mesmo deslocamento do método 3, mas nunca além da fachada
-            do prédio mais próximo medida na Overture — corrige o maior risco do método 3.</li>
-          <li><strong>Desvantagem:</strong> depende da cobertura e atualização das edificações da
-            Overture; onde não há prédio mapeado por perto, cai de volta na estimativa do método 3.</li>
         </ul>
       </div>
     </div>
     <p class="lead reveal" style="margin-top:24px">
       Todos usam o IBGE para identificar setor, quadra, face e logradouro oficial de cada
-      vaga sempre que há uma face a menos de 25 m — no método 4 isso já vem do vínculo direto; nos
+      vaga sempre que há uma face a menos de 25 m — no método 3 isso já vem do vínculo direto; nos
       outros é um pareamento à parte, só para preencher metadados, que nunca move o ponto.
     </p>
   </section>
@@ -480,7 +475,7 @@
     <p class="eyebrow reveal">Métodos em detalhe</p>
     <h2 class="reveal">Como cada método calcula a posição da vaga</h2>
     <p class="lead reveal">
-      Os cinco métodos compartilham a mesma caminhada ao longo da via, com as regras comuns acima. O
+      Os três métodos compartilham a mesma caminhada ao longo da via, com as regras comuns acima. O
       que muda é <strong>sobre qual linha</strong> se caminha e <strong>como</strong> cada posição
       ao longo dela vira um ponto no mapa. Abaixo, na mesma ordem do seletor do webmap, cada método
       com um esquema e capturas reais do mesmo trecho de Suzano — para comparar lado a lado. A
@@ -494,12 +489,12 @@
     <p class="lead reveal">A vaga é o próprio ponto do eixo da via do OSM. É o método mais simples e o que melhor mostra, sem distração, onde a rua comporta árvores ao longo do seu comprimento: o espaçamento, as esquinas e os obstáculos.</p>
     <ol class="steps reveal">
         <li>Une os trechos do OSM da mesma rua numa via contínua e marca quais pontas são cruzamentos.</li>
-        <li>Bloqueia 6 m em cada esquina e um raio em volta de cada obstáculo projetado sobre a via.</li>
-        <li>Caminha ao longo do eixo colocando uma vaga a cada 10 m (ou 6/8/11 m pelo porte), pulando os trechos bloqueados.</li>
+        <li>Bloqueia 5 m em cada esquina e, em volta de cada obstáculo projetado sobre a via, a distância mínima do porte.</li>
+        <li>Caminha ao longo do eixo colocando uma vaga a cada 10 m (ou 10, 6 e 4 m pelo porte, na variante por porte), pulando os trechos bloqueados.</li>
         <li>Não desloca o ponto: ele fica no leito carroçável, de propósito — a posição lateral fica para os outros métodos.</li>
     </ol>
     <div class="diagram reveal">
-      <svg viewBox="0 0 680 292" role="img" aria-label="Vagas sobre o eixo da via, a cada 10 metros">
+      <svg viewBox="0 0 680 292" role="img" aria-label="Vagas sobre o eixo da via, a cada 10 metros ">
         <rect x="20" y="14" width="640" height="66" rx="4" fill="var(--primary-light)" stroke="var(--border)" />
         <rect x="20" y="190" width="640" height="66" rx="4" fill="var(--primary-light)" stroke="var(--border)" />
         <rect x="20" y="105" width="640" height="60" fill="#c9c9c9" />
@@ -532,67 +527,8 @@
     </figure>
     </article>
 
-    <article class="method-detail" id="metodo-osm-calcada-lado">
-    <p class="eyebrow reveal"><span class="tag">2 · osm_calcada_lado</span></p>
-    <h3 class="method-title reveal">Calçada alocada em um dos lados da via (OSM)</h3>
-    <p class="lead reveal">Igual ao método 3, mas com vagas em um lado só de cada rua — útil onde as calçadas são estreitas e plantar dos dois lados não é realista. O lado é escolhido pelos endereços do IBGE.</p>
-    <ol class="steps reveal">
-        <li>Associa cada face de quadra do IBGE à via mais próxima e paralela (até 15 m, diferença de direção até 30°).</li>
-        <li>Descobre de que lado da via fica cada face, pelo sinal do produto vetorial entre a direção da via e o vetor até a face.</li>
-        <li>Soma os endereços (TOT_GERAL do Censo) de cada lado e fica com o lado que tem <strong>menos</strong> — menos portões e garagens.</li>
-        <li>Se só um lado tem face do IBGE (uma rua ao longo de uma praça ou de um rio), esse lado; sem dado nenhum, o lado esquerdo do traçado do OSM.</li>
-        <li>Desloca as vagas desse lado para a calçada estimada, como no método 3.</li>
-    </ol>
-    <div class="diagram reveal">
-      <svg viewBox="0 0 680 292" role="img" aria-label="Faces de quadra do IBGE dos dois lados da via: o lado direito tem menos endereços e recebe as vagas; o esquerdo fica sem">
-        <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="var(--fg)" /></marker></defs>
-        <rect x="20" y="14" width="640" height="66" rx="4" fill="var(--primary-light)" stroke="var(--border)" />
-        <rect x="20" y="190" width="640" height="66" rx="4" fill="var(--primary-light)" stroke="var(--border)" />
-        <rect x="20" y="105" width="640" height="60" fill="#c9c9c9" />
-        <line x1="20" y1="135" x2="660" y2="135" stroke="#fff" stroke-width="2" stroke-dasharray="12 9" />
-        <text x="26" y="131" text-anchor="start" font-size="11" fill="#fff" font-weight="700">eixo OSM</text>
-        <line class="fade" x1="20" y1="82" x2="660" y2="82" stroke="#d81b60" stroke-width="3" />
-        <line class="fade" x1="20" y1="188" x2="660" y2="188" stroke="#d81b60" stroke-width="3" />
-        <text x="340" y="52" text-anchor="middle" font-size="12.5" fill="#d81b60" font-weight="700">face IBGE à esquerda: 42 endereços</text>
-        <text x="340" y="228" text-anchor="middle" font-size="12.5" fill="#d81b60" font-weight="700">face IBGE à direita: 9 endereços ✓</text>
-        <circle class="pop" cx="90" cy="171" r="7" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
-        <circle cx="90" cy="99" r="6" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="3 3" />
-        <circle class="pop" cx="150" cy="171" r="7" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
-        <circle cx="150" cy="99" r="6" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="3 3" />
-        <circle class="pop" cx="210" cy="171" r="7" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
-        <circle cx="210" cy="99" r="6" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="3 3" />
-        <circle class="pop" cx="270" cy="171" r="7" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
-        <circle cx="270" cy="99" r="6" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="3 3" />
-        <circle class="pop" cx="330" cy="171" r="7" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
-        <circle cx="330" cy="99" r="6" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="3 3" />
-        <circle class="pop" cx="390" cy="171" r="7" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
-        <circle cx="390" cy="99" r="6" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="3 3" />
-        <circle class="pop" cx="450" cy="171" r="7" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
-        <circle cx="450" cy="99" r="6" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="3 3" />
-        <circle class="pop" cx="510" cy="171" r="7" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
-        <circle cx="510" cy="99" r="6" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="3 3" />
-        <circle class="pop" cx="570" cy="171" r="7" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
-        <circle cx="570" cy="99" r="6" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="3 3" />
-        <path d="M 30 152 L 80 152" stroke="var(--fg)" stroke-width="2" marker-end="url(#arr)" />
-        <text x="44" y="160" text-anchor="middle" font-size="1" fill="var(--muted)"></text>
-        <text x="86" y="156" text-anchor="start" font-size="10.5" fill="var(--fg)">sentido de desenho</text>
-        <text x="340" y="280" text-anchor="middle" font-size="13" fill="var(--fg)" font-weight="700">fica só o lado com menos endereços (menos portões e garagens)</text>
-      </svg>
-      <p class="caption">O lado com menos endereços recebe as vagas; o outro fica livre.</p>
-    </div>
-    <figure class="photo-figure reveal">
-      <div class="photo-grid">
-        <figure>
-          <img src="img/metodo-lado.jpg" width="800" height="800" loading="lazy" alt="Mesmo cruzamento de Suzano com vagas em um só lado de cada rua" />
-          <figcaption>Cada rua com uma fila de vagas, num lado só. O lado pode mudar de uma rua para outra — depende dos endereços de cada uma.</figcaption>
-        </figure>
-      </div>
-      <figcaption class="caption">Mesmo trecho de Suzano em todos os métodos, espaçamento de 10 m. <span class="key">vaga: <i style="background:#66bb6a"></i>pequeno <i style="background:#1565c0"></i>médio <i style="background:#6a1b9a"></i>grande</span></figcaption>
-    </figure>
-    </article>
-
     <article class="method-detail" id="metodo-osm-calcada">
-    <p class="eyebrow reveal"><span class="tag">3 · osm_calcada</span></p>
+    <p class="eyebrow reveal"><span class="tag">2 · osm_calcada</span></p>
     <h3 class="method-title reveal">Calçada alocada nos dois lados da via (OSM)</h3>
     <p class="lead reveal">Desloca cada vaga do eixo para a calçada estimada, dos dois lados. Depende só do OSM: a largura do leito vem da classe da via (residencial, terciária…) e, quando existe, das tags de largura ou número de faixas.</p>
     <ol class="steps reveal">
@@ -651,7 +587,7 @@
     </article>
 
     <article class="method-detail" id="metodo-face-ibge">
-    <p class="eyebrow reveal"><span class="tag">4 · face_ibge</span></p>
+    <p class="eyebrow reveal"><span class="tag">3 · face_ibge</span></p>
     <h3 class="method-title reveal">Face de quadra (IBGE)</h3>
     <p class="lead reveal">Caminha sobre a <strong>face de quadra</strong> do IBGE em vez do eixo da via. Cada vaga sabe em qual setor, quadra, face e logradouro oficial está, e a posição ao longo da face é exata. A posição lateral é ajustada: em muitas quadras a face foi digitalizada rente à via, então cada ponto é empurrado até a calçada, sem passar da fachada.</p>
     <ol class="steps reveal">
@@ -742,111 +678,61 @@
     </div>
     </article>
 
-    <article class="method-detail" id="metodo-osm-overture">
-    <p class="eyebrow reveal"><span class="tag">5 · osm_overture</span></p>
-    <h3 class="method-title reveal">Calçada ajustada com prédios (OSM + Overture)</h3>
-    <p class="lead reveal">O mesmo deslocamento do método 3, mas checado contra as edificações da Overture: a vaga nunca passa da fachada do prédio mais próximo. Corrige o maior risco do método 3 — vagas sobre telhados — sem depender do IBGE.</p>
-    <ol class="steps reveal">
-        <li>Alinha o OSM às edificações: mede, em ruas de mão dupla, a diferença entre as distâncias até as fachadas dos dois lados e estima o deslocamento sistemático da malha, região por região.</li>
-        <li>Ao longo de cada via, a cada 5 m, lança raios perpendiculares de até 40 m e mede a distância até o primeiro prédio de cada lado.</li>
-        <li>Em cada posição, a fachada é o percentil 25 dos raios numa janela de ±15 m — robusto a vãos entre prédios.</li>
-        <li>Coloca a vaga a <em>d</em> = <em>h</em> + 0,5 m do eixo; se isso passa da fachada − 0,5 m, não há espaço seguro e a vaga vira inviável.</li>
-    </ol>
-    <div class="diagram reveal">
-      <svg viewBox="0 0 680 292" role="img" aria-label="Raios perpendiculares medem a distância até as fachadas da Overture; onde o prédio está no alinhamento, não há espaço entre o meio-fio e a fachada e a vaga é inviável">
-        <rect x="20" y="14" width="640" height="66" rx="4" fill="var(--primary-light)" stroke="var(--border)" />
-        <rect x="20" y="105" width="640" height="60" fill="#c9c9c9" />
-        <line x1="20" y1="135" x2="660" y2="135" stroke="#fff" stroke-width="2" stroke-dasharray="12 9" />
-        <text x="26" y="131" text-anchor="start" font-size="11" fill="#fff" font-weight="700">eixo OSM</text>
-        <rect x="30" y="205" width="150" height="51" fill="#6a1b9a" fill-opacity="0.12" stroke="#6a1b9a" stroke-width="2" />
-        <rect x="190" y="168" width="110" height="88" fill="#6a1b9a" fill-opacity="0.12" stroke="#6a1b9a" stroke-width="2" />
-        <rect x="310" y="214" width="150" height="42" fill="#6a1b9a" fill-opacity="0.12" stroke="#6a1b9a" stroke-width="2" />
-        <rect x="470" y="192" width="180" height="64" fill="#6a1b9a" fill-opacity="0.12" stroke="#6a1b9a" stroke-width="2" />
-        <line class="fade" x1="40" y1="135" x2="40" y2="205" stroke="#6a1b9a" stroke-width="1" opacity="0.55" />
-        <line class="fade" x1="70" y1="135" x2="70" y2="205" stroke="#6a1b9a" stroke-width="1" opacity="0.55" />
-        <line class="fade" x1="100" y1="135" x2="100" y2="205" stroke="#6a1b9a" stroke-width="1" opacity="0.55" />
-        <line class="fade" x1="130" y1="135" x2="130" y2="205" stroke="#6a1b9a" stroke-width="1" opacity="0.55" />
-        <line class="fade" x1="160" y1="135" x2="160" y2="205" stroke="#6a1b9a" stroke-width="1" opacity="0.55" />
-        <line class="fade" x1="190" y1="135" x2="190" y2="168" stroke="#6a1b9a" stroke-width="1" opacity="0.55" />
-        <line class="fade" x1="220" y1="135" x2="220" y2="168" stroke="#6a1b9a" stroke-width="1" opacity="0.55" />
-        <line class="fade" x1="250" y1="135" x2="250" y2="168" stroke="#6a1b9a" stroke-width="1" opacity="0.55" />
-        <line class="fade" x1="280" y1="135" x2="280" y2="168" stroke="#6a1b9a" stroke-width="1" opacity="0.55" />
-        <line class="fade" x1="310" y1="135" x2="310" y2="214" stroke="#6a1b9a" stroke-width="1" opacity="0.55" />
-        <line class="fade" x1="340" y1="135" x2="340" y2="214" stroke="#6a1b9a" stroke-width="1" opacity="0.55" />
-        <line class="fade" x1="370" y1="135" x2="370" y2="214" stroke="#6a1b9a" stroke-width="1" opacity="0.55" />
-        <line class="fade" x1="400" y1="135" x2="400" y2="214" stroke="#6a1b9a" stroke-width="1" opacity="0.55" />
-        <line class="fade" x1="430" y1="135" x2="430" y2="214" stroke="#6a1b9a" stroke-width="1" opacity="0.55" />
-        <line class="fade" x1="460" y1="135" x2="460" y2="214" stroke="#6a1b9a" stroke-width="1" opacity="0.55" />
-        <line class="fade" x1="490" y1="135" x2="490" y2="192" stroke="#6a1b9a" stroke-width="1" opacity="0.55" />
-        <line class="fade" x1="520" y1="135" x2="520" y2="192" stroke="#6a1b9a" stroke-width="1" opacity="0.55" />
-        <line class="fade" x1="550" y1="135" x2="550" y2="192" stroke="#6a1b9a" stroke-width="1" opacity="0.55" />
-        <line class="fade" x1="580" y1="135" x2="580" y2="192" stroke="#6a1b9a" stroke-width="1" opacity="0.55" />
-        <line class="fade" x1="610" y1="135" x2="610" y2="192" stroke="#6a1b9a" stroke-width="1" opacity="0.55" />
-        <line class="fade" x1="640" y1="135" x2="640" y2="192" stroke="#6a1b9a" stroke-width="1" opacity="0.55" />
-        <circle class="pop" cx="90" cy="171" r="7" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
-        <circle class="pop" cx="150" cy="171" r="7" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
-        <circle cx="210" cy="171" r="7" fill="#1565c0" fill-opacity="0.85" stroke="#d64545" stroke-width="3" />
-        <circle cx="270" cy="171" r="7" fill="#1565c0" fill-opacity="0.85" stroke="#d64545" stroke-width="3" />
-        <circle class="pop" cx="330" cy="171" r="7" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
-        <circle class="pop" cx="390" cy="171" r="7" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
-        <circle class="pop" cx="450" cy="171" r="7" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
-        <circle class="pop" cx="510" cy="171" r="7" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
-        <circle class="pop" cx="570" cy="171" r="7" fill="#1565c0" stroke="#fff" stroke-width="1.5" />
-        <text x="250" y="98" text-anchor="middle" font-size="11.5" fill="#d64545" font-weight="700">prédio no alinhamento: não cabe → inviável</text>
-        <text x="340" y="280" text-anchor="middle" font-size="12.5" fill="var(--fg)" font-weight="700">raios a cada 5 m medem a fachada; teto = P25 da fachada − 0,5 m; piso > teto → sem espaço seguro</text>
-      </svg>
-      <p class="caption">Raios medem a fachada de cada lado; onde o prédio está no alinhamento, não cabe vaga.</p>
-    </div>
-    <figure class="photo-figure reveal">
-      <div class="photo-grid">
-        <figure>
-          <img src="img/metodo-overture.jpg" width="800" height="800" loading="lazy" alt="Mesmo cruzamento de Suzano com vagas do método calçada ajustada com prédios, muitas com contorno vermelho" />
-          <figcaption>Comparado ao método 3, as vagas que ficariam sobre prédios viram inviáveis (vermelho) em vez de aparecerem como vagas.</figcaption>
-        </figure>
-        <figure>
-          <img src="img/metodo-overture-satelite.jpg" width="800" height="800" loading="lazy" alt="Mesmo trecho sobre satélite com vagas válidas nas calçadas e inviáveis junto às casas no alinhamento" />
-          <figcaption>Sobre o satélite: compare com a imagem do método 3 — as vagas sobre telhados saíram.</figcaption>
-        </figure>
-      </div>
-      <figcaption class="caption">Mesmo trecho de Suzano em todos os métodos, espaçamento de 10 m. <span class="key">vaga: <i style="background:#66bb6a"></i>pequeno <i style="background:#1565c0"></i>médio <i style="background:#6a1b9a"></i>grande</span> · <span class="key"><i class="ring" style="--ring:#d64545"></i>sem espaço até a fachada</span> · <span class="key"><i class="ring" style="--ring:#fdd835"></i>esquina</span> · <span class="key"><i class="ring" style="--ring:#e91e63"></i>via transversal</span>. Imagem de satélite: Google.</figcaption>
-    </figure>
-    </article>
-
   </section>
 
-  <!-- Variantes de espaçamento -->
-  <section class="story-section" id="variantes">
-    <p class="eyebrow reveal">Duas variantes</p>
-    <h2 class="reveal">Dois critérios de espaçamento, lado a lado</h2>
+  <!-- Critérios oficiais -->
+  <section class="story-section" id="criterios">
+    <p class="eyebrow reveal">Critérios oficiais</p>
+    <h2 class="reveal">Distâncias e larguras mínimas, por porte da árvore</h2>
     <p class="lead reveal">
-      Geramos as duas versões em paralelo, para cada um dos cinco métodos, para comparar o resultado
-      de cada critério sem precisar reprocessar o restante do pipeline.
+      Os valores abaixo são as definições finais do projeto (GEOCAU/MMA) e valem para os três métodos e
+      para todos os municípios. O espaçamento <strong>padrão é o do maior porte — 10 m entre todas as
+      árvores</strong> —; a variante por porte (10, 6 e 4 m) é gerada em paralelo, para comparação. As
+      demais regras (larguras mínimas e distâncias à infraestrutura por porte) valem nas duas.
     </p>
 
-    <div class="variant-grid">
-      <div class="variant-card reveal">
-        <span class="tag">espacamento_10m</span>
-        <h3>Espaçamento genérico de 10 m</h3>
-        <ul>
-          <li>Mesmo espaçamento mínimo em toda a malha.</li>
-          <li>O porte da árvore permanece como atributo de cada vaga, sem influenciar a distância entre elas.</li>
-          <li>Mais simples de comunicar e de operacionalizar no plantio.</li>
-        </ul>
-      </div>
-      <div class="variant-card reveal">
-        <span class="tag">espacamento_porte</span>
-        <h3>Espaçamento por porte — 6 / 8 / 11 m</h3>
-        <ul>
-          <li>Distância mínima entre vagas varia com o porte típico da árvore para aquela classe de via.</li>
-          <li>Mais vagas no total, por adensar onde o porte permite.</li>
-          <li>O porte hoje deriva da classe da via — não há dado confiável de largura de calçada em escala nacional.</li>
-        </ul>
-      </div>
+    <h3 class="sub-title reveal">Espaçamento entre árvores, largura da calçada e do canteiro</h3>
+    <div class="table-wrap reveal">
+      <table class="criteria-table">
+        <thead><tr><th scope="col">Porte</th><th scope="col">Distância mínima entre árvores</th><th scope="col">Largura mínima da calçada</th><th scope="col">Largura mínima do canteiro</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Grande</th><td>10 m</td><td>2,80 m</td><td>1,45 m</td></tr>
+          <tr><th scope="row">Médio</th><td>6 m</td><td>2,10 m</td><td>0,75 m</td></tr>
+          <tr><th scope="row">Pequeno</th><td>4 m</td><td>1,50 m</td><td>0,45 m²</td></tr>
+        </tbody>
+      </table>
     </div>
-    <p class="lead reveal" style="margin-top:24px">
-      Em ambas, a distância mínima entre duas vagas é sempre o espaçamento da variante: 10 m fixo
-      na primeira; na segunda, 6, 8 ou 11 m conforme o porte da maior das duas vagas — mesmo quando
-      uma delas é de canteiro central.
+    <p class="lead reveal" style="margin-top:16px">
+      Na variante por porte, a distância mínima entre duas vagas é sempre a do porte da
+      <strong>maior</strong> das duas — mesmo quando uma delas é de canteiro central; na padrão, 10 m para todas. A <strong>largura mínima da calçada</strong> é aplicada
+      onde há fachada conhecida (método 3, face de quadra): a vaga só é gerada se, entre a borda do leito carroçável
+      e a fachada mais próxima, couber a largura do porte; caso contrário o candidato vira vaga inviável
+      ("calçada estreita demais"). A <strong>largura mínima do canteiro</strong> decide o porte das
+      vagas de canteiro central: a de maior porte cuja largura mínima o canteiro atende.
+      ² 0,45 m de largura por, no mínimo, 0,60 m de comprimento.
+    </p>
+
+    <h3 class="sub-title reveal">Distância mínima longitudinal à infraestrutura urbana (m)</h3>
+    <div class="table-wrap reveal">
+      <table class="criteria-table">
+        <thead><tr><th scope="col">Elemento</th><th scope="col">Pequeno</th><th scope="col">Médio</th><th scope="col">Grande</th><th scope="col">Aplicado?</th></tr></thead>
+        <tbody><tr><th scope="row">Esquina / cruzamento</th><td>5</td><td>5</td><td>5</td><td>sim</td></tr><tr><th scope="row">Cruzamento semaforizado</th><td>10</td><td>10</td><td>10</td><td>sim</td></tr><tr><th scope="row">Guia rebaixada / faixa de pedestres</th><td>1</td><td>2</td><td>2</td><td>sim</td></tr><tr><th scope="row">Entrada de veículos</th><td>2</td><td>2</td><td>2</td><td>sim</td></tr><tr><th scope="row">Poste ou iluminação pública</th><td>3</td><td>4</td><td>5</td><td>sim¹</td></tr><tr><th scope="row">Transformador</th><td>5</td><td>8</td><td>12</td><td>sim¹</td></tr><tr><th scope="row">Rede subterrânea</th><td>1</td><td>2</td><td>2</td><td>não — sem dado aberto</td></tr><tr><th scope="row">Boca de lobo / caixa de inspeção</th><td>2</td><td>2</td><td>3</td><td>sim¹</td></tr><tr><th scope="row">Ponto de ônibus</th><td>1,5</td><td>2</td><td>2</td><td>sim</td></tr></tbody>
+      </table>
+    </div>
+    <p class="lead reveal" style="margin-top:16px">
+      As distâncias são medidas ao longo da via, a partir do elemento. Uma <strong>árvore já existente</strong>
+      no OSM também conta: a nova mantém dela o espaçamento do seu porte.
+      ¹ Só entram os elementos que alguém mapeou no OSM (<code>highway=street_lamp</code>/<code>power=pole</code>,
+      <code>power=transformer</code>, <code>man_made=manhole</code>); onde o mapeamento é incompleto, a
+      restrição só vale para o que está mapeado.
+    </p>
+
+    <h3 class="sub-title reveal">O porte vem da classe da via</h3>
+    <p class="lead reveal">
+      Ruas residenciais, sem classificação e terciárias são de porte médio; secundárias e primárias, de
+      grande porte; ruas de convivência, de pequeno porte — sem largura de calçada medida em escala nacional, a classe
+      da via é o melhor indicador disponível. Os canteiros quadrado, circular e contínuo recomendados no
+      documento ainda não entram na modelagem.
     </p>
   </section>
 
@@ -895,21 +781,15 @@
       na borda do pixel.
     </p>
 
-    <div class="variant-grid">
-      <div class="variant-card reveal">
-        <span class="tag">espacamento_10m</span>
-        <h3>Buffer de 5 m</h3>
-        <ul>
-          <li>Espaçamento de 10 m para qualquer porte: metade, 5 m.</li>
-        </ul>
-      </div>
-      <div class="variant-card reveal">
-        <span class="tag">espacamento_porte</span>
-        <h3>Buffer de 3 / 4 / 5,5 m</h3>
-        <ul>
-          <li>Metade dos 6 m, 8 m e 11 m de cada porte: 3 m (pequeno), 4 m (médio) e 5,5 m (grande).</li>
-        </ul>
-      </div>
+    <div class="table-wrap reveal">
+      <table class="criteria-table">
+        <thead><tr><th scope="col">Porte</th><th scope="col">Espaçamento padrão → buffer</th><th scope="col">Espaçamento por porte → buffer</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Grande</th><td>10 m → 5 m</td><td>10 m → 5 m</td></tr>
+          <tr><th scope="row">Médio</th><td>10 m → 5 m</td><td>6 m → 3 m</td></tr>
+          <tr><th scope="row">Pequeno</th><td>10 m → 5 m</td><td>4 m → 2 m</td></tr>
+        </tbody>
+      </table>
     </div>
 
     <div class="diagram reveal">
@@ -945,7 +825,7 @@
         <circle cx="180" cy="140" r="40" fill="#1565c0" fill-opacity="0.12" stroke="#1565c0" stroke-width="2" stroke-dasharray="6 4" />
         <circle cx="180" cy="140" r="6.5" fill="#1565c0" stroke="#fff" stroke-width="2" />
         <text x="190" y="292" text-anchor="middle" font-size="12" fill="var(--muted)">cada quadrado = 1 pixel de 10 m · % de copa em cada um</text>
-        <text x="390" y="52" font-size="13" fill="var(--fg)" font-weight="700">Vaga com espaçamento de 10 m</text>
+        <text x="390" y="52" font-size="13" fill="var(--fg)" font-weight="700">Vaga com espaçamento de 10 m (padrão)</text>
         <text x="390" y="74" font-size="12.5" fill="var(--muted)">buffer de 5 m, metade do espaçamento</text>
         <text x="390" y="130" font-size="12.5" fill="var(--muted)">Pixels que o buffer toca (quatro):</text>
         <text x="390" y="154" font-size="15" fill="var(--fg)" font-weight="700">0 %  ·  30 %  ·  60 %  ·  80 %</text>
@@ -972,7 +852,7 @@
 
     <h3 class="sub-title reveal">O que ler com cuidado</h3>
     <ul class="steps reveal" style="max-width:680px">
-      <li><strong>Resolução maior que o buffer.</strong> Com pixel de 10 m e buffer de 3 a 5,5 m, o círculo toca de
+      <li><strong>Resolução maior que o buffer.</strong> Com pixel de 10 m e buffer de 2 a 5 m, o círculo toca de
         um a quatro pixels; no GLAD, de ~28 m, vagas vizinhas costumam herdar o mesmo valor.</li>
       <li><strong>É toda a vegetação arbórea, não só a copa da rua.</strong> Quintais, praças e matas ao redor entram
         no valor, e árvores já plantadas também — o raster não distingue o que é vaga livre.</li>
@@ -1011,7 +891,7 @@
       <div class="pipeline-step reveal">
         <div class="num">03</div>
         <h3>Alocar as vagas</h3>
-        <p>Gera os cinco métodos x duas variantes de espaçamento, com as mesmas regras comuns.</p>
+        <p>Gera os três métodos x duas variantes de espaçamento (10 m padrão e por porte), com as distâncias mínimas por porte e as mesmas regras comuns.</p>
         <code>03_allocate_slots.py</code>
       </div>
       <div class="pipeline-step reveal">

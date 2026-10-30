@@ -5,13 +5,13 @@ from __future__ import annotations
 import geopandas as gpd
 import numpy as np
 
-GENERIC_SPACING_M = 10.0
-SPACING_BY_PORTE_M = {"pequeno": 6.0, "medio": 8.0, "grande": 11.0}
+from planting_slots.criteria import GENERIC_SPACING_M, SPACING_BY_PORTE_M
 
 
 def slot_spacing_m(spacing_id: str, porte: str) -> float:
-    """Spacing a slot of this porte keeps from its neighbours under a spacing
-    variant: "10m" is flat, "porte" follows SPACING_BY_PORTE_M."""
+    """Minimum distance a slot of this porte keeps from its neighbours under a
+    spacing variant: "10m" (the default) is flat, "porte" follows
+    SPACING_BY_PORTE_M."""
     return GENERIC_SPACING_M if spacing_id == "10m" else SPACING_BY_PORTE_M[porte]
 
 

@@ -37,6 +37,8 @@ class MunicipalityFiles:
         self.ibge_tracts = DATA_DIR / "ibge" / "setores_censitarios_2022" / f"{abbr}_setores_CD2022.gpkg"
         self.ibge_street_faces = DATA_DIR / "ibge" / "faces_logradouros_2022" / abbr / f"{code}_faces_de_logradouros_2022.shp"
 
+        self.ibge_subdivisions = DATA_DIR / "ibge" / "subdistritos_2022" / f"{abbr}_subdistritos_CD2022.gpkg"
+
         self.allocation_report = self.output_dir / "relatorio_alocacao.json"
 
     def slots(self, variant: str, extension: str) -> Path:

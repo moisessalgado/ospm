@@ -2,10 +2,11 @@
 step, run after 03 and before 04 (which exports it to the webmap when present).
 
 For each slot, `cobertura_copa_pct` is the maximum canopy % among the raster
-pixels within a buffer of half the slot's spacing (5 m for 10 m spacing; 3,
-4 and 5.5 m for the pequeno/medio/grande porte under the porte spacing),
-`raio_copa_m` is that buffer radius and `cobertura_copa_fonte` names the raster
-(--fonte, as in 02b_download_canopy.py; gfw_10m by default). Nothing is removed: the value is
+pixels within a buffer of half the slot's spacing (5 m for the 10 m spacing; 2,
+3 and 5 m for the pequeno/medio/grande porte under the porte spacing of 4, 6
+and 10 m), `raio_copa_m` is
+that buffer radius and `cobertura_copa_fonte` names the raster (--fonte, as in
+02b_download_canopy.py; gfw_10m by default). Nothing is removed: the value is
 only an attribute, for filtering downstream. Null where the raster has no
 data. Rewrites the variants' .gpkg/.geojson in place; rerunning 03 drops the
 columns, so rerun this afterwards.
@@ -20,7 +21,7 @@ from planting_slots.canopy import CANOPY_SOURCES, canopy_radius_m, max_canopy_wi
 from planting_slots.municipalities import get_municipality, municipality_arg_parser
 from planting_slots.paths import MunicipalityFiles
 
-METHODS = ["osm_eixo", "osm_calcada_lado", "osm_calcada", "face_ibge", "osm_overture"]
+METHODS = ["osm_eixo", "osm_calcada", "face_ibge"]
 SPACINGS = ["10m", "porte"]
 
 

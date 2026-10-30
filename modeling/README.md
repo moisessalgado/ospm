@@ -1,7 +1,7 @@
 # modeling
 
 Modelagem de vagas de plantio de árvores em vias públicas, por município, com
-cinco métodos de alocação comparáveis entre si (ver `## Métodos` abaixo) —
+três métodos de alocação comparáveis entre si (ver `## Métodos` abaixo) —
 o webmap deixa alternar entre eles para o mesmo município.
 
 ## Métodos
@@ -9,9 +9,10 @@ o webmap deixa alternar entre eles para o mesmo município.
 Explicação didática dos algoritmos, com as fórmulas e exemplos numéricos, em
 [ALGORITMOS.md](ALGORITMOS.md).
 
-Na ordem do seletor do webmap: `osm_eixo` (padrão do mapa),
-`osm_calcada_lado`, `osm_calcada`, `face_ibge` e `osm_overture`. O
-`face_ibge` é o mais completo em metadados; os outros existem para comparar
+Na ordem do seletor do webmap: `osm_eixo` (padrão do mapa), `osm_calcada` e
+`face_ibge`. O script 03 gera só esses três por padrão; `osm_calcada_lado` e
+`osm_overture` continuam implementados e saem com `--metodos` (não vão para o
+webmap). O `face_ibge` é o mais completo em metadados; os outros existem para comparar
 o que cada fonte de dados consegue garantir — ver `ROAD_METHODS` e
 `generate_face_ibge` em `scripts/03_allocate_slots.py`.
 
@@ -70,17 +71,23 @@ Parâmetros das Coletâneas Brasileiras de Arborização Urbana, MMA 2026:
   sobre a via do OSM, só nas pontas que são cruzamento de fato — trechos OSM
   consecutivos da mesma rua são unidos antes, ver `build_road_chains`);
 - trechos próximos a **obstáculos do OSM** projetados na face ficam sem vaga:
-  travessias (3 m), acessos de garagem (2 m), pontos de ônibus (12 m),
-  árvores já mapeadas (4 m);
+  semáforos, travessias, acessos de garagem, pontos de ônibus, postes,
+  transformadores, bocas de lobo e árvores já mapeadas, cada um com a
+  distância mínima do porte (`CLEARANCE_M` em `planting_slots/criteria.py`);
+- **calçada mínima por porte** (2,80 / 2,10 / 1,50 m): onde há fachada conhecida
+  (métodos `face_ibge` e `osm_overture`; no webmap, só `face_ibge`), o candidato cuja calçada — da borda
+  estimada do leito até a fachada — é mais estreita que o mínimo do porte vira
+  vaga inviável (`calcada_estreita`);
 - **canteiros centrais** de pistas duplas do OSM, co-registradas às
   edificações, com margem de pior caso igual à incerteza medida contra o IBGE;
-- **espaçamento mínimo entre quaisquer duas vagas igual ao espaçamento da
-  variante** (10 m fixo em `espacamento_10m`; 6/8/11 m pelo porte da maior
-  das duas vagas em `espacamento_porte`), inclusive entre vagas de calçada e
-  de canteiro central;
-- duas variantes de espaçamento por método (critérios do MMA ainda
-  pendentes): `10m` e `porte` (6/8/11 m pelo porte, que vem da classe da
-  via) — dez arquivos de saída por município (5 métodos × 2 espaçamentos).
+- **espaçamento mínimo entre quaisquer duas vagas**: `10m` (padrão) — 10 m,
+  o do maior porte, para todas; ou `porte` — o do porte da maior das duas
+  (10 m grande, 6 m médio, 4 m pequeno), inclusive entre vagas de calçada e de
+  canteiro central;
+- duas variantes de espaçamento por método (`10m` e `porte`) — seis arquivos de
+  saída por município (3 métodos × 2 espaçamentos);
+- canteiros centrais: o porte é o maior cuja largura mínima de canteiro
+  (1,45 / 0,75 / 0,45 m) o canteiro atende.
 
 O espaçamento ao longo da via/face é medido em linha reta (corda), não ao
 longo da curva, e com os pontos já deslocados para a calçada quando é o caso
@@ -111,7 +118,7 @@ pip install -e ".[dev]"     # a partir de modeling/
 
 python scripts/01_download_osm.py --municipio suzano        # limite, vias e obstáculos (OSM)
 python scripts/02_download_buildings.py --municipio suzano  # edificações (Overture Maps)
-python scripts/03_allocate_slots.py --municipio suzano      # alocação das vagas (5 métodos x 2 espaçamentos)
+python scripts/03_allocate_slots.py --municipio suzano      # alocação das vagas (3 métodos x 2 espaçamentos)
 python scripts/04_export_webmap.py --municipio suzano       # dados do webmap
 ```
 
@@ -145,7 +152,7 @@ colorida (`webmap/data/<municipio>/copa.png`) para a camada de copa do webmap. A
 rode o 03b depois. Só municípios dentro de um único tile de 10° são suportados no download
 (Suzano, Sorocaba, Tremembé e Florianópolis caem no 20S_050W).
 
-Municípios processados: Sorocaba e Suzano (SP), Tremembé (SP), Florianópolis
+Municípios processados: Distrito Federal, Sorocaba e Suzano (SP), Tremembé (SP), Florianópolis
 (SC) — ver `planting_slots/municipalities.py`.
 
 As faces de logradouro do IBGE ficam atrás de uma verificação anti-robô e

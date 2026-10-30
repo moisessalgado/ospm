@@ -26,9 +26,8 @@ de cada uma.
   tipo, setor/quadra/face do IBGE e posição ao longo da via/face), num popup
   do MapLibre (`showSlotPopup` em `js/app.js`).
 - Dois seletores — **Método de alocação** e **Espaçamento** — escolhem a
-  variante: 5 métodos x 2 espaçamentos, na ordem do seletor — `osm_eixo`
-  (padrão), `osm_calcada_lado` (um lado da via), `osm_calcada` (dois lados),
-  `face_ibge` e `osm_overture`; ver `modeling/README.md`. A ordem e os rótulos
+  variante: 3 métodos x 2 espaçamentos, na ordem do seletor — `osm_eixo`
+  (padrão), `osm_calcada` (dois lados) e `face_ibge`; ver `modeling/README.md`. A ordem e os rótulos
   vêm de `METHODS` em `modeling/scripts/04_export_webmap.py` (via manifesto).
   O webmap abre em Suzano/`osm_eixo` (`DEFAULT_MUNICIPALITY`/`DEFAULT_METHOD`
   em `js/app.js`, sem animação de voo — o mapa já nasce centrado ali).

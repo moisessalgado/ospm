@@ -1,4 +1,4 @@
-"""Allocate tree-planting slots — five comparable methods, two spacings each.
+"""Allocate tree-planting slots — comparable methods, two spacings each.
 
 Methods (increasing use of data, decreasing distance from the carriageway):
   - face_ibge: the production method. Each slot is linked to an IBGE street
@@ -26,14 +26,18 @@ the nearest street face within IBGE_MATCH_M, when there is one close enough
 linked face and this is a no-op.
 
 Finally, no two slots of the same variant (method + spacing) are closer than
-the spacing for the larger-porte slot of the pair (10 m flat for the generic
-spacing; 6/8/11 m by porte otherwise) — including between sidewalk and
-median slots.
+the spacing for the larger-porte slot of the pair (10 m flat for the default
+"10m" spacing; 10, 6 or 4 m for grande, medio or pequeno under "porte" —
+planting_slots/criteria.py) — including between sidewalk
+and median slots. The sidewalk is also required to be at least the porte's
+minimum width wide (carriageway edge to the nearest facade) wherever a
+facade is known — "calcada_estreita" otherwise.
 
 Every candidate dropped along the way is exported too (one
 `<variante>_sem_alocacao.geojson` per variant, same porte it would have had),
 tagged with why — "esquina" (corner setback), an obstacle name (see
-OBSTACLES), "sem_espaco_seguro" (no safe room before the nearest facade),
+OBSTACLES), "calcada_estreita" (sidewalk narrower than the porte's minimum) or
+"sem_espaco_seguro" (no safe room before the nearest facade),
 "via_transversal" (cleared its own road but still landed inside a different,
 intersecting one — see drop_crossing_road_points), or "espacamento_minimo"
 (closer than the variant's spacing to a slot of another street, almost
@@ -54,6 +58,9 @@ import shapely
 from shapely.geometry import Point
 
 from planting_slots.allocation import enforce_min_separation, greedy_walk, slot_spacing_m
+from planting_slots.criteria import (
+    CLEARANCE_M, CORNER_SETBACK_M, MIN_PLANTER_WIDTH_BY_PORTE_M, MIN_SIDEWALK_WIDTH_BY_PORTE_M, SPACING_BY_PORTE_M,
+)
 from planting_slots.buildings import facade_probes, load_overture_buildings, local_facade
 from planting_slots.ibge import load_street_faces, load_urban_area
 from planting_slots.municipalities import get_municipality, municipality_arg_parser
@@ -66,18 +73,25 @@ from planting_slots.registration import (
     apply_shift, coregistration_field, ibge_registration_uncertainty, normalize_street_name,
 )
 
-# --- Setbacks (MMA "Coletânea Brasileira de Arborização Urbana", 2026) -------
-CORNER_SETBACK_M = 6.0
+# --- Setbacks (official criteria: planting_slots/criteria.py) ---------------------
 CURB_SETBACK_M = 0.5
 PIT_HALF_WIDTH_M = 0.5
 SERVICE_SETBACK_M = 1.5
 SAMPLE_STEP_M = 1.0
 
-OBSTACLES = {  # name -> (OSM tag filter, exclusion radius in m)
-    "travessia": (lambda t: t.get("footway") == "crossing" or t.get("highway") == "crossing", 3.0),
-    "acesso_garagem": (lambda t: t.get("amenity") == "parking_entrance" or t.get("service") == "driveway", 2.0),
-    "ponto_onibus": (lambda t: t.get("highway") == "bus_stop" or t.get("public_transport") == "platform", 12.0),
-    "arvore_existente": (lambda t: t.get("natural") == "tree", 4.0),
+OBSTACLES = {  # name -> (OSM tag filter, exclusion radius in m by porte)
+    "semaforo": (lambda t: t.get("highway") == "traffic_signals", CLEARANCE_M["semaforo"]),
+    "travessia": (lambda t: t.get("footway") == "crossing" or t.get("highway") == "crossing", CLEARANCE_M["travessia"]),
+    "acesso_garagem": (lambda t: t.get("amenity") == "parking_entrance" or t.get("service") == "driveway",
+                       CLEARANCE_M["acesso_garagem"]),
+    "ponto_onibus": (lambda t: t.get("highway") == "bus_stop" or t.get("public_transport") == "platform",
+                     CLEARANCE_M["ponto_onibus"]),
+    "poste": (lambda t: t.get("highway") == "street_lamp" or t.get("power") == "pole", CLEARANCE_M["poste"]),
+    "transformador": (lambda t: t.get("power") == "transformer" or bool(t.get("transformer")),
+                      CLEARANCE_M["transformador"]),
+    "boca_de_lobo": (lambda t: t.get("man_made") == "manhole" or "manhole" in t, CLEARANCE_M["boca_de_lobo"]),
+    # An existing tree is a tree: the new one keeps the minimum distance between trees from it.
+    "arvore_existente": (lambda t: t.get("natural") == "tree", SPACING_BY_PORTE_M),
 }
 OBSTACLE_TO_FACE_M = 8.0  # OSM obstacles within this distance are projected onto the face
 
@@ -97,13 +111,16 @@ PORTE_BY_CLASS = {
     "secondary": "grande", "secondary_link": "grande",
     "primary": "grande", "primary_link": "grande",
 }
-MEDIAN_PORTE_BY_WIDTH = [(2.0, "pequeno"), (3.5, "medio"), (np.inf, "grande")]
-MIN_MEDIAN_WIDTH_M = 1.0
+# A median strip hosts the largest porte whose minimum planter width it meets.
+MEDIAN_PORTE_BY_WIDTH = [(MIN_PLANTER_WIDTH_BY_PORTE_M["medio"], "pequeno"),
+                         (MIN_PLANTER_WIDTH_BY_PORTE_M["grande"], "medio"), (np.inf, "grande")]
+MIN_MEDIAN_WIDTH_M = MIN_PLANTER_WIDTH_BY_PORTE_M["pequeno"]
 
-# --- Spacing variants (pending MMA criteria) -----------------------------------
+# --- Spacing (official criteria: 10 / 6 / 4 m for grande / medio / pequeno) ---------
+# "10m" — the largest porte's spacing for every tree — is the project default.
 SPACINGS = {
-    "10m": {"label": "Espaçamento genérico de 10 m", "spacing": lambda porte: slot_spacing_m("10m", porte)},
-    "porte": {"label": "Espaçamento por porte (6/8/11 m)", "spacing": lambda porte: slot_spacing_m("porte", porte)},
+    "10m": {"label": "Espaçamento padrão de 10 m (maior porte)", "spacing": lambda porte: slot_spacing_m("10m", porte)},
+    "porte": {"label": "Espaçamento por porte (10 / 6 / 4 m)", "spacing": lambda porte: slot_spacing_m("porte", porte)},
 }
 
 # --- Methods ------------------------------------------------------------------
@@ -117,6 +134,8 @@ ROAD_METHODS = {
                          "clamp_building": False, "one_side": True},
     "osm_overture": {"label": "Calçada ajustada com prédios (OSM + Overture)", "offset": True, "clamp_building": True},
 }
+# The methods generated by default; the other two stay available through --metodos.
+DEFAULT_METHODS = ["osm_eixo", "osm_calcada", "face_ibge"]
 IBGE_MATCH_M = 25.0  # metadata-only nearest-face search radius for non-face_ibge methods
 
 
@@ -221,11 +240,11 @@ def local_bearing(line, pos: float, probe: float = 2.0) -> float:
     return float(np.degrees(np.arctan2(b.y - a.y, b.x - a.x))) % 360
 
 
-def blocked_intervals(line, obstacles: dict[str, np.ndarray], start_corner: bool = True,
+def blocked_intervals(line, obstacles: dict[str, tuple], porte: str, start_corner: bool = True,
                       end_corner: bool = True) -> list[tuple[float, float, str]]:
     """Intervals (m from the line start) where a slot can't go, each tagged
     with why — the corner setback at each end that is an actual intersection
-    (see build_road_chains), plus a radius around every nearby obstacle. Fed
+    (see build_road_chains), plus the porte's clearance around every nearby obstacle. Fed
     to allocate_face, which uses the tag to report not just that a candidate
     was dropped there but which rule dropped it."""
     length = line.length
@@ -234,9 +253,10 @@ def blocked_intervals(line, obstacles: dict[str, np.ndarray], start_corner: bool
         out.append((0.0, CORNER_SETBACK_M, "esquina"))
     if end_corner:
         out.append((max(length - CORNER_SETBACK_M, 0.0), length, "esquina"))
-    for name, (geoms, radius) in obstacles.items():
+    for name, (geoms, radii) in obstacles.items():
         if not len(geoms):
             continue
+        radius = radii[porte]
         near = geoms[shapely.dwithin(geoms, line, OBSTACLE_TO_FACE_M)]
         for g in near:
             p = line.project(g.centroid if g.geom_type != "Point" else g)
@@ -302,14 +322,18 @@ def allocate_face(line, blocked, spacing_at, offset: float = 0.0,
 CLAMP_MAX_ITER = 6
 
 
-def clamp_to_road(point: Point, road, min_clear: float, probe_entry) -> Point | None:
+def clamp_to_road(point: Point, road, min_clear: float, probe_entry,
+                  min_sidewalk: float) -> tuple[Point | None, str | None]:
     """Push a face-derived point, perpendicular to the road, so it clears the
     carriageway (min_clear) without crossing the nearest building facade.
-    None if there is no room between the two, or if a safe spot can't be
-    found within CLAMP_MAX_ITER tries (a bend or junction nearby can put the
-    pushed point closer to a *different* stretch of the same road than the
-    one it was projected from) — skipping the slot there is safer than
-    risking a point still inside the carriageway."""
+    Returns (point, None), or (None, reason) when it can't be placed:
+    "calcada_estreita" if the sidewalk between the carriageway edge and the
+    facade is narrower than min_sidewalk (the porte's minimum width), and
+    "sem_espaco_seguro" if there is no room between the two, or if a safe
+    spot can't be found within CLAMP_MAX_ITER tries (a bend or junction
+    nearby can put the pushed point closer to a *different* stretch of the
+    same road than the one it was projected from) — skipping the slot there
+    is safer than risking a point still inside the carriageway."""
     pos_arr, left_d, right_d = probe_entry
     p = point
     for _ in range(CLAMP_MAX_ITER):
@@ -335,15 +359,17 @@ def clamp_to_road(point: Point, road, min_clear: float, probe_entry) -> Point | 
         facade_d = np.nan
         if len(pos_arr):
             facade_d = local_facade(np.array([proj]), pos_arr, left_d if side_left else right_d)[0]
+        if not np.isnan(facade_d) and facade_d - (min_clear - CURB_SETBACK_M) < min_sidewalk:
+            return None, "calcada_estreita"
         ceiling = (facade_d - CURB_SETBACK_M) if not np.isnan(facade_d) else np.inf
         if min_clear > ceiling:
-            return None
+            return None, "sem_espaco_seguro"
         target = min(max(dist, min_clear), ceiling)
         candidate = Point(r.x + ux * target, r.y + uy * target)
         if road.distance(candidate) >= min_clear - 1e-6:
-            return candidate
+            return candidate, None
         p = candidate  # too close to a different stretch of the road: re-project and retry
-    return None
+    return None, "sem_espaco_seguro"
 
 
 def point_at_offset(road, pos: float, side_left: bool, offset: float) -> Point:
@@ -378,7 +404,7 @@ def allocate_from_roads(roads: gpd.GeoDataFrame, probes: dict, obstacles: dict, 
         street_name = normalize_street_name(row.get("name"))
         floor = row["half"] + CURB_SETBACK_M
         side_options = ([sides[idx]] if sides is not None and idx in sides else [True, False]) if offset else [None]
-        blocked = blocked_intervals(road_geom, obstacles, row["start_corner"], row["end_corner"])
+        blocked = blocked_intervals(road_geom, obstacles, porte, row["start_corner"], row["end_corner"])
         positions, blocked_rej = allocate_face(road_geom, blocked, lambda _: spacing_fn(porte),
                                                floor if offset else 0.0, side_options)
         probe_entry = probes.get(idx, empty_probe) if clamp_building else empty_probe
@@ -394,11 +420,16 @@ def allocate_from_roads(roads: gpd.GeoDataFrame, probes: dict, obstacles: dict, 
                 if not offset:
                     point = road_geom.interpolate(pos)
                 else:
-                    ceiling = np.inf
+                    ceiling, facade_d = np.inf, np.nan
                     if clamp_building and len(probe_entry[0]):
                         facade_d = local_facade(np.array([pos]), probe_entry[0],
                                                 probe_entry[1] if side_left else probe_entry[2])[0]
                         ceiling = (facade_d - CURB_SETBACK_M) if not np.isnan(facade_d) else np.inf
+                    if clamp_building and len(probe_entry[0]) and not np.isnan(facade_d) \
+                            and facade_d - row["half"] < MIN_SIDEWALK_WIDTH_BY_PORTE_M[porte]:
+                        rejected.append({"motivo": "calcada_estreita", "porte": porte,
+                                        "logradouro": street_name, "geometry": road_geom.interpolate(pos)})
+                        continue
                     if floor > ceiling:
                         rejected.append({"motivo": "sem_espaco_seguro", "porte": porte,
                                         "logradouro": street_name, "geometry": road_geom.interpolate(pos)})
@@ -540,7 +571,11 @@ def drop_crossing_road_points(points: gpd.GeoDataFrame, tree: shapely.STRtree,
 
 
 def main() -> None:
-    municipality = get_municipality(municipality_arg_parser(__doc__).parse_args().municipio)
+    parser = municipality_arg_parser(__doc__)
+    parser.add_argument("--metodos", nargs="+", choices=["face_ibge", *ROAD_METHODS], metavar="METODO",
+                        help="Métodos a gerar (padrão: " + ", ".join(DEFAULT_METHODS) + "); todos: face_ibge, " + ", ".join(ROAD_METHODS))
+    args = parser.parse_args()
+    municipality = get_municipality(args.municipio)
     files = MunicipalityFiles(municipality)
     files.ensure_dirs()
     crs = municipality.epsg
@@ -573,7 +608,8 @@ def main() -> None:
         obstacles[name] = (apply_shift(geoms, gx, gy, shift), radius)
 
     roads = ways[ways["highway"].isin(DEFAULT_WIDTH_BY_CLASS)].copy()
-    roads["half"] = [carriageway_half_width(r, p, np.nan, municipality.min_sidewalk_width_m)[0]
+    roads["half"] = [carriageway_half_width(r, p, np.nan,
+                                            MIN_SIDEWALK_WIDTH_BY_PORTE_M[PORTE_BY_CLASS.get(r["highway"], "medio")])[0]
                      for r, p in zip(roads.to_dict("records"), roads["paired"])]
     roads_raw = roads.copy()
     roads_raw["geometry"] = ways_raw_geometry.loc[roads.index]
@@ -603,7 +639,7 @@ def main() -> None:
     }
     print("Faces:", summary)
     sel = faces[face_ok]
-    blocked = {i: blocked_intervals(g, obstacles) for i, g in sel.geometry.items()}
+    blocked = {i: blocked_intervals(g, obstacles, PORTE_BY_CLASS[sel.loc[i, "highway"]]) for i, g in sel.geometry.items()}
 
     # Per-face context to clamp the lateral position to the matched road (see
     # clamp_to_road): the road geometry, its nominal carriageway half-width,
@@ -622,9 +658,10 @@ def main() -> None:
     exclusion = list(roads.geometry.buffer(roads["half_worst"].to_numpy() + margin))
     exclusion += junction_disks(roads.assign(half=roads["half_worst"]), CORNER_SETBACK_M,
                                 CURB_SETBACK_M + PIT_HALF_WIDTH_M)
-    for geoms, radius in obstacles.values():
-        exclusion += list(shapely.buffer(geoms, radius))
-    etree = shapely.STRtree(exclusion)
+    # one exclusion tree per porte: the obstacle clearances depend on it
+    etrees = {porte: shapely.STRtree(exclusion + [b for geoms, radii in obstacles.values()
+                                                  for b in shapely.buffer(geoms, radii[porte])])
+              for porte in SPACING_BY_PORTE_M}
     median_groups = []
     for a, b in {tuple(sorted(p)) for p in pairs.items()}:
         if ways.loc[a, "highway"] not in GENERATION_CLASSES:
@@ -636,8 +673,11 @@ def main() -> None:
         mids = shapely.points((shapely.get_x(pts) + shapely.get_x(near)) / 2, (shapely.get_y(pts) + shapely.get_y(near)) / 2)
         width = shapely.distance(pts, near) - roads.loc[a, "half_worst"] - roads.loc[b, "half_worst"]
         ok = (width >= MIN_MEDIAN_WIDTH_M) & shapely.contains_xy(urban_area, shapely.get_x(mids), shapely.get_y(mids))
-        hit = etree.query(mids, predicate="within")[0]
-        ok[np.unique(hit)] = False
+        sample_porte = np.array([next(p for lim, p in MEDIAN_PORTE_BY_WIDTH if w < lim) for w in width])
+        for porte, etree in etrees.items():
+            idx = np.flatnonzero(sample_porte == porte)
+            if len(idx):
+                ok[idx[np.unique(etree.query(mids[idx], predicate="within")[0])]] = False
         median_groups.append({"row": ways.loc[a], "dists": d, "pts": mids, "width": width, "ok": ok})
 
     # --- allocation per method x spacing -----------------------------------------
@@ -645,6 +685,10 @@ def main() -> None:
         "municipio": municipality.slug,
         "parametros": {
             "afastamento_esquina_m": CORNER_SETBACK_M,
+            "espacamento_por_porte_m": SPACING_BY_PORTE_M,
+            "largura_minima_calcada_por_porte_m": MIN_SIDEWALK_WIDTH_BY_PORTE_M,
+            "largura_minima_canteiro_por_porte_m": MIN_PLANTER_WIDTH_BY_PORTE_M,
+            "distancias_minimas_infraestrutura_m": CLEARANCE_M,
             "incerteza_registro_canteiros_m": round(uncertainty, 2),
         },
         "faces": summary,
@@ -652,7 +696,7 @@ def main() -> None:
     }
 
     def generate_face_ibge(spacing_fn):
-        records, rejected, fora_de_alcance = [], [], 0
+        records, rejected = [], []
         for i, face in sel.iterrows():
             porte = PORTE_BY_CLASS[face["highway"]]
             road_geom, min_clear, probe_entry = clamp_ctx[i]
@@ -663,10 +707,10 @@ def main() -> None:
                                 "geometry": face.geometry.interpolate(pos)})
             for pos in positions:
                 candidate = face.geometry.interpolate(pos)
-                point = clamp_to_road(candidate, road_geom, min_clear, probe_entry)
+                point, motivo = clamp_to_road(candidate, road_geom, min_clear, probe_entry,
+                                              MIN_SIDEWALK_WIDTH_BY_PORTE_M[porte])
                 if point is None:
-                    fora_de_alcance += 1
-                    rejected.append({"motivo": "sem_espaco_seguro", "porte": porte,
+                    rejected.append({"motivo": motivo, "porte": porte,
                                     "logradouro": street_name, "geometry": candidate})
                     continue
                 records.append({
@@ -685,7 +729,9 @@ def main() -> None:
                     "cd_setor": None, "cd_quadra": None, "cd_face": None, "posicao_face_m": None,
                     "posicao_lateral": "pior caso (OSM co-registrado)", "geometry": g["pts"][i],
                 })
-        return records, rejected, {"removidos_sem_espaco_seguro_ate_fachada": fora_de_alcance}
+        return records, rejected, {
+            "removidos_sem_espaco_seguro_ate_fachada": sum(r["motivo"] == "sem_espaco_seguro" for r in rejected),
+            "removidos_calcada_estreita": sum(r["motivo"] == "calcada_estreita" for r in rejected)}
 
     for spacing_id, spacing_cfg in SPACINGS.items():
         spacing_fn = spacing_cfg["spacing"]
@@ -693,8 +739,9 @@ def main() -> None:
         def generate_road_method(spacing_fn, roads, obs, mcfg):
             records, rejected = allocate_from_roads(roads, chain_probes, obs, mcfg["offset"], mcfg["clamp_building"],
                                                     spacing_fn, chain_sides_raw if mcfg.get("one_side") else None)
-            skipped = sum(1 for r in rejected if r["motivo"] == "sem_espaco_seguro")
-            stats = {"removidos_sem_espaco_seguro_ate_fachada": skipped} if mcfg["clamp_building"] else {}
+            stats = ({"removidos_sem_espaco_seguro_ate_fachada": sum(r["motivo"] == "sem_espaco_seguro" for r in rejected),
+                      "removidos_calcada_estreita": sum(r["motivo"] == "calcada_estreita" for r in rejected)}
+                     if mcfg["clamp_building"] else {})
             return records, rejected, stats
 
         methods = {"face_ibge": generate_face_ibge}
@@ -706,6 +753,8 @@ def main() -> None:
             )
 
         for method_id, generate in methods.items():
+            if method_id not in (args.metodos or DEFAULT_METHODS):
+                continue
             records, rejected, extra_stats = generate(spacing_fn)
             points = gpd.GeoDataFrame(records, geometry="geometry", crs=crs).reset_index(drop=True)
             if method_id != "face_ibge":

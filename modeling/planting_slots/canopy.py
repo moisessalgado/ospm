@@ -140,21 +140,30 @@ def _ramp_colormap() -> dict[int, tuple[int, int, int, int]]:
     return colormap
 
 
-def export_canopy_image(raster_path, png_path) -> list[list[float]]:
+def export_canopy_image(raster_path, png_path, bounds: tuple[float, float, float, float] | None = None) -> list[list[float]]:
     """Write the raster as a colored PNG in Web Mercator — the webmap stretches
     an image linearly in that projection, so this keeps it aligned — with
     nearest-neighbour resampling, so the pixels stay the source's classes.
+    `bounds` (west, south, east, north, in degrees) crops the raster first.
     Returns the corners [lon, lat] (upper-left, upper-right, lower-right,
     lower-left) MapLibre's image source needs."""
     from rasterio.warp import Resampling, calculate_default_transform, reproject
+    from rasterio.windows import from_bounds
 
     with rasterio.open(raster_path) as src:
+        window = from_bounds(*bounds, src.transform).intersection(
+            rasterio.windows.Window(0, 0, src.width, src.height)).round_offsets().round_lengths() if bounds else None
+        data = src.read(1, window=window)
+        src_transform = src.window_transform(window) if window else src.transform
         resolution = src.res[0] * WEB_MERCATOR_M_PER_DEG
+        left, top = src_transform * (0, 0)
+        right, bottom = src_transform * (data.shape[1], data.shape[0])
         transform, width, height = calculate_default_transform(
-            src.crs, "EPSG:3857", src.width, src.height, *src.bounds, resolution=resolution)
+            src.crs, "EPSG:3857", data.shape[1], data.shape[0], left, bottom, right, top, resolution=resolution)
         warped = np.full((height, width), CANOPY_NODATA, dtype=np.uint8)
-        reproject(rasterio.band(src, 1), warped, src_nodata=CANOPY_NODATA, dst_transform=transform,
-                  dst_crs="EPSG:3857", dst_nodata=CANOPY_NODATA, resampling=Resampling.nearest)
+        reproject(data, warped, src_transform=src_transform, src_crs=src.crs, src_nodata=CANOPY_NODATA,
+                  dst_transform=transform, dst_crs="EPSG:3857", dst_nodata=CANOPY_NODATA,
+                  resampling=Resampling.nearest)
     png_path.parent.mkdir(parents=True, exist_ok=True)
     with rasterio.Env(GDAL_PAM_ENABLED="NO"):
         with rasterio.open(png_path, "w", driver="PNG", width=width, height=height, count=1, dtype="uint8",

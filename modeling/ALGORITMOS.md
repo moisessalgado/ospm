@@ -13,7 +13,7 @@ Sumário:
 4. [Deslocar um ponto para a calçada](#4-deslocar-um-ponto-para-a-calçada)
 5. [Trechos bloqueados: esquinas e obstáculos](#5-trechos-bloqueados-esquinas-e-obstáculos)
 6. [A caminhada: onde cai cada vaga](#6-a-caminhada-onde-cai-cada-vaga)
-7. [Os cinco métodos](#7-os-cinco-métodos)
+7. [Os métodos](#7-os-métodos)
 8. [Fachadas e co-registro com as edificações](#8-fachadas-e-co-registro-com-as-edificações)
 9. [Pós-processamento comum a todos os métodos](#9-pós-processamento-comum-a-todos-os-métodos)
 10. [Canteiros centrais](#10-canteiros-centrais)
@@ -75,7 +75,7 @@ $\Delta\theta = \min(|\theta_1 - \theta_2|,\ |\theta_1 - \theta_2 \pm 180°|)$
 O OSM quebra uma mesma rua em vários trechos (*ways*) toda vez que alguma tag
 muda: ponte, pavimento, limite de velocidade. Se cada trecho fosse tratado
 como uma rua separada, cada emenda ganharia um afastamento de esquina dos dois
-lados e reiniciaria a contagem do espaçamento — um buraco de 12 m ou mais
+lados e reiniciaria a contagem do espaçamento — um buraco de 10 m ou mais
 onde não existe cruzamento.
 
 `build_road_chains` resolve isso analisando **cada ponta** de cada trecho, e
@@ -175,27 +175,34 @@ sobre o eixo — o método `osm_eixo`.
 Antes de caminhar, cada via (ou face) recebe uma lista de **intervalos
 proibidos** em $s$, cada um com o seu motivo (`blocked_intervals`):
 
-- **Esquina** — 6 m livres em cada ponta que é esquina de verdade
-  (`CORNER_SETBACK_M`, Coletânea MMA 2026):
+- **Esquina** — 5 m livres em cada ponta que é esquina de verdade
+  (`CORNER_SETBACK_M`, critérios oficiais em `planting_slots/criteria.py`):
 
   ```math
-  [0,\ 6] \quad\text{e}\quad [L-6,\ L]
+  [0,\ 5] \quad\text{e}\quad [L-5,\ L]
   ```
 
 - **Obstáculo do OSM** — cada obstáculo a até 8 m da linha é projetado sobre
   ela — sua posição $s_o$ é `line.project(obstáculo)` — e bloqueia um raio $r$ em torno
-  da projeção:
+  da projeção, que depende do **porte** da árvore da via (pequeno · médio · grande):
 
   ```math
   [s_o - r,\ s_o + r]
   ```
 
-  | Obstáculo | Tags OSM | Raio $r$ |
+  | Obstáculo | Tags OSM | Raio $r$ (m) |
   |---|---|---|
-  | `travessia` | `highway=crossing`, `footway=crossing` | 3 m |
-  | `acesso_garagem` | `amenity=parking_entrance`, `service=driveway` | 2 m |
-  | `ponto_onibus` | `highway=bus_stop`, `public_transport=platform` | 12 m |
-  | `arvore_existente` | `natural=tree` | 4 m |
+  | `semaforo` | `highway=traffic_signals` | 10 · 10 · 10 |
+  | `travessia` | `highway=crossing`, `footway=crossing` | 1 · 2 · 2 |
+  | `acesso_garagem` | `amenity=parking_entrance`, `service=driveway` | 2 · 2 · 2 |
+  | `ponto_onibus` | `highway=bus_stop`, `public_transport=platform` | 1,5 · 2 · 2 |
+  | `poste` | `highway=street_lamp`, `power=pole` | 3 · 4 · 5 |
+  | `transformador` | `power=transformer`, `transformer=*` | 5 · 8 · 12 |
+  | `boca_de_lobo` | `man_made=manhole`, `manhole=*` | 2 · 2 · 3 |
+  | `arvore_existente` | `natural=tree` | 4 · 6 · 10 (o espaçamento do porte) |
+
+  A rede subterrânea (1 · 2 · 2 m) também faz parte dos critérios oficiais, mas
+  não há dado aberto para ela e não é aplicada.
 
 Intervalos podem se sobrepor; nesse caso eles formam um único trecho
 bloqueado contínuo.
@@ -281,27 +288,29 @@ próximo passo normal e o fim do bloqueio + 0,1 m. Assim um obstáculo custa
 só as vagas que de fato cobre.
 
 **Exemplo** (gerado com o código): rua reta de 100 m, esquinas nas duas
-pontas e uma travessia ocupando $[33,\ 39]$, espaçamento de 10 m.
+pontas e uma travessia a 36 m ocupando $[34,\ 38]$, porte médio (espaçamento
+de 6 m, travessia de 2 m).
 
 | Passo | $s$ (m) | O que acontece |
 |---|---|---|
-| 1 | 0,0 | dentro da esquina $[0, 6]$ → inviável (`esquina`); retoma em $\min(10{,}0;\ 6{,}1) = 6{,}1$ |
-| 2 | 6,1 | vaga |
-| 3 | 16,1 | vaga |
-| 4 | 26,1 | vaga |
-| 5 | 36,1 | dentro da travessia → inviável (`travessia`); retoma em $\min(46{,}1;\ 39{,}1) = 39{,}1$ |
-| 6 | 39,1 → 89,1 | vagas a cada 10 m |
-| 7 | 99,1 | dentro da esquina $[94, 100]$ → inviável (`esquina`) |
+| 1 | 0,0 | dentro da esquina $[0, 5]$ → inviável (`esquina`); retoma em $\min(6{,}0;\ 5{,}1) = 5{,}1$ |
+| 2 | 5,1 → 29,1 | vagas a cada 6 m (5,1 · 11,1 · 17,1 · 23,1 · 29,1) |
+| 3 | 35,1 | dentro da travessia → inviável (`travessia`); retoma em $\min(41{,}1;\ 38{,}1) = 38{,}1$ |
+| 4 | 38,1 → 92,1 | vagas a cada 6 m |
+| 5 | 98,1 | dentro da esquina $[95, 100]$ → inviável (`esquina`) |
 
-Resultado: vagas em 6,1 · 16,1 · 26,1 · 39,1 · 49,1 · … · 89,1. O buraco
-causado pela travessia é de 13 m (26,1 → 39,1), e não de 20 m.
+Resultado: vagas em 5,1 · 11,1 · 17,1 · 23,1 · 29,1 · 38,1 · 44,1 · … · 92,1. O
+buraco causado pela travessia é de 9 m (29,1 → 38,1), e não de 12 m.
 
 Se a ponta inicial **não** é esquina (uma emenda, por exemplo), não há
-bloqueio em $[0, 6]$ e a primeira vaga cai em $s = 0$.
+bloqueio em $[0, 5]$ e a primeira vaga cai em $s = 0$.
 
 ---
 
-## 7. Os cinco métodos
+## 7. Os métodos
+
+O webmap mostra `osm_eixo`, `osm_calcada` e `face_ibge`; `osm_calcada_lado` e
+`osm_overture` (7.2 e 7.5) continuam implementados e saem com `--metodos`.
 
 Todos usam a caminhada da seção 6. O que muda é **sobre qual linha** se
 caminha e **como** a posição $s$ vira um ponto no mapa.
@@ -374,8 +383,13 @@ edificações, seção 8.2) — `clamp_to_road`:
 
    onde $f$ é a distância até a fachada naquele lado (seção 8.1); sem
    prédio mapeado por perto, $d_{\max} = \infty$.
-3. Se $d_{\min} > d_{\max}$, não há espaço seguro entre o leito e a fachada:
-   o candidato vira vaga inviável com motivo `sem_espaco_seguro`.
+3. Antes disso, a **largura mínima da calçada** do porte: a calçada tem
+   $f - h$ (da borda do leito à fachada); se $f - h < w_{\text{calçada}}$ (1,5 ·
+   2,1 · 2,8 m para pequeno · médio · grande), o candidato vira vaga inviável
+   com motivo `calcada_estreita` (`MIN_SIDEWALK_WIDTH_BY_PORTE_M`). Só vale onde
+   há fachada mapeada.
+   Se ainda $d_{\min} > d_{\max}$, não há espaço seguro entre o leito e a
+   fachada: vaga inviável com motivo `sem_espaco_seguro`.
 4. Senão, a distância final é a original "presa" no intervalo permitido:
 
    ```math
@@ -551,20 +565,23 @@ Só no método `face_ibge`. Para cada par de pistas de uma via dupla (seção 3)
    onde $u$ é a incerteza de posição do OSM, medida no próprio município
    comparando o eixo co-registrado com o eixo implícito nas faces do IBGE
    (percentil 90 das discrepâncias por rua — `ibge_registration_uncertainty`).
-4. O candidato só vale se $w_k \ge 1$ m, se estiver em área urbana e fora de
+4. O candidato só vale se $w_k \ge 0{,}45$ m (largura mínima de canteiro do porte
+   pequeno), se estiver em área urbana e fora de
    todas as zonas de exclusão: os leitos (de pior caso) das vias, discos de
    esquina em cada cruzamento e os raios dos obstáculos. O disco de esquina
    tem raio
 
    ```math
-   \rho = \sqrt{(h + 6)^2 + (h + 1)^2}
+   \rho = \sqrt{(h + 5)^2 + (h + 1)^2}
    ```
 
    com $h$ a maior meia-largura entre as vias do cruzamento — o que mantém a
-   cova a 6 m do meio-fio da via que cruza.
+   cova a 5 m do meio-fio da via que cruza.
 5. Sobre os candidatos válidos roda uma caminhada gulosa simples
-   (`greedy_walk`), com o porte dado pela largura do canteiro: até 2 m
-   pequeno, até 3,5 m médio, acima disso grande.
+   (`greedy_walk`), com o porte dado pela largura do canteiro: o maior cuja
+   largura mínima de canteiro ele atende — a partir de 1,45 m grande, a partir
+   de 0,75 m médio, a partir de 0,45 m pequeno. As zonas de exclusão dos
+   obstáculos usam o raio do porte de cada amostra.
 
 ---
 
@@ -572,19 +589,21 @@ Só no método `face_ibge`. Para cada par de pistas de uma via dupla (seção 3)
 
 | Parâmetro | Valor | Onde |
 |---|---|---|
-| Afastamento de esquina | 6 m | `CORNER_SETBACK_M` |
+| Afastamento de esquina | 5 m | `CORNER_SETBACK_M` (`criteria.py`) |
 | Recuo a partir do meio-fio | 0,5 m | `CURB_SETBACK_M` |
-| Espaçamento `10m` | 10 m | `SPACINGS` |
-| Espaçamento `porte` | pequeno 6 m · médio 8 m · grande 11 m | `SPACINGS` |
+| Espaçamento `10m` (padrão) | 10 m, o do maior porte | `GENERIC_SPACING_M` (`criteria.py`) |
+| Espaçamento `porte` | pequeno 4 m · médio 6 m · grande 10 m | `SPACING_BY_PORTE_M` (`criteria.py`) |
+| Largura mínima da calçada | pequeno 1,5 m · médio 2,1 m · grande 2,8 m | `MIN_SIDEWALK_WIDTH_BY_PORTE_M` |
+| Largura mínima do canteiro | pequeno 0,45 m · médio 0,75 m · grande 1,45 m | `MIN_PLANTER_WIDTH_BY_PORTE_M` |
 | Porte por classe de via | `living_street` pequeno; `residential`, `unclassified`, `tertiary` médio; `secondary`, `primary` grande | `PORTE_BY_CLASS` |
-| Raios dos obstáculos | travessia 3 m · garagem 2 m · ônibus 12 m · árvore 4 m | `OBSTACLES` |
+| Raios dos obstáculos | por elemento e porte, tabela da seção 5 | `CLEARANCE_M` (`criteria.py`), `OBSTACLES` |
 | Distância máx. obstáculo → via | 8 m | `OBSTACLE_TO_FACE_M` |
 | Passo da busca por corda | 0,1 m | `ADVANCE_STEP_M` |
 | Ângulo mínimo de via transversal | 45° | `CROSSING_ANGLE_MIN_DEG` |
 | Pareamento face ↔ via | ≤ 15 m e ≤ 30° | `FACE_STREET_MATCH_M`, `FACE_STREET_MAX_ANGLE_DEG` |
 | Raios de fachada | a cada 5 m, até 40 m, P25 em ±15 m | `planting_slots/buildings.py` |
 | Co-registro | células de 250 m, raio de 400 m, λ = 20, Huber 1,5 m | `planting_slots/registration.py` |
-| Largura mínima de canteiro | 1 m | `MIN_MEDIAN_WIDTH_M` |
+| Largura mínima de canteiro central | 0,45 m | `MIN_MEDIAN_WIDTH_M` |
 
 As constantes ficam no topo de `scripts/03_allocate_slots.py`, salvo
 indicação. Ao mudar uma delas, rode de novo os passos 03 e 04 de cada
