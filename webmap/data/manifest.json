@@ -1,6 +1,360 @@
 {
   "municipalities": [
     {
+      "slug": "distrito_federal_arniqueira",
+      "name": "Arniqueira",
+      "state": "Distrito Federal",
+      "center": [
+        -48.00977084999997,
+        -15.859676699999937
+      ],
+      "variants": [
+        {
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 2708,
+          "rejected_count": 9621
+        },
+        {
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 4476,
+          "rejected_count": 15695
+        }
+      ],
+      "canopy": {
+        "image": "distrito_federal_arniqueira/copa.png",
+        "coordinates": [
+          [
+            -48.035,
+            -15.8391
+          ],
+          [
+            -47.9846,
+            -15.8391
+          ],
+          [
+            -47.9846,
+            -15.880271
+          ],
+          [
+            -48.035,
+            -15.880271
+          ]
+        ],
+        "source": "GFW Tropical Tree Cover (10 m, 2020)",
+        "credit": "Tropical Tree Cover — Global Forest Watch / WRI",
+        "ramp": [
+          "#e5f5d0",
+          "#a1d99b",
+          "#41ab5d",
+          "#006d2c",
+          "#00441b"
+        ]
+      }
+    },
+    {
+      "slug": "distrito_federal_brazlandia",
+      "name": "Brazlândia",
+      "state": "Distrito Federal",
+      "center": [
+        -48.129282399999965,
+        -15.636834899999968
+      ],
+      "variants": [
+        {
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 2793,
+          "rejected_count": 14282
+        },
+        {
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 4615,
+          "rejected_count": 23259
+        }
+      ],
+      "canopy": {
+        "image": "distrito_federal_brazlandia/copa.png",
+        "coordinates": [
+          [
+            -48.2435,
+            -15.5002
+          ],
+          [
+            -48.0151,
+            -15.5002
+          ],
+          [
+            -48.0151,
+            -15.773496
+          ],
+          [
+            -48.2435,
+            -15.773496
+          ]
+        ],
+        "source": "GFW Tropical Tree Cover (10 m, 2020)",
+        "credit": "Tropical Tree Cover — Global Forest Watch / WRI",
+        "ramp": [
+          "#e5f5d0",
+          "#a1d99b",
+          "#41ab5d",
+          "#006d2c",
+          "#00441b"
+        ]
+      }
+    },
+    {
+      "slug": "distrito_federal_candangolandia",
+      "name": "Candangolândia",
+      "state": "Distrito Federal",
+      "center": [
+        -47.94516964999994,
+        -15.857600349999956
+      ],
+      "variants": [
+        {
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 120,
+          "rejected_count": 1739
+        },
+        {
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 196,
+          "rejected_count": 2857
+        }
+      ],
+      "canopy": {
+        "image": "distrito_federal_candangolandia/copa.png",
+        "coordinates": [
+          [
+            -47.9608,
+            -15.8385
+          ],
+          [
+            -47.9294,
+            -15.8385
+          ],
+          [
+            -47.9294,
+            -15.876689
+          ],
+          [
+            -47.9608,
+            -15.876689
+          ]
+        ],
+        "source": "GFW Tropical Tree Cover (10 m, 2020)",
+        "credit": "Tropical Tree Cover — Global Forest Watch / WRI",
+        "ramp": [
+          "#e5f5d0",
+          "#a1d99b",
+          "#41ab5d",
+          "#006d2c",
+          "#00441b"
+        ]
+      }
+    },
+    {
+      "slug": "distrito_federal_ceilandia",
+      "name": "Ceilândia",
+      "state": "Distrito Federal",
+      "center": [
+        -48.18678254999995,
+        -15.840446649999961
+      ],
+      "variants": [
+        {
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 5553,
+          "rejected_count": 70750
+        },
+        {
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 9271,
+          "rejected_count": 116037
+        }
+      ],
+      "canopy": {
+        "image": "distrito_federal_ceilandia/copa.png",
+        "coordinates": [
+          [
+            -48.2879,
+            -15.7457
+          ],
+          [
+            -48.0857,
+            -15.7457
+          ],
+          [
+            -48.0857,
+            -15.935315
+          ],
+          [
+            -48.2879,
+            -15.935315
+          ]
+        ],
+        "source": "GFW Tropical Tree Cover (10 m, 2020)",
+        "credit": "Tropical Tree Cover — Global Forest Watch / WRI",
+        "ramp": [
+          "#e5f5d0",
+          "#a1d99b",
+          "#41ab5d",
+          "#006d2c",
+          "#00441b"
+        ]
+      }
+    },
+    {
+      "slug": "distrito_federal_cruzeiro",
+      "name": "Cruzeiro",
+      "state": "Distrito Federal",
+      "center": [
+        -47.93782034999995,
+        -15.79184049999995
+      ],
+      "variants": [
+        {
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 600,
+          "rejected_count": 2496
+        },
+        {
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 991,
+          "rejected_count": 4071
+        }
+      ],
+      "canopy": {
+        "image": "distrito_federal_cruzeiro/copa.png",
+        "coordinates": [
+          [
+            -47.9484,
+            -15.7752
+          ],
+          [
+            -47.9272,
+            -15.7752
+          ],
+          [
+            -47.9272,
+            -15.80859
+          ],
+          [
+            -47.9484,
+            -15.80859
+          ]
+        ],
+        "source": "GFW Tropical Tree Cover (10 m, 2020)",
+        "credit": "Tropical Tree Cover — Global Forest Watch / WRI",
+        "ramp": [
+          "#e5f5d0",
+          "#a1d99b",
+          "#41ab5d",
+          "#006d2c",
+          "#00441b"
+        ]
+      }
+    },
+    {
+      "slug": "distrito_federal_fercal",
+      "name": "Fercal",
+      "state": "Distrito Federal",
+      "center": [
+        -47.86886954999994,
+        -15.561163349999958
+      ],
+      "variants": [
+        {
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 491,
+          "rejected_count": 1379
+        },
+        {
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 840,
+          "rejected_count": 2245
+        }
+      ],
+      "canopy": {
+        "image": "distrito_federal_fercal/copa.png",
+        "coordinates": [
+          [
+            -47.9783,
+            -15.5001
+          ],
+          [
+            -47.7595,
+            -15.5001
+          ],
+          [
+            -47.7595,
+            -15.622156
+          ],
+          [
+            -47.9783,
+            -15.622156
+          ]
+        ],
+        "source": "GFW Tropical Tree Cover (10 m, 2020)",
+        "credit": "Tropical Tree Cover — Global Forest Watch / WRI",
+        "ramp": [
+          "#e5f5d0",
+          "#a1d99b",
+          "#41ab5d",
+          "#006d2c",
+          "#00441b"
+        ]
+      }
+    },
+    {
       "slug": "florianopolis",
       "name": "Florianópolis",
       "state": "Santa Catarina",
@@ -14,90 +368,54 @@
           "method": "osm_eixo",
           "method_label": "Eixo da via (OSM)",
           "spacing": "10m",
-          "spacing_label": "Espaçamento genérico de 10 m",
-          "count": 139602,
-          "rejected_count": 22983
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 142098,
+          "rejected_count": 20754
         },
         {
           "id": "osm_eixo_porte",
           "method": "osm_eixo",
           "method_label": "Eixo da via (OSM)",
           "spacing": "porte",
-          "spacing_label": "Espaçamento por porte (6/8/11 m)",
-          "count": 165059,
-          "rejected_count": 23669
-        },
-        {
-          "id": "osm_calcada_lado_10m",
-          "method": "osm_calcada_lado",
-          "method_label": "Calçada alocada em um dos lados da via (OSM)",
-          "spacing": "10m",
-          "spacing_label": "Espaçamento genérico de 10 m",
-          "count": 135225,
-          "rejected_count": 26181
-        },
-        {
-          "id": "osm_calcada_lado_porte",
-          "method": "osm_calcada_lado",
-          "method_label": "Calçada alocada em um dos lados da via (OSM)",
-          "spacing": "porte",
-          "spacing_label": "Espaçamento por porte (6/8/11 m)",
-          "count": 159451,
-          "rejected_count": 27840
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 219438,
+          "rejected_count": 21820
         },
         {
           "id": "osm_calcada_10m",
           "method": "osm_calcada",
           "method_label": "Calçada alocada nos dois lados da via (OSM)",
           "spacing": "10m",
-          "spacing_label": "Espaçamento genérico de 10 m",
-          "count": 257577,
-          "rejected_count": 62215
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 261643,
+          "rejected_count": 58577
         },
         {
           "id": "osm_calcada_porte",
           "method": "osm_calcada",
           "method_label": "Calçada alocada nos dois lados da via (OSM)",
           "spacing": "porte",
-          "spacing_label": "Espaçamento por porte (6/8/11 m)",
-          "count": 305255,
-          "rejected_count": 66029
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 405769,
+          "rejected_count": 68897
         },
         {
           "id": "face_ibge_10m",
           "method": "face_ibge",
           "method_label": "Face de quadra (IBGE)",
           "spacing": "10m",
-          "spacing_label": "Espaçamento genérico de 10 m",
-          "count": 117683,
-          "rejected_count": 126981
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 110887,
+          "rejected_count": 135019
         },
         {
           "id": "face_ibge_porte",
           "method": "face_ibge",
           "method_label": "Face de quadra (IBGE)",
           "spacing": "porte",
-          "spacing_label": "Espaçamento por porte (6/8/11 m)",
-          "count": 137972,
-          "rejected_count": 146613
-        },
-        {
-          "id": "osm_overture_10m",
-          "method": "osm_overture",
-          "method_label": "Calçada ajustada com prédios (OSM + Overture)",
-          "spacing": "10m",
-          "spacing_label": "Espaçamento genérico de 10 m",
-          "count": 217994,
-          "rejected_count": 101788
-        },
-        {
-          "id": "osm_overture_porte",
-          "method": "osm_overture",
-          "method_label": "Calçada ajustada com prédios (OSM + Overture)",
-          "spacing": "porte",
-          "spacing_label": "Espaçamento por porte (6/8/11 m)",
-          "count": 256878,
-          "rejected_count": 114362
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 167369,
+          "rejected_count": 196881
         }
       ],
       "canopy": {
@@ -132,6 +450,1286 @@
       }
     },
     {
+      "slug": "distrito_federal_gama",
+      "name": "Gama",
+      "state": "Distrito Federal",
+      "center": [
+        -48.141631049999944,
+        -15.990956299999937
+      ],
+      "variants": [
+        {
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 3586,
+          "rejected_count": 13279
+        },
+        {
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 5999,
+          "rejected_count": 21647
+        }
+      ],
+      "canopy": {
+        "image": "distrito_federal_gama/copa.png",
+        "coordinates": [
+          [
+            -48.2807,
+            -15.9302
+          ],
+          [
+            -48.0025,
+            -15.9302
+          ],
+          [
+            -48.0025,
+            -16.051805
+          ],
+          [
+            -48.2807,
+            -16.051805
+          ]
+        ],
+        "source": "GFW Tropical Tree Cover (10 m, 2020)",
+        "credit": "Tropical Tree Cover — Global Forest Watch / WRI",
+        "ramp": [
+          "#e5f5d0",
+          "#a1d99b",
+          "#41ab5d",
+          "#006d2c",
+          "#00441b"
+        ]
+      }
+    },
+    {
+      "slug": "distrito_federal_guara",
+      "name": "Guará",
+      "state": "Distrito Federal",
+      "center": [
+        -47.97674599999996,
+        -15.832221549999929
+      ],
+      "variants": [
+        {
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 3989,
+          "rejected_count": 18160
+        },
+        {
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 6655,
+          "rejected_count": 29780
+        }
+      ],
+      "canopy": {
+        "image": "distrito_federal_guara/copa.png",
+        "coordinates": [
+          [
+            -48.0069,
+            -15.7981
+          ],
+          [
+            -47.9465,
+            -15.7981
+          ],
+          [
+            -47.9465,
+            -15.86631
+          ],
+          [
+            -48.0069,
+            -15.86631
+          ]
+        ],
+        "source": "GFW Tropical Tree Cover (10 m, 2020)",
+        "credit": "Tropical Tree Cover — Global Forest Watch / WRI",
+        "ramp": [
+          "#e5f5d0",
+          "#a1d99b",
+          "#41ab5d",
+          "#006d2c",
+          "#00441b"
+        ]
+      }
+    },
+    {
+      "slug": "distrito_federal_itapoa",
+      "name": "Itapoã",
+      "state": "Distrito Federal",
+      "center": [
+        -47.733019799999965,
+        -15.738231499999955
+      ],
+      "variants": [
+        {
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 1737,
+          "rejected_count": 19737
+        },
+        {
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 2848,
+          "rejected_count": 31995
+        }
+      ],
+      "canopy": {
+        "image": "distrito_federal_itapoa/copa.png",
+        "coordinates": [
+          [
+            -47.7936,
+            -15.7113
+          ],
+          [
+            -47.6726,
+            -15.7113
+          ],
+          [
+            -47.6726,
+            -15.765104
+          ],
+          [
+            -47.7936,
+            -15.765104
+          ]
+        ],
+        "source": "GFW Tropical Tree Cover (10 m, 2020)",
+        "credit": "Tropical Tree Cover — Global Forest Watch / WRI",
+        "ramp": [
+          "#e5f5d0",
+          "#a1d99b",
+          "#41ab5d",
+          "#006d2c",
+          "#00441b"
+        ]
+      }
+    },
+    {
+      "slug": "distrito_federal_jardim_botanico",
+      "name": "Jardim Botânico",
+      "state": "Distrito Federal",
+      "center": [
+        -47.807367399999976,
+        -15.922846999999933
+      ],
+      "variants": [
+        {
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 18228,
+          "rejected_count": 24314
+        },
+        {
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 31549,
+          "rejected_count": 38386
+        }
+      ],
+      "canopy": {
+        "image": "distrito_federal_jardim_botanico/copa.png",
+        "coordinates": [
+          [
+            -47.9099,
+            -15.7937
+          ],
+          [
+            -47.7047,
+            -15.7937
+          ],
+          [
+            -47.7047,
+            -16.051898
+          ],
+          [
+            -47.9099,
+            -16.051898
+          ]
+        ],
+        "source": "GFW Tropical Tree Cover (10 m, 2020)",
+        "credit": "Tropical Tree Cover — Global Forest Watch / WRI",
+        "ramp": [
+          "#e5f5d0",
+          "#a1d99b",
+          "#41ab5d",
+          "#006d2c",
+          "#00441b"
+        ]
+      }
+    },
+    {
+      "slug": "distrito_federal_lago_norte",
+      "name": "Lago Norte",
+      "state": "Distrito Federal",
+      "center": [
+        -47.85333214999997,
+        -15.735803549999957
+      ],
+      "variants": [
+        {
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 5670,
+          "rejected_count": 7038
+        },
+        {
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 9434,
+          "rejected_count": 11095
+        }
+      ],
+      "canopy": {
+        "image": "distrito_federal_lago_norte/copa.png",
+        "coordinates": [
+          [
+            -47.9248,
+            -15.6788
+          ],
+          [
+            -47.7819,
+            -15.6788
+          ],
+          [
+            -47.7819,
+            -15.792763
+          ],
+          [
+            -47.9248,
+            -15.792763
+          ]
+        ],
+        "source": "GFW Tropical Tree Cover (10 m, 2020)",
+        "credit": "Tropical Tree Cover — Global Forest Watch / WRI",
+        "ramp": [
+          "#e5f5d0",
+          "#a1d99b",
+          "#41ab5d",
+          "#006d2c",
+          "#00441b"
+        ]
+      }
+    },
+    {
+      "slug": "distrito_federal_lago_sul",
+      "name": "Lago Sul",
+      "state": "Distrito Federal",
+      "center": [
+        -47.871114449999936,
+        -15.853009449999945
+      ],
+      "variants": [
+        {
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 4578,
+          "rejected_count": 6303
+        },
+        {
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 7363,
+          "rejected_count": 9575
+        }
+      ],
+      "canopy": {
+        "image": "distrito_federal_lago_sul/copa.png",
+        "coordinates": [
+          [
+            -47.9584,
+            -15.7903
+          ],
+          [
+            -47.7838,
+            -15.7903
+          ],
+          [
+            -47.7838,
+            -15.915644
+          ],
+          [
+            -47.9584,
+            -15.915644
+          ]
+        ],
+        "source": "GFW Tropical Tree Cover (10 m, 2020)",
+        "credit": "Tropical Tree Cover — Global Forest Watch / WRI",
+        "ramp": [
+          "#e5f5d0",
+          "#a1d99b",
+          "#41ab5d",
+          "#006d2c",
+          "#00441b"
+        ]
+      }
+    },
+    {
+      "slug": "distrito_federal_nucleo_bandeirante",
+      "name": "Núcleo Bandeirante",
+      "state": "Distrito Federal",
+      "center": [
+        -47.97755234999997,
+        -15.865995499999968
+      ],
+      "variants": [
+        {
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 890,
+          "rejected_count": 3787
+        },
+        {
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 1497,
+          "rejected_count": 6140
+        }
+      ],
+      "canopy": {
+        "image": "distrito_federal_nucleo_bandeirante/copa.png",
+        "coordinates": [
+          [
+            -48.0025,
+            -15.8462
+          ],
+          [
+            -47.9526,
+            -15.8462
+          ],
+          [
+            -47.9526,
+            -15.885734
+          ],
+          [
+            -48.0025,
+            -15.885734
+          ]
+        ],
+        "source": "GFW Tropical Tree Cover (10 m, 2020)",
+        "credit": "Tropical Tree Cover — Global Forest Watch / WRI",
+        "ramp": [
+          "#e5f5d0",
+          "#a1d99b",
+          "#41ab5d",
+          "#006d2c",
+          "#00441b"
+        ]
+      }
+    },
+    {
+      "slug": "distrito_federal_paranoa",
+      "name": "Paranoá",
+      "state": "Distrito Federal",
+      "center": [
+        -47.56091139999995,
+        -15.888488849999959
+      ],
+      "variants": [
+        {
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 3097,
+          "rejected_count": 8895
+        },
+        {
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 5078,
+          "rejected_count": 14643
+        }
+      ],
+      "canopy": {
+        "image": "distrito_federal_paranoa/copa.png",
+        "coordinates": [
+          [
+            -47.8155,
+            -15.7249
+          ],
+          [
+            -47.3064,
+            -15.7249
+          ],
+          [
+            -47.3064,
+            -16.05191
+          ],
+          [
+            -47.8155,
+            -16.05191
+          ]
+        ],
+        "source": "GFW Tropical Tree Cover (10 m, 2020)",
+        "credit": "Tropical Tree Cover — Global Forest Watch / WRI",
+        "ramp": [
+          "#e5f5d0",
+          "#a1d99b",
+          "#41ab5d",
+          "#006d2c",
+          "#00441b"
+        ]
+      }
+    },
+    {
+      "slug": "distrito_federal_park_way",
+      "name": "Park Way",
+      "state": "Distrito Federal",
+      "center": [
+        -47.953718849999944,
+        -15.900878349999942
+      ],
+      "variants": [
+        {
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 2169,
+          "rejected_count": 993
+        },
+        {
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 3567,
+          "rejected_count": 1607
+        }
+      ],
+      "canopy": {
+        "image": "distrito_federal_park_way/copa.png",
+        "coordinates": [
+          [
+            -48.0228,
+            -15.8157
+          ],
+          [
+            -47.8847,
+            -15.8157
+          ],
+          [
+            -47.8847,
+            -15.985927
+          ],
+          [
+            -48.0228,
+            -15.985927
+          ]
+        ],
+        "source": "GFW Tropical Tree Cover (10 m, 2020)",
+        "credit": "Tropical Tree Cover — Global Forest Watch / WRI",
+        "ramp": [
+          "#e5f5d0",
+          "#a1d99b",
+          "#41ab5d",
+          "#006d2c",
+          "#00441b"
+        ]
+      }
+    },
+    {
+      "slug": "distrito_federal_planaltina",
+      "name": "Planaltina",
+      "state": "Distrito Federal",
+      "center": [
+        -47.546811249999934,
+        -15.687336649999935
+      ],
+      "variants": [
+        {
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 10810,
+          "rejected_count": 46356
+        },
+        {
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 17977,
+          "rejected_count": 75937
+        }
+      ],
+      "canopy": {
+        "image": "distrito_federal_planaltina/copa.png",
+        "coordinates": [
+          [
+            -47.7832,
+            -15.4998
+          ],
+          [
+            -47.3105,
+            -15.4998
+          ],
+          [
+            -47.3105,
+            -15.874887
+          ],
+          [
+            -47.7832,
+            -15.874887
+          ]
+        ],
+        "source": "GFW Tropical Tree Cover (10 m, 2020)",
+        "credit": "Tropical Tree Cover — Global Forest Watch / WRI",
+        "ramp": [
+          "#e5f5d0",
+          "#a1d99b",
+          "#41ab5d",
+          "#006d2c",
+          "#00441b"
+        ]
+      }
+    },
+    {
+      "slug": "distrito_federal_plano_piloto",
+      "name": "Plano Piloto",
+      "state": "Distrito Federal",
+      "center": [
+        -47.93668174999996,
+        -15.718449349999958
+      ],
+      "variants": [
+        {
+          "id": "osm_eixo_10m",
+          "method": "osm_eixo",
+          "method_label": "Eixo da via (OSM)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 73163,
+          "rejected_count": 17253
+        },
+        {
+          "id": "osm_eixo_porte",
+          "method": "osm_eixo",
+          "method_label": "Eixo da via (OSM)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 105129,
+          "rejected_count": 17164
+        },
+        {
+          "id": "osm_calcada_10m",
+          "method": "osm_calcada",
+          "method_label": "Calçada alocada nos dois lados da via (OSM)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 118260,
+          "rejected_count": 55064
+        },
+        {
+          "id": "osm_calcada_porte",
+          "method": "osm_calcada",
+          "method_label": "Calçada alocada nos dois lados da via (OSM)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 174739,
+          "rejected_count": 60189
+        },
+        {
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 8144,
+          "rejected_count": 12678
+        },
+        {
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 12542,
+          "rejected_count": 19598
+        }
+      ],
+      "focus": [
+        -47.8825,
+        -15.7942,
+        13.0
+      ],
+      "canopy": {
+        "image": "distrito_federal_plano_piloto/copa.png",
+        "coordinates": [
+          [
+            -48.0918,
+            -15.5759
+          ],
+          [
+            -47.7817,
+            -15.5759
+          ],
+          [
+            -47.7817,
+            -15.860927
+          ],
+          [
+            -48.0918,
+            -15.860927
+          ]
+        ],
+        "source": "GFW Tropical Tree Cover (10 m, 2020)",
+        "credit": "Tropical Tree Cover — Global Forest Watch / WRI",
+        "ramp": [
+          "#e5f5d0",
+          "#a1d99b",
+          "#41ab5d",
+          "#006d2c",
+          "#00441b"
+        ]
+      }
+    },
+    {
+      "slug": "distrito_federal_recanto_das_emas",
+      "name": "Recanto das Emas",
+      "state": "Distrito Federal",
+      "center": [
+        -48.14941969999995,
+        -15.930463449999962
+      ],
+      "variants": [
+        {
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 6973,
+          "rejected_count": 24961
+        },
+        {
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 11271,
+          "rejected_count": 40865
+        }
+      ],
+      "canopy": {
+        "image": "distrito_federal_recanto_das_emas/copa.png",
+        "coordinates": [
+          [
+            -48.2626,
+            -15.8804
+          ],
+          [
+            -48.0363,
+            -15.8804
+          ],
+          [
+            -48.0363,
+            -15.980406
+          ],
+          [
+            -48.2626,
+            -15.980406
+          ]
+        ],
+        "source": "GFW Tropical Tree Cover (10 m, 2020)",
+        "credit": "Tropical Tree Cover — Global Forest Watch / WRI",
+        "ramp": [
+          "#e5f5d0",
+          "#a1d99b",
+          "#41ab5d",
+          "#006d2c",
+          "#00441b"
+        ]
+      }
+    },
+    {
+      "slug": "distrito_federal_riacho_fundo",
+      "name": "Riacho Fundo",
+      "state": "Distrito Federal",
+      "center": [
+        -48.01095629999995,
+        -15.899269299999958
+      ],
+      "variants": [
+        {
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 977,
+          "rejected_count": 6969
+        },
+        {
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 1638,
+          "rejected_count": 11544
+        }
+      ],
+      "canopy": {
+        "image": "distrito_federal_riacho_fundo/copa.png",
+        "coordinates": [
+          [
+            -48.0447,
+            -15.8715
+          ],
+          [
+            -47.9773,
+            -15.8715
+          ],
+          [
+            -47.9773,
+            -15.927089
+          ],
+          [
+            -48.0447,
+            -15.927089
+          ]
+        ],
+        "source": "GFW Tropical Tree Cover (10 m, 2020)",
+        "credit": "Tropical Tree Cover — Global Forest Watch / WRI",
+        "ramp": [
+          "#e5f5d0",
+          "#a1d99b",
+          "#41ab5d",
+          "#006d2c",
+          "#00441b"
+        ]
+      }
+    },
+    {
+      "slug": "distrito_federal_riacho_fundo_ii",
+      "name": "Riacho Fundo II",
+      "state": "Distrito Federal",
+      "center": [
+        -48.021878749999956,
+        -15.919823349999945
+      ],
+      "variants": [
+        {
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 2004,
+          "rejected_count": 10602
+        },
+        {
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 3360,
+          "rejected_count": 17407
+        }
+      ],
+      "canopy": {
+        "image": "distrito_federal_riacho_fundo_ii/copa.png",
+        "coordinates": [
+          [
+            -48.0624,
+            -15.8715
+          ],
+          [
+            -47.9814,
+            -15.8715
+          ],
+          [
+            -47.9814,
+            -15.968145
+          ],
+          [
+            -48.0624,
+            -15.968145
+          ]
+        ],
+        "source": "GFW Tropical Tree Cover (10 m, 2020)",
+        "credit": "Tropical Tree Cover — Global Forest Watch / WRI",
+        "ramp": [
+          "#e5f5d0",
+          "#a1d99b",
+          "#41ab5d",
+          "#006d2c",
+          "#00441b"
+        ]
+      }
+    },
+    {
+      "slug": "distrito_federal_scia",
+      "name": "SCIA",
+      "state": "Distrito Federal",
+      "center": [
+        -47.986676399999965,
+        -15.77488029999995
+      ],
+      "variants": [
+        {
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 516,
+          "rejected_count": 10062
+        },
+        {
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 828,
+          "rejected_count": 16659
+        }
+      ],
+      "canopy": {
+        "image": "distrito_federal_scia/copa.png",
+        "coordinates": [
+          [
+            -48.0093,
+            -15.7522
+          ],
+          [
+            -47.9641,
+            -15.7522
+          ],
+          [
+            -47.9641,
+            -15.797719
+          ],
+          [
+            -48.0093,
+            -15.797719
+          ]
+        ],
+        "source": "GFW Tropical Tree Cover (10 m, 2020)",
+        "credit": "Tropical Tree Cover — Global Forest Watch / WRI",
+        "ramp": [
+          "#e5f5d0",
+          "#a1d99b",
+          "#41ab5d",
+          "#006d2c",
+          "#00441b"
+        ]
+      }
+    },
+    {
+      "slug": "distrito_federal_sia",
+      "name": "SIA",
+      "state": "Distrito Federal",
+      "center": [
+        -47.95455734999996,
+        -15.774942499999952
+      ],
+      "variants": [
+        {
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 1549,
+          "rejected_count": 2445
+        },
+        {
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 1999,
+          "rejected_count": 3281
+        }
+      ],
+      "canopy": {
+        "image": "distrito_federal_sia/copa.png",
+        "coordinates": [
+          [
+            -47.9941,
+            -15.7379
+          ],
+          [
+            -47.9149,
+            -15.7379
+          ],
+          [
+            -47.9149,
+            -15.811808
+          ],
+          [
+            -47.9941,
+            -15.811808
+          ]
+        ],
+        "source": "GFW Tropical Tree Cover (10 m, 2020)",
+        "credit": "Tropical Tree Cover — Global Forest Watch / WRI",
+        "ramp": [
+          "#e5f5d0",
+          "#a1d99b",
+          "#41ab5d",
+          "#006d2c",
+          "#00441b"
+        ]
+      }
+    },
+    {
+      "slug": "distrito_federal_samambaia",
+      "name": "Samambaia",
+      "state": "Distrito Federal",
+      "center": [
+        -48.14839594999995,
+        -15.890228899999954
+      ],
+      "variants": [
+        {
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 6952,
+          "rejected_count": 43967
+        },
+        {
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 10310,
+          "rejected_count": 70794
+        }
+      ],
+      "canopy": {
+        "image": "distrito_federal_samambaia/copa.png",
+        "coordinates": [
+          [
+            -48.2615,
+            -15.8416
+          ],
+          [
+            -48.0353,
+            -15.8416
+          ],
+          [
+            -48.0353,
+            -15.938933
+          ],
+          [
+            -48.2615,
+            -15.938933
+          ]
+        ],
+        "source": "GFW Tropical Tree Cover (10 m, 2020)",
+        "credit": "Tropical Tree Cover — Global Forest Watch / WRI",
+        "ramp": [
+          "#e5f5d0",
+          "#a1d99b",
+          "#41ab5d",
+          "#006d2c",
+          "#00441b"
+        ]
+      }
+    },
+    {
+      "slug": "distrito_federal_santa_maria",
+      "name": "Santa Maria",
+      "state": "Distrito Federal",
+      "center": [
+        -47.961272349999945,
+        -16.009341699999936
+      ],
+      "variants": [
+        {
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 4501,
+          "rejected_count": 19958
+        },
+        {
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 7418,
+          "rejected_count": 32437
+        }
+      ],
+      "canopy": {
+        "image": "distrito_federal_santa_maria/copa.png",
+        "coordinates": [
+          [
+            -48.0561,
+            -15.9667
+          ],
+          [
+            -47.8666,
+            -15.9667
+          ],
+          [
+            -47.8666,
+            -16.05196
+          ],
+          [
+            -48.0561,
+            -16.05196
+          ]
+        ],
+        "source": "GFW Tropical Tree Cover (10 m, 2020)",
+        "credit": "Tropical Tree Cover — Global Forest Watch / WRI",
+        "ramp": [
+          "#e5f5d0",
+          "#a1d99b",
+          "#41ab5d",
+          "#006d2c",
+          "#00441b"
+        ]
+      }
+    },
+    {
+      "slug": "distrito_federal_sobradinho",
+      "name": "Sobradinho",
+      "state": "Distrito Federal",
+      "center": [
+        -47.76586539999994,
+        -15.628686099999953
+      ],
+      "variants": [
+        {
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 3905,
+          "rejected_count": 18278
+        },
+        {
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 6480,
+          "rejected_count": 30086
+        }
+      ],
+      "canopy": {
+        "image": "distrito_federal_sobradinho/copa.png",
+        "coordinates": [
+          [
+            -47.8609,
+            -15.5213
+          ],
+          [
+            -47.6708,
+            -15.5213
+          ],
+          [
+            -47.6708,
+            -15.735959
+          ],
+          [
+            -47.8609,
+            -15.735959
+          ]
+        ],
+        "source": "GFW Tropical Tree Cover (10 m, 2020)",
+        "credit": "Tropical Tree Cover — Global Forest Watch / WRI",
+        "ramp": [
+          "#e5f5d0",
+          "#a1d99b",
+          "#41ab5d",
+          "#006d2c",
+          "#00441b"
+        ]
+      }
+    },
+    {
+      "slug": "distrito_federal_sobradinho_ii",
+      "name": "Sobradinho II",
+      "state": "Distrito Federal",
+      "center": [
+        -47.92646649999995,
+        -15.595431849999954
+      ],
+      "variants": [
+        {
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 4754,
+          "rejected_count": 18831
+        },
+        {
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 8191,
+          "rejected_count": 30511
+        }
+      ],
+      "canopy": {
+        "image": "distrito_federal_sobradinho_ii/copa.png",
+        "coordinates": [
+          [
+            -48.0459,
+            -15.5002
+          ],
+          [
+            -47.807,
+            -15.5002
+          ],
+          [
+            -47.807,
+            -15.690718
+          ],
+          [
+            -48.0459,
+            -15.690718
+          ]
+        ],
+        "source": "GFW Tropical Tree Cover (10 m, 2020)",
+        "credit": "Tropical Tree Cover — Global Forest Watch / WRI",
+        "ramp": [
+          "#e5f5d0",
+          "#a1d99b",
+          "#41ab5d",
+          "#006d2c",
+          "#00441b"
+        ]
+      }
+    },
+    {
+      "slug": "distrito_federal_sol_nascente_por_do_sol",
+      "name": "Sol Nascente/Pôr do Sol",
+      "state": "Distrito Federal",
+      "center": [
+        -48.14921169999997,
+        -15.830878799999937
+      ],
+      "variants": [
+        {
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 2177,
+          "rejected_count": 18162
+        },
+        {
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 3683,
+          "rejected_count": 29883
+        }
+      ],
+      "canopy": {
+        "image": "distrito_federal_sol_nascente_por_do_sol/copa.png",
+        "coordinates": [
+          [
+            -48.1932,
+            -15.7919
+          ],
+          [
+            -48.1051,
+            -15.7919
+          ],
+          [
+            -48.1051,
+            -15.869732
+          ],
+          [
+            -48.1932,
+            -15.869732
+          ]
+        ],
+        "source": "GFW Tropical Tree Cover (10 m, 2020)",
+        "credit": "Tropical Tree Cover — Global Forest Watch / WRI",
+        "ramp": [
+          "#e5f5d0",
+          "#a1d99b",
+          "#41ab5d",
+          "#006d2c",
+          "#00441b"
+        ]
+      }
+    },
+    {
       "slug": "sorocaba",
       "name": "Sorocaba",
       "state": "São Paulo",
@@ -145,90 +1743,54 @@
           "method": "osm_eixo",
           "method_label": "Eixo da via (OSM)",
           "spacing": "10m",
-          "spacing_label": "Espaçamento genérico de 10 m",
-          "count": 240761,
-          "rejected_count": 46531
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 244108,
+          "rejected_count": 44129
         },
         {
           "id": "osm_eixo_porte",
           "method": "osm_eixo",
           "method_label": "Eixo da via (OSM)",
           "spacing": "porte",
-          "spacing_label": "Espaçamento por porte (6/8/11 m)",
-          "count": 292713,
-          "rejected_count": 47589
-        },
-        {
-          "id": "osm_calcada_lado_10m",
-          "method": "osm_calcada_lado",
-          "method_label": "Calçada alocada em um dos lados da via (OSM)",
-          "spacing": "10m",
-          "spacing_label": "Espaçamento genérico de 10 m",
-          "count": 226981,
-          "rejected_count": 57959
-        },
-        {
-          "id": "osm_calcada_lado_porte",
-          "method": "osm_calcada_lado",
-          "method_label": "Calçada alocada em um dos lados da via (OSM)",
-          "spacing": "porte",
-          "spacing_label": "Espaçamento por porte (6/8/11 m)",
-          "count": 274674,
-          "rejected_count": 62899
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 395020,
+          "rejected_count": 45127
         },
         {
           "id": "osm_calcada_10m",
           "method": "osm_calcada",
           "method_label": "Calçada alocada nos dois lados da via (OSM)",
           "spacing": "10m",
-          "spacing_label": "Espaçamento genérico de 10 m",
-          "count": 432925,
-          "rejected_count": 132155
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 437719,
+          "rejected_count": 129229
         },
         {
           "id": "osm_calcada_porte",
           "method": "osm_calcada",
           "method_label": "Calçada alocada nos dois lados da via (OSM)",
           "spacing": "porte",
-          "spacing_label": "Espaçamento por porte (6/8/11 m)",
-          "count": 528188,
-          "rejected_count": 141120
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 711926,
+          "rejected_count": 153558
         },
         {
           "id": "face_ibge_10m",
           "method": "face_ibge",
           "method_label": "Face de quadra (IBGE)",
           "spacing": "10m",
-          "spacing_label": "Espaçamento genérico de 10 m",
-          "count": 169905,
-          "rejected_count": 243100
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 159118,
+          "rejected_count": 256878
         },
         {
           "id": "face_ibge_porte",
           "method": "face_ibge",
           "method_label": "Face de quadra (IBGE)",
           "spacing": "porte",
-          "spacing_label": "Espaçamento por porte (6/8/11 m)",
-          "count": 205754,
-          "rejected_count": 282320
-        },
-        {
-          "id": "osm_overture_10m",
-          "method": "osm_overture",
-          "method_label": "Calçada ajustada com prédios (OSM + Overture)",
-          "spacing": "10m",
-          "spacing_label": "Espaçamento genérico de 10 m",
-          "count": 390860,
-          "rejected_count": 174250
-        },
-        {
-          "id": "osm_overture_porte",
-          "method": "osm_overture",
-          "method_label": "Calçada ajustada com prédios (OSM + Overture)",
-          "spacing": "porte",
-          "spacing_label": "Espaçamento por porte (6/8/11 m)",
-          "count": 475611,
-          "rejected_count": 193661
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 258226,
+          "rejected_count": 370735
         }
       ],
       "canopy": {
@@ -263,6 +1825,65 @@
       }
     },
     {
+      "slug": "distrito_federal_sudoeste_octogonal",
+      "name": "Sudoeste/Octogonal",
+      "state": "Distrito Federal",
+      "center": [
+        -47.928561799999954,
+        -15.795670449999932
+      ],
+      "variants": [
+        {
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 624,
+          "rejected_count": 1596
+        },
+        {
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 1043,
+          "rejected_count": 2606
+        }
+      ],
+      "canopy": {
+        "image": "distrito_federal_sudoeste_octogonal/copa.png",
+        "coordinates": [
+          [
+            -47.9507,
+            -15.7781
+          ],
+          [
+            -47.9065,
+            -15.7781
+          ],
+          [
+            -47.9065,
+            -15.813222
+          ],
+          [
+            -47.9507,
+            -15.813222
+          ]
+        ],
+        "source": "GFW Tropical Tree Cover (10 m, 2020)",
+        "credit": "Tropical Tree Cover — Global Forest Watch / WRI",
+        "ramp": [
+          "#e5f5d0",
+          "#a1d99b",
+          "#41ab5d",
+          "#006d2c",
+          "#00441b"
+        ]
+      }
+    },
+    {
       "slug": "suzano",
       "name": "Suzano",
       "state": "São Paulo",
@@ -276,90 +1897,54 @@
           "method": "osm_eixo",
           "method_label": "Eixo da via (OSM)",
           "spacing": "10m",
-          "spacing_label": "Espaçamento genérico de 10 m",
-          "count": 95235,
-          "rejected_count": 10652
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 95525,
+          "rejected_count": 10678
         },
         {
           "id": "osm_eixo_porte",
           "method": "osm_eixo",
           "method_label": "Eixo da via (OSM)",
           "spacing": "porte",
-          "spacing_label": "Espaçamento por porte (6/8/11 m)",
-          "count": 119064,
-          "rejected_count": 10317
-        },
-        {
-          "id": "osm_calcada_lado_10m",
-          "method": "osm_calcada_lado",
-          "method_label": "Calçada alocada em um dos lados da via (OSM)",
-          "spacing": "10m",
-          "spacing_label": "Espaçamento genérico de 10 m",
-          "count": 91638,
-          "rejected_count": 13504
-        },
-        {
-          "id": "osm_calcada_lado_porte",
-          "method": "osm_calcada_lado",
-          "method_label": "Calçada alocada em um dos lados da via (OSM)",
-          "spacing": "porte",
-          "spacing_label": "Espaçamento por porte (6/8/11 m)",
-          "count": 113644,
-          "rejected_count": 14790
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 160148,
+          "rejected_count": 10164
         },
         {
           "id": "osm_calcada_10m",
           "method": "osm_calcada",
           "method_label": "Calçada alocada nos dois lados da via (OSM)",
           "spacing": "10m",
-          "spacing_label": "Espaçamento genérico de 10 m",
-          "count": 178439,
-          "rejected_count": 29893
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 178860,
+          "rejected_count": 30122
         },
         {
           "id": "osm_calcada_porte",
           "method": "osm_calcada",
           "method_label": "Calçada alocada nos dois lados da via (OSM)",
           "spacing": "porte",
-          "spacing_label": "Espaçamento por porte (6/8/11 m)",
-          "count": 222146,
-          "rejected_count": 32472
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 297926,
+          "rejected_count": 37186
         },
         {
           "id": "face_ibge_10m",
           "method": "face_ibge",
           "method_label": "Face de quadra (IBGE)",
           "spacing": "10m",
-          "spacing_label": "Espaçamento genérico de 10 m",
-          "count": 69026,
-          "rejected_count": 88819
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 63111,
+          "rejected_count": 95992
         },
         {
           "id": "face_ibge_porte",
           "method": "face_ibge",
           "method_label": "Face de quadra (IBGE)",
           "spacing": "porte",
-          "spacing_label": "Espaçamento por porte (6/8/11 m)",
-          "count": 84859,
-          "rejected_count": 105682
-        },
-        {
-          "id": "osm_overture_10m",
-          "method": "osm_overture",
-          "method_label": "Calçada ajustada com prédios (OSM + Overture)",
-          "spacing": "10m",
-          "spacing_label": "Espaçamento genérico de 10 m",
-          "count": 149519,
-          "rejected_count": 58803
-        },
-        {
-          "id": "osm_overture_porte",
-          "method": "osm_overture",
-          "method_label": "Calçada ajustada com prédios (OSM + Overture)",
-          "spacing": "porte",
-          "spacing_label": "Espaçamento por porte (6/8/11 m)",
-          "count": 185590,
-          "rejected_count": 69028
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 101904,
+          "rejected_count": 146820
         }
       ],
       "canopy": {
@@ -394,6 +1979,124 @@
       }
     },
     {
+      "slug": "distrito_federal_sao_sebastiao",
+      "name": "São Sebastião",
+      "state": "Distrito Federal",
+      "center": [
+        -47.69766419999996,
+        -15.96237519999994
+      ],
+      "variants": [
+        {
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 5727,
+          "rejected_count": 19900
+        },
+        {
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 9640,
+          "rejected_count": 31831
+        }
+      ],
+      "canopy": {
+        "image": "distrito_federal_sao_sebastiao/copa.png",
+        "coordinates": [
+          [
+            -47.8095,
+            -15.8728
+          ],
+          [
+            -47.5859,
+            -15.8728
+          ],
+          [
+            -47.5859,
+            -16.051917
+          ],
+          [
+            -47.8095,
+            -16.051917
+          ]
+        ],
+        "source": "GFW Tropical Tree Cover (10 m, 2020)",
+        "credit": "Tropical Tree Cover — Global Forest Watch / WRI",
+        "ramp": [
+          "#e5f5d0",
+          "#a1d99b",
+          "#41ab5d",
+          "#006d2c",
+          "#00441b"
+        ]
+      }
+    },
+    {
+      "slug": "distrito_federal_taguatinga",
+      "name": "Taguatinga",
+      "state": "Distrito Federal",
+      "center": [
+        -48.068968749999954,
+        -15.806093749999945
+      ],
+      "variants": [
+        {
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 8036,
+          "rejected_count": 35316
+        },
+        {
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 12942,
+          "rejected_count": 55773
+        }
+      ],
+      "canopy": {
+        "image": "distrito_federal_taguatinga/copa.png",
+        "coordinates": [
+          [
+            -48.1145,
+            -15.7345
+          ],
+          [
+            -48.0236,
+            -15.7345
+          ],
+          [
+            -48.0236,
+            -15.877674
+          ],
+          [
+            -48.1145,
+            -15.877674
+          ]
+        ],
+        "source": "GFW Tropical Tree Cover (10 m, 2020)",
+        "credit": "Tropical Tree Cover — Global Forest Watch / WRI",
+        "ramp": [
+          "#e5f5d0",
+          "#a1d99b",
+          "#41ab5d",
+          "#006d2c",
+          "#00441b"
+        ]
+      }
+    },
+    {
       "slug": "tremembe",
       "name": "Tremembé",
       "state": "São Paulo",
@@ -407,90 +2110,54 @@
           "method": "osm_eixo",
           "method_label": "Eixo da via (OSM)",
           "spacing": "10m",
-          "spacing_label": "Espaçamento genérico de 10 m",
-          "count": 37011,
-          "rejected_count": 4023
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 37086,
+          "rejected_count": 4095
         },
         {
           "id": "osm_eixo_porte",
           "method": "osm_eixo",
           "method_label": "Eixo da via (OSM)",
           "spacing": "porte",
-          "spacing_label": "Espaçamento por porte (6/8/11 m)",
-          "count": 46023,
-          "rejected_count": 3829
-        },
-        {
-          "id": "osm_calcada_lado_10m",
-          "method": "osm_calcada_lado",
-          "method_label": "Calçada alocada em um dos lados da via (OSM)",
-          "spacing": "10m",
-          "spacing_label": "Espaçamento genérico de 10 m",
-          "count": 35839,
-          "rejected_count": 4810
-        },
-        {
-          "id": "osm_calcada_lado_porte",
-          "method": "osm_calcada_lado",
-          "method_label": "Calçada alocada em um dos lados da via (OSM)",
-          "spacing": "porte",
-          "spacing_label": "Espaçamento por porte (6/8/11 m)",
-          "count": 44188,
-          "rejected_count": 5184
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 61668,
+          "rejected_count": 3776
         },
         {
           "id": "osm_calcada_10m",
           "method": "osm_calcada",
           "method_label": "Calçada alocada nos dois lados da via (OSM)",
           "spacing": "10m",
-          "spacing_label": "Espaçamento genérico de 10 m",
-          "count": 69720,
-          "rejected_count": 10628
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 69751,
+          "rejected_count": 10877
         },
         {
           "id": "osm_calcada_porte",
           "method": "osm_calcada",
           "method_label": "Calçada alocada nos dois lados da via (OSM)",
           "spacing": "porte",
-          "spacing_label": "Espaçamento por porte (6/8/11 m)",
-          "count": 86337,
-          "rejected_count": 11263
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 115328,
+          "rejected_count": 12862
         },
         {
           "id": "face_ibge_10m",
           "method": "face_ibge",
           "method_label": "Face de quadra (IBGE)",
           "spacing": "10m",
-          "spacing_label": "Espaçamento genérico de 10 m",
-          "count": 16014,
-          "rejected_count": 21911
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 15231,
+          "rejected_count": 23008
         },
         {
           "id": "face_ibge_porte",
           "method": "face_ibge",
           "method_label": "Face de quadra (IBGE)",
           "spacing": "porte",
-          "spacing_label": "Espaçamento por porte (6/8/11 m)",
-          "count": 19700,
-          "rejected_count": 25637
-        },
-        {
-          "id": "osm_overture_10m",
-          "method": "osm_overture",
-          "method_label": "Calçada ajustada com prédios (OSM + Overture)",
-          "spacing": "10m",
-          "spacing_label": "Espaçamento genérico de 10 m",
-          "count": 63847,
-          "rejected_count": 16503
-        },
-        {
-          "id": "osm_overture_porte",
-          "method": "osm_overture",
-          "method_label": "Calçada ajustada com prédios (OSM + Overture)",
-          "spacing": "porte",
-          "spacing_label": "Espaçamento por porte (6/8/11 m)",
-          "count": 78814,
-          "rejected_count": 18764
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 25126,
+          "rejected_count": 33739
         }
       ],
       "canopy": {
@@ -511,6 +2178,183 @@
           [
             -45.709,
             -23.006021
+          ]
+        ],
+        "source": "GFW Tropical Tree Cover (10 m, 2020)",
+        "credit": "Tropical Tree Cover — Global Forest Watch / WRI",
+        "ramp": [
+          "#e5f5d0",
+          "#a1d99b",
+          "#41ab5d",
+          "#006d2c",
+          "#00441b"
+        ]
+      }
+    },
+    {
+      "slug": "distrito_federal_varjao",
+      "name": "Varjão",
+      "state": "Distrito Federal",
+      "center": [
+        -47.88002284999996,
+        -15.710471299999938
+      ],
+      "variants": [
+        {
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 90,
+          "rejected_count": 1205
+        },
+        {
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 136,
+          "rejected_count": 1975
+        }
+      ],
+      "canopy": {
+        "image": "distrito_federal_varjao/copa.png",
+        "coordinates": [
+          [
+            -47.894,
+            -15.6994
+          ],
+          [
+            -47.8661,
+            -15.6994
+          ],
+          [
+            -47.8661,
+            -15.721445
+          ],
+          [
+            -47.894,
+            -15.721445
+          ]
+        ],
+        "source": "GFW Tropical Tree Cover (10 m, 2020)",
+        "credit": "Tropical Tree Cover — Global Forest Watch / WRI",
+        "ramp": [
+          "#e5f5d0",
+          "#a1d99b",
+          "#41ab5d",
+          "#006d2c",
+          "#00441b"
+        ]
+      }
+    },
+    {
+      "slug": "distrito_federal_vicente_pires",
+      "name": "Vicente Pires",
+      "state": "Distrito Federal",
+      "center": [
+        -48.02308639999998,
+        -15.79170899999994
+      ],
+      "variants": [
+        {
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 10913,
+          "rejected_count": 28546
+        },
+        {
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 18750,
+          "rejected_count": 46599
+        }
+      ],
+      "canopy": {
+        "image": "distrito_federal_vicente_pires/copa.png",
+        "coordinates": [
+          [
+            -48.0584,
+            -15.7495
+          ],
+          [
+            -47.9877,
+            -15.7495
+          ],
+          [
+            -47.9877,
+            -15.833794
+          ],
+          [
+            -48.0584,
+            -15.833794
+          ]
+        ],
+        "source": "GFW Tropical Tree Cover (10 m, 2020)",
+        "credit": "Tropical Tree Cover — Global Forest Watch / WRI",
+        "ramp": [
+          "#e5f5d0",
+          "#a1d99b",
+          "#41ab5d",
+          "#006d2c",
+          "#00441b"
+        ]
+      }
+    },
+    {
+      "slug": "distrito_federal_aguas_claras",
+      "name": "Águas Claras",
+      "state": "Distrito Federal",
+      "center": [
+        -48.02559834999997,
+        -15.832536549999958
+      ],
+      "variants": [
+        {
+          "id": "face_ibge_10m",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "10m",
+          "spacing_label": "Espaçamento padrão de 10 m (maior porte)",
+          "count": 3850,
+          "rejected_count": 2618
+        },
+        {
+          "id": "face_ibge_porte",
+          "method": "face_ibge",
+          "method_label": "Face de quadra (IBGE)",
+          "spacing": "porte",
+          "spacing_label": "Espaçamento por porte (10 / 6 / 4 m)",
+          "count": 5815,
+          "rejected_count": 3582
+        }
+      ],
+      "canopy": {
+        "image": "distrito_federal_aguas_claras/copa.png",
+        "coordinates": [
+          [
+            -48.0524,
+            -15.8125
+          ],
+          [
+            -47.9989,
+            -15.8125
+          ],
+          [
+            -47.9989,
+            -15.852522
+          ],
+          [
+            -48.0524,
+            -15.852522
           ]
         ],
         "source": "GFW Tropical Tree Cover (10 m, 2020)",
