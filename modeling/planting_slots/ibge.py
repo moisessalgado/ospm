@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import zipfile
+from pathlib import Path
 
 import geopandas as gpd
-import httpx
 import shapely
 
+from planting_slots.downloads import download_file
 from planting_slots.paths import MunicipalityFiles
 
 URBAN_SITUATION_CODES = ["1", "2", "3"]  # high/low building density urban area, urban nucleus
@@ -33,10 +34,7 @@ def load_urban_area(files: MunicipalityFiles, crs: str):
         path.parent.mkdir(parents=True, exist_ok=True)
         url = IBGE_TRACTS_URL.format(uf=files.municipality.state_abbr)
         print(f"Baixando setores censitários: {url}")
-        with httpx.stream("GET", url, timeout=900) as resp, open(path, "wb") as fh:
-            resp.raise_for_status()
-            for chunk in resp.iter_bytes():
-                fh.write(chunk)
+        download_file(url, path)
     tracts = gpd.read_file(path, where=f"CD_MUN='{files.municipality.ibge_code}'")
     urban = tracts[tracts["CD_SIT"].isin(URBAN_SITUATION_CODES)].to_crs(crs)
     area = urban.geometry.union_all()
@@ -52,10 +50,7 @@ def load_subdivisions(files: MunicipalityFiles, crs: str) -> gpd.GeoDataFrame:
         path.parent.mkdir(parents=True, exist_ok=True)
         url = SUBDIVISIONS_URL.format(uf=files.municipality.state_abbr)
         print(f"Baixando subdistritos: {url}")
-        with httpx.stream("GET", url, timeout=300) as resp, open(path, "wb") as fh:
-            resp.raise_for_status()
-            for chunk in resp.iter_bytes():
-                fh.write(chunk)
+        download_file(url, path)
     divisions = gpd.read_file(path, where=f"CD_MUN='{files.municipality.ibge_code}'").to_crs(crs)
     # a division in several parts comes as several rows with the same code
     return divisions.dissolve(by="CD_SUBDIST", as_index=False)
@@ -71,17 +66,19 @@ def load_street_faces(files: MunicipalityFiles, crs: str) -> gpd.GeoDataFrame:
         print(f"Baixando faces de logradouro: {url}")
         archive = path.parent / f"{uf}_faces_de_logradouros_2022_shp.zip"
         path.parent.mkdir(parents=True, exist_ok=True)
-        with httpx.stream("GET", url, timeout=900) as resp, open(archive, "wb") as fh:
-            resp.raise_for_status()
-            for chunk in resp.iter_bytes():
-                fh.write(chunk)
-        with zipfile.ZipFile(archive) as zf:
-            for member in zf.namelist():  # the zip holds a <UF>/ folder; extract it under faces_logradouros_2022/
-                target = (path.parent.parent / member).resolve()
-                if path.parent.parent.resolve() not in target.parents:
-                    raise SystemExit(f"Arquivo suspeito no zip de faces: {member}")
-            zf.extractall(path.parent.parent)
+        download_file(url, archive)
+        extract_zip_safely(archive, path.parent.parent)
         archive.unlink()
         if not path.exists():
             raise SystemExit(f"Faces de logradouro não encontradas em {path} após extrair {url}.")
     return gpd.read_file(path).to_crs(crs)
+
+
+def extract_zip_safely(archive, dest) -> None:
+    """Extract a zip refusing members that would land outside `dest` (zip-slip)."""
+    dest = Path(dest).resolve()
+    with zipfile.ZipFile(archive) as zf:
+        for member in zf.namelist():
+            if dest not in (dest / member).resolve().parents and (dest / member).resolve() != dest:
+                raise SystemExit(f"Arquivo suspeito no zip {Path(archive).name}: {member}")
+        zf.extractall(dest)

@@ -11,6 +11,7 @@ from __future__ import annotations
 import geopandas as gpd
 import numpy as np
 import rasterio
+from rasterio.windows import Window
 
 from planting_slots.allocation import slot_spacing_m
 
@@ -41,19 +42,24 @@ def max_canopy_within(points: gpd.GeoDataFrame, radius_m: np.ndarray, raster_pat
     pixel still sees it). Pixel sizes are converted to meters at each point's
     latitude, so the circle stays a circle in the raster's degrees grid."""
     with rasterio.open(raster_path) as src:
-        band = src.read(1)
         transform, raster_crs = src.transform, src.crs
-    if abs(transform.b) > 0 or abs(transform.d) > 0:
-        raise ValueError("Raster rotacionado não suportado")
-    lonlat = points.geometry.to_crs(raster_crs)
-    lon, lat = lonlat.x.to_numpy(), lonlat.y.to_numpy()
-    per_lon, per_lat = _meters_per_degree(lat)
-    pixel_w_m, pixel_h_m = transform.a * per_lon, -transform.e * per_lat
+        rows, cols = src.height, src.width
+        if abs(transform.b) > 0 or abs(transform.d) > 0:
+            raise ValueError("Raster rotacionado não suportado")
+        lonlat = points.geometry.to_crs(raster_crs)
+        lon, lat = lonlat.x.to_numpy(), lonlat.y.to_numpy()
+        per_lon, per_lat = _meters_per_degree(lat)
+        pixel_w_m, pixel_h_m = transform.a * per_lon, -transform.e * per_lat
 
-    col_f, row_f = (lon - transform.c) / transform.a, (lat - transform.f) / transform.e
-    col0, row0 = np.floor(col_f).astype(int), np.floor(row_f).astype(int)
-    reach = int(np.ceil(radius_m.max() / min(pixel_w_m.min(), pixel_h_m.min()))) + 1
-    rows, cols = band.shape
+        col_f, row_f = (lon - transform.c) / transform.a, (lat - transform.f) / transform.e
+        col0, row0 = np.floor(col_f).astype(int), np.floor(row_f).astype(int)
+        reach = int(np.ceil(radius_m.max() / min(pixel_w_m.min(), pixel_h_m.min()))) + 1
+        # Only the window the points can touch is read: a national tile is far too big to load whole.
+        r_lo, r_hi = max(row0.min() - reach, 0), min(row0.max() + reach + 1, rows)
+        c_lo, c_hi = max(col0.min() - reach, 0), min(col0.max() + reach + 1, cols)
+        if r_lo >= r_hi or c_lo >= c_hi:
+            return np.full(len(points), np.nan)
+        band = src.read(1, window=Window(c_lo, r_lo, c_hi - c_lo, r_hi - r_lo))
 
     best = np.full(len(points), -1, dtype=np.int32)
     for dr in range(-reach, reach + 1):
@@ -63,9 +69,10 @@ def max_canopy_within(points: gpd.GeoDataFrame, radius_m: np.ndarray, raster_pat
             x_lo, x_hi = (c - col_f) * pixel_w_m, (c + 1 - col_f) * pixel_w_m
             y_lo, y_hi = (r - row_f) * pixel_h_m, (r + 1 - row_f) * pixel_h_m
             dx, dy = np.maximum.reduce([x_lo, -x_hi, np.zeros_like(x_lo)]), np.maximum.reduce([y_lo, -y_hi, np.zeros_like(y_lo)])
-            touched = (dx * dx + dy * dy <= radius_m * radius_m) & (r >= 0) & (r < rows) & (c >= 0) & (c < cols)
+            touched = ((dx * dx + dy * dy <= radius_m * radius_m)
+                       & (r >= r_lo) & (r < r_hi) & (c >= c_lo) & (c < c_hi))
             value = np.full(len(points), -1, dtype=np.int32)
-            value[touched] = band[r[touched], c[touched]]
+            value[touched] = band[r[touched] - r_lo, c[touched] - c_lo]
             best = np.maximum(best, np.where(value == CANOPY_NODATA, -1, value))
     return np.where(best >= 0, best, np.nan)
 

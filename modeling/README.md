@@ -161,6 +161,70 @@ UF/Municípios (shp)" na [página do IBGE](https://www.ibge.gov.br/geociencias/o
 descompactada em `data/ibge/faces_logradouros_2022/<UF>/`. Os setores
 censitários são baixados automaticamente.
 
+## Geração nacional do osm_calcada (lote)
+
+Gera os pontos do método `osm_calcada` (espaçamento de 10 m, **só setores
+urbanos**) para todos os municípios do Brasil, com o geocódigo do município
+(`cd_mun`) em cada ponto, para ingestão no banco do GEOCAU. Os pontos **não
+entram no repositório**: ficam em `output/brasil/` (fora do git).
+
+```bash
+git clone <repo> && cd ospm
+python3 -m venv .venv && . .venv/bin/activate
+pip install -e "modeling[dev]"
+export GFW_API_KEY=...        # copa GFW 10 m (a chave não fica no repo); sem ela: --fontes-copa glad_30m
+python modeling/scripts/05_pontos_brasil.py tudo --workers 20
+```
+
+`tudo` encadeia `baixar` → `extrair` → `processar` → `validar`; cada etapa
+também roda sozinha e é **idempotente** (reexecutar pula o que já está pronto;
+`--refazer` força). Recortes: `--uf SP SC`, `--regiao sudeste`,
+`--municipio 3554805` (repetível), `--limite N`. `--dados-dir` e `--saida-dir`
+apontam para outro disco.
+
+| Etapa | O que faz |
+|---|---|
+| `baixar` | PBFs regionais do [Geofabrik](https://download.geofabrik.de/south-america/brazil.html) (com MD5), malha municipal, setores censitários e faces de logradouro do IBGE por UF, e tiles de copa de 10° (GFW e GLAD). Downloads atômicos e retomáveis. |
+| `extrair` | Uma passada por PBF regional (pyosmium) → GeoParquet de vias e de obstáculos, ordenados espacialmente. Mesma seleção das consultas Overpass do script 01. |
+| `processar` | Um processo por município (`--workers`): vias recortadas no limite IBGE → `generate_osm_calcada` (`planting_slots/sidewalk.py`, o mesmo núcleo do script 03) → pontos dentro de setores urbanos → setor/bairro/distrito por interseção, quadra/face pela face IBGE mais próxima (≤ 25 m) → cobertura de copa → GeoParquet. Falhas ficam em `status/<cd_mun>.json` e não param o lote. |
+| `validar` | Confere cada saída (esquema, `cd_mun`, pontos dentro do limite, espaçamento ≥ 10 m, faixa da copa) e grava `resumo.csv` e `metadados.json` (fontes, MD5 dos PBFs, parâmetros, commit). Retorna erro se houver problema. |
+
+**Saída**: `output/brasil/pontos/<UF>/<cd_mun>.parquet` (GeoParquet, EPSG:4326, zstd), colunas:
+
+| Coluna | Descrição |
+|---|---|
+| `id_ponto` | `<cd_mun>-<sequência de 8 dígitos>`; estável só para os mesmos insumos |
+| `cd_mun` | código IBGE do município (7 dígitos) |
+| `viavel` | `true` para o ponto de plantio; `false` para um candidato descartado (inviável) |
+| `motivo` | por que foi descartado (nulo se viável), com os ids do protótipo — tabela abaixo |
+| `porte` | `pequeno`/`medio`/`grande`, pela classe da via |
+| `via_osm`, `logradouro` | classe `highway` e nome (OSM; nome IBGE se o OSM não tem) |
+| `posicao_via_m` | posição ao longo da via contínua |
+| `cd_setor` | setor censitário **que contém o ponto** |
+| `cd_setor_face`, `cd_quadra`, `cd_face` | face de logradouro IBGE a ≤ 25 m (nulos se não houver) |
+| `cd_bairro`, `nm_bairro`, `cd_dist`, `nm_dist`, `cd_subdist`, `nm_subdist` | divisões do setor (nulas onde o IBGE não define) |
+| `cobertura_copa_pct`, `raio_copa_m`, `cobertura_copa_fonte` | máximo da copa (0–100) nos pixels a até 5 m do ponto; fonte `gfw_10m` (2020) ou, onde não há dado, `glad_30m` (2010) |
+
+**Pontos inviáveis.** O dataset traz também os candidatos descartados (`viavel = false`), na
+mesma tabela, com o mesmo setor/bairro/copa. Têm `via_osm` e `posicao_via_m` nulos. Cada candidato
+carrega só o **primeiro** motivo que o bloqueou. Usam apenas OSM e IBGE (sem Overture):
+
+| `motivo` | Regra |
+|---|---|
+| `corner` | afastamento de esquina (5 m) |
+| `cross-road` | caiu dentro do leito de uma via transversal |
+| `spacing` | a menos de 10 m de outro ponto (quase sempre perto de esquinas) |
+| `traffic-light`, `crossing`, `driveway`, `bus-stop`, `utility-pole`, `transformer`, `drain` | distância mínima do critério de distanciamento para cada item de infraestrutura mapeado no OSM |
+| `existing-tree` | a menos de 10 m de uma árvore mapeada no OSM |
+
+Os motivos `facade` (sem espaço até a fachada) e `sidewalk` (calçada estreita) **não existem neste método**:
+dependem das fachadas dos prédios (Overture), que o `osm_calcada` não usa.
+
+Municípios sem setor urbano, sem vias ou sem pontos não geram arquivo e saem como
+`sem_pontos` (com o motivo) no `resumo.csv`.
+
+Testes: `pytest modeling/tests` (dados sintéticos, sem rede).
+
 ## Novo município
 
 Adicione uma entrada em `planting_slots/municipalities.py` com o código IBGE
@@ -175,6 +239,9 @@ planting_slots/          pacote Python (código em inglês)
   municipalities.py      registro de municípios, região e calçada mínima
   paths.py               nomes de todos os arquivos de dados e saídas
   osm.py  buildings.py  ibge.py  registration.py  allocation.py
+  sidewalk.py            núcleo da caminhada pelas vias (osm_calcada), usado pelo script 03 e pelo lote
+  brasil.py  osm_pbf.py  ibge_brasil.py  copa_brasil.py  lote.py  downloads.py   lote nacional (script 05)
+tests/                   pytest, com dados sintéticos
 scripts/                 etapas do pipeline, na ordem de execução
 data/<municipio>/        insumos baixados (fora do git)
 data/ibge/               setores censitários e faces de logradouro (fora do git)

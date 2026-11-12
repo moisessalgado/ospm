@@ -18,10 +18,11 @@ dependencies = [
     "rasterio",
     "httpx",
     "overturemaps",
+    "osmium",
 ]
 
 [project.optional-dependencies]
-dev = ["pyflakes", "playwright"]
+dev = ["pyflakes", "playwright", "pytest"]
 
 [tool.setuptools]
 packages = ["planting_slots"]
