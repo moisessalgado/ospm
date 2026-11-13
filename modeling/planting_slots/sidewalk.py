@@ -124,6 +124,9 @@ def build_road_chains(roads: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
                 "end_corner": corner_at.get(key(part.coords[-1]), True),
                 "geometry": part,
             })
+    if not rows:  # no walkable street in the extent: an empty frame that still has its geometry column
+        return gpd.GeoDataFrame({"highway": [], "half": [], "name": [], "start_corner": [], "end_corner": []},
+                                geometry=gpd.GeoSeries([], crs=roads.crs), crs=roads.crs)
     return gpd.GeoDataFrame(rows, geometry="geometry", crs=roads.crs)
 
 
