@@ -37,7 +37,6 @@ from planting_slots.sidewalk import enrich_with_ibge, generate_osm_calcada
 
 SPACING_ID = "10m"
 URBAN_BUFFER_M = 100.0  # roads this close to an urban tract are walked (keeps the cross streets at its edge)
-MAX_TASKS_PER_WORKER = 20  # recycle workers so memory from big cities is returned
 
 # Why a candidate was dropped (names used by sidewalk.py) -> id used by the prototype.
 # "facade" (no room before the facade) and "sidewalk" (sidewalk too narrow) need building
@@ -224,8 +223,8 @@ def run_batch(layout: Layout, cd_muns: list[str], workers: int = 1, sources=DEFA
         for c in todo:
             report(process_municipality(layout, c, sources))
     else:
-        with ProcessPoolExecutor(workers, mp_context=get_context("spawn"),
-                                 max_tasks_per_child=MAX_TASKS_PER_WORKER) as pool:
+        # No max_tasks_per_child: with spawn it can leave the pool without workers (hang in Python 3.12).
+        with ProcessPoolExecutor(workers, mp_context=get_context("spawn")) as pool:
             futures = [pool.submit(_run_one, (layout, c, sources)) for c in todo]
             for future in as_completed(futures):
                 report(future.result())
